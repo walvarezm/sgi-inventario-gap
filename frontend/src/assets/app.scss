@@ -1,0 +1,82 @@
+// =============================================================
+// app.scss — Estilos globales SGI
+// =============================================================
+
+// ── Variables CSS ─────────────────────────────────────────────
+:root {
+  --sgi-primary: #1565c0;
+  --sgi-secondary: #0288d1;
+  --sgi-accent: #00acc1;
+  --sgi-dark: #1a1a2e;
+  --sgi-positive: #2e7d32;
+  --sgi-negative: #c62828;
+  --sgi-warning: #f57f17;
+  --sgi-info: #01579b;
+
+  --sgi-surface: #ffffff;
+  --sgi-surface-alt: #f5f7fa;
+  --sgi-border: #e0e7ef;
+  --sgi-text: #1a1a2e;
+  --sgi-text-muted: #6b7a99;
+
+  --sgi-sidebar-width: 260px;
+  --sgi-header-height: 60px;
+  --sgi-radius: 8px;
+  --sgi-radius-lg: 16px;
+  --sgi-shadow: 0 2px 12px rgba(21, 101, 192, 0.08);
+  --sgi-shadow-lg: 0 8px 32px rgba(21, 101, 192, 0.14);
+}
+
+// ── Dark mode ─────────────────────────────────────────────────
+.body--dark {
+  --sgi-surface: #1e2130;
+  --sgi-surface-alt: #252a3d;
+  --sgi-border: #2e3454;
+  --sgi-text: #e8eaf6;
+  --sgi-text-muted: #8892b0;
+}
+
+// ── Utilidades globales ───────────────────────────────────────
+.sgi-card {
+  border-radius: var(--sgi-radius-lg);
+  box-shadow: var(--sgi-shadow);
+  background: var(--sgi-surface);
+  border: 1px solid var(--sgi-border);
+}
+
+.sgi-page {
+  padding: 24px;
+  min-height: 100%;
+  background: var(--sgi-surface-alt);
+}
+
+.sgi-page-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--sgi-dark);
+  letter-spacing: -0.02em;
+  margin-bottom: 0;
+}
+
+.text-muted { color: var(--sgi-text-muted); }
+.stock-bajo { color: var(--sgi-negative); font-weight: 600; }
+.stock-ok   { color: var(--sgi-positive); }
+
+// ── Tabla SGI ─────────────────────────────────────────────────
+.sgi-table {
+  .q-table__top { padding: 12px 16px; }
+  thead tr th {
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--sgi-text-muted);
+    background: var(--sgi-surface-alt);
+  }
+}
+
+// ── Scrollbar ─────────────────────────────────────────────────
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--sgi-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--sgi-text-muted); }
