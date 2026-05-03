@@ -1,16 +1,9 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import { configure } from 'quasar/wrappers'
 
-export default configure(function (/* ctx */) {
+export default configure(() => {
   return {
-    eslint: {
-      fix: true,
-      include: ['src'],
-      exclude: ['node_modules'],
-      rawOptions: {},
-      warnings: true,
-      errors: true,
-    },
-
     boot: ['axios', 'pinia'],
 
     css: ['app.scss'],
@@ -22,15 +15,28 @@ export default configure(function (/* ctx */) {
         browser: ['es2020'],
         node: 'node20',
       },
-      vueRouterMode: 'history',
       typescript: {
         strict: true,
         vueShim: true,
       },
+      vueRouterMode: 'history',
+      vitePlugins: [],
     },
 
     devServer: {
       open: true,
+      // ── Proxy para evitar CORS con Google Apps Script en desarrollo ──
+      // Las peticiones a /api/gas/* se redirigen a la URL de GAS
+      // En producción el frontend llama directamente a GAS (sin proxy)
+      proxy: {
+        '/api/gas': {
+          target: 'https://script.google.com',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path: string) =>
+            path.replace(/^\/api\/gas/, '/macros/s'),
+        },
+      },
     },
 
     framework: {
@@ -50,6 +56,23 @@ export default configure(function (/* ctx */) {
       swFilename: 'sw.js',
       manifestFilename: 'manifest.json',
       useCredentialsForManifestTag: false,
+    },
+
+    capacitor: {
+      hideSplashscreen: true,
+    },
+
+    electron: {
+      inspectPort: 5858,
+      bundler: 'packager',
+      packager: {},
+      builder: {
+        appId: 'sgi-inventarios',
+      },
+    },
+
+    bex: {
+      contentScripts: ['my-content-script'],
     },
   }
 })

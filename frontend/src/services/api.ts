@@ -1,5 +1,7 @@
 // =============================================================
 // api.ts — Instancia base de Axios para comunicación con GAS
+// IMPORTANTE: GAS requiere Content-Type: text/plain para evitar
+// el preflight CORS. El body sigue siendo JSON serializado.
 // =============================================================
 import axios from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
@@ -9,7 +11,9 @@ const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_GAS_API_URL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
+    // GAS no responde el preflight OPTIONS para application/json
+    // text/plain evita el preflight y GAS igual parsea el JSON del body
+    'Content-Type': 'text/plain',
   },
 })
 
@@ -19,7 +23,8 @@ api.interceptors.request.use(
     try {
       const authStore = useAuthStore()
       if (authStore.token && config.data) {
-        const body = JSON.parse(config.data as string)
+        const body =
+          typeof config.data === 'string' ? JSON.parse(config.data) : config.data
         body.token = authStore.token
         config.data = JSON.stringify(body)
       }

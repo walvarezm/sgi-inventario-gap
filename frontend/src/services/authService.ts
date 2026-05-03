@@ -1,30 +1,38 @@
 // =============================================================
 // authService.ts — Autenticación contra GAS
+// IMPORTANTE: Content-Type text/plain para evitar preflight CORS
 // =============================================================
 import axios from 'axios'
 import type { ApiResponse, LoginCredentials, LoginResponse } from 'src/types'
 
+// Instancia específica para login (sin interceptor de token)
+const gasAxios = axios.create({
+  headers: {
+    'Content-Type': 'text/plain',
+  },
+  timeout: 30000,
+})
+
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    // Login usa axios directo (sin interceptor de token)
-    const { data } = await axios.post<ApiResponse<LoginResponse>>(
+    const { data } = await gasAxios.post<ApiResponse<LoginResponse>>(
       import.meta.env.VITE_GAS_API_URL,
-      {
+      JSON.stringify({
         action: 'login',
         payload: credentials,
-      },
+      }),
     )
     if (!data.success) throw new Error(data.message)
     return data.result
   },
 
   async verificarToken(token: string): Promise<boolean> {
-    const { data } = await axios.post<ApiResponse<boolean>>(
+    const { data } = await gasAxios.post<ApiResponse<boolean>>(
       import.meta.env.VITE_GAS_API_URL,
-      {
+      JSON.stringify({
         action: 'verificarToken',
         token,
-      },
+      }),
     )
     return data.success && data.result === true
   },
