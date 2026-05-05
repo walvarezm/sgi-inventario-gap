@@ -7,8 +7,11 @@
       <q-select
         v-model="sucursalActiva"
         :options="opcionesSucursal"
-        outlined dense emit-value map-options
-        style="min-width:220px"
+        outlined
+        dense
+        emit-value
+        map-options
+        style="min-width: 220px"
         :disable="!authStore.isGlobal"
       >
         <template #prepend><q-icon name="store" /></template>
@@ -19,10 +22,11 @@
       <!-- ── Columna izquierda: búsqueda + catálogo ──────── -->
       <div class="col-12 col-md-7">
         <!-- Buscador -->
-        <div class="q-mb-md" style="position:relative">
+        <div class="q-mb-md" style="position: relative">
           <ProductoBuscador
             v-model="pos.busqueda.value"
-            :resultados="(pos.resultadosBusqueda.value as ProductoCatalogo[])"
+            :data-value="pos.busqueda.value"
+            :resultados="pos.resultadosBusqueda.value as ProductoCatalogo[]"
             @seleccionar="agregarDesdeResultado"
             @escanear="activarEscaner"
           />
@@ -45,13 +49,14 @@
               >
                 <q-card
                   class="producto-rapido-card cursor-pointer"
-                  flat bordered
-                  :class="{ 'agotado': p.stock <= 0 }"
+                  flat
+                  bordered
+                  :class="{ agotado: p.stock <= 0 }"
                   @click="pos.agregarDesdeCatalogo(p)"
                 >
-                  <q-img
+<!--                  <q-img
                     :src="p.imagenUrl || ''"
-                    style="height:70px"
+                    style="height: 70px"
                     fit="contain"
                     class="bg-grey-2"
                   >
@@ -60,15 +65,26 @@
                         <q-icon name="image" color="grey-4" size="28px" />
                       </div>
                     </template>
-                  </q-img>
+                  </q-img>-->
+
+                  <ProductoImagenIFrame
+                    v-if="p.imagenUrl"
+                    :imagen-url="p.imagenUrl"
+                    :width="40"
+                    :height="40"
+                  />
+
                   <div class="q-pa-xs">
                     <div class="text-caption ellipsis text-weight-medium">{{ p.nombre }}</div>
                     <div class="text-caption text-positive text-weight-bold">
                       {{ formatCurrency(p.precioFinal) }}
                     </div>
-                    <q-chip dense size="xs"
+                    <q-chip
+                      dense
+                      size="md"
                       :color="p.stock <= 0 ? 'grey' : p.stockBajo ? 'orange' : 'positive'"
-                      text-color="white">
+                      text-color="white"
+                    >
                       {{ p.stock }}
                     </q-chip>
                   </div>
@@ -95,17 +111,25 @@
             <q-space />
             <q-btn
               v-if="pos.carrito.value.length"
-              flat dense color="negative" icon="delete_sweep" label="Vaciar"
-              size="sm" @click="confirmarVaciar"
+              flat
+              dense
+              color="negative"
+              icon="delete_sweep"
+              label="Vaciar"
+              size="sm"
+              @click="confirmarVaciar"
             />
           </q-card-section>
 
           <q-separator />
 
           <!-- Items del carrito -->
-          <q-scroll-area style="height:340px" class="q-pa-sm">
-            <div v-if="!pos.carrito.value.length" class="full-width column flex-center q-pa-xl text-muted">
-              <q-icon name="shopping_cart" size="48px" style="opacity:0.2" class="q-mb-sm" />
+          <q-scroll-area style="height: 340px" class="q-pa-sm">
+            <div
+              v-if="!pos.carrito.value.length"
+              class="full-width column flex-center q-pa-xl text-muted"
+            >
+              <q-icon name="shopping_cart" size="48px" style="opacity: 0.2" class="q-mb-sm" />
               <span class="text-body2">Carrito vacío</span>
               <span class="text-caption">Busca o toca un producto para agregarlo</span>
             </div>
@@ -139,11 +163,7 @@
 
           <!-- Cliente y cobrar -->
           <q-card-section class="q-gutter-sm">
-            <q-input
-              v-model="pos.cliente.value"
-              label="Nombre del cliente"
-              outlined dense
-            >
+            <q-input v-model="pos.cliente.value" label="Nombre del cliente" outlined dense>
               <template #prepend><q-icon name="person" /></template>
             </q-input>
 
@@ -165,17 +185,22 @@
 
     <!-- Dialog: Factura emitida -->
     <q-dialog v-model="dialogFacturaEmitida">
-      <q-card class="sgi-card q-pa-lg text-center" style="min-width:320px">
+      <q-card class="sgi-card q-pa-lg text-center" style="min-width: 320px">
         <q-icon name="check_circle" color="positive" size="64px" />
         <div class="text-h6 text-weight-bold q-mt-sm">¡Venta completada!</div>
         <div class="text-muted q-mb-lg">Factura emitida correctamente</div>
         <div class="row q-gutter-sm justify-center">
           <q-btn
-            outline color="primary" icon="print" label="Imprimir"
+            outline
+            color="primary"
+            icon="print"
+            label="Imprimir"
             @click="imprimirUltimaFactura"
           />
           <q-btn
-            color="primary" unelevated label="Nueva venta"
+            color="primary"
+            unelevated
+            label="Nueva venta"
             @click="dialogFacturaEmitida = false"
           />
         </div>
@@ -196,6 +221,7 @@ import { formatCurrency } from 'src/utils/formatters'
 import type { ProductoCatalogo } from 'src/types'
 import ProductoBuscador from 'src/components/pos/ProductoBuscador.vue'
 import CarritoItem from 'src/components/pos/CarritoItem.vue'
+import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
@@ -269,11 +295,22 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.carrito-card { position: sticky; top: 80px; }
+.carrito-card {
+  position: sticky;
+  top: 80px;
+}
 .producto-rapido-card {
   border-radius: var(--sgi-radius);
-  transition: box-shadow 0.15s, transform 0.1s;
-  &:hover:not(.agotado) { box-shadow: var(--sgi-shadow); transform: translateY(-1px); }
-  &.agotado { opacity: 0.5; cursor: not-allowed; }
+  transition:
+    box-shadow 0.15s,
+    transform 0.1s;
+  &:hover:not(.agotado) {
+    box-shadow: var(--sgi-shadow);
+    transform: translateY(-1px);
+  }
+  &.agotado {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 </style>

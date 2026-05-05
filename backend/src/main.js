@@ -33,6 +33,11 @@ function doPost(e) {
       'getCategoriaById':        () => CategoriaService.getById(payload),
       'createCategoria':         () => CategoriaService.create(payload, session),
       'updateCategoria':         () => CategoriaService.update(payload, session),
+      // Marcas
+      'getMarcas':               () => MarcaService.getAll(),
+      'getMarcaById':            () => MarcaService.getById(payload),
+      'createMarca':             () => MarcaService.create(payload, session),
+      'updateMarca':             () => MarcaService.update(payload, session),
       // Productos
       'getProductos':            () => ProductoService.getAll(payload),
       'getProductoById':         () => ProductoService.getById(payload),

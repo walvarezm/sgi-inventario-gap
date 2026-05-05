@@ -2,42 +2,49 @@
   <div class="buscador-producto">
     <!-- Input de búsqueda -->
     <q-input
-      v-model="modelValue"
+      v-model="dataValue2"
       :label="label"
       outlined
       dense
       clearable
       autofocus
-      @update:model-value="emit('update:modelValue', $event ?? '')"
+      @update:model-value="emit('update:modelValue', $event ? $event as string : '')"
       @keydown.enter="seleccionarPrimero"
     >
       <template #prepend>
         <q-icon name="search" />
       </template>
       <template #append>
-        <q-icon name="qr_code_scanner" color="primary" class="cursor-pointer"
-          @click="emit('escanear')">
+        <q-icon
+          name="qr_code_scanner"
+          color="primary"
+          class="cursor-pointer"
+          @click="emit('escanear')"
+        >
           <q-tooltip>Escanear QR</q-tooltip>
         </q-icon>
       </template>
     </q-input>
 
     <!-- Resultados desplegables -->
-    <q-list
-      v-if="resultados.length"
-      bordered separator
-      class="buscador-resultados sgi-card"
-    >
+    <q-list v-if="resultados.length" bordered separator class="buscador-resultados sgi-card">
       <q-item
         v-for="producto in resultados"
         :key="producto.id"
-        clickable v-ripple
+        clickable
+        v-ripple
         :disable="producto.stock <= 0"
         @click="emit('seleccionar', producto)"
       >
         <q-item-section avatar>
           <q-avatar size="40px" square rounded>
-            <img v-if="producto.imagenUrl" :src="producto.imagenUrl" loading="lazy" />
+            <!--            <img v-if="producto.imagenUrl" :src="producto.imagenUrl" loading="lazy" />-->
+            <ProductoImagenIFrame
+              v-if="producto.imagenUrl"
+              :imagen-url="producto.imagenUrl"
+              :width="40"
+              :height="40"
+            />
             <q-icon v-else name="inventory_2" color="grey-4" />
           </q-avatar>
         </q-item-section>
@@ -56,7 +63,8 @@
               {{ formatCurrency(producto.precioFinal) }}
             </div>
             <q-chip
-              dense size="xs"
+              dense
+              size="xs"
               :color="producto.stock <= 0 ? 'grey' : producto.stockBajo ? 'orange' : 'positive'"
               text-color="white"
             >
@@ -72,20 +80,26 @@
 <script setup lang="ts">
 import type { ProductoCatalogo } from 'src/types'
 import { formatCurrency } from 'src/utils/formatters'
+import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
+import { computed, ref } from 'vue'
 
 interface Props {
   modelValue: string
+  dataValue: string
   resultados: ProductoCatalogo[]
   label?: string
 }
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
+  //modelValue: '',
   label: 'Buscar producto por SKU, nombre o marca…',
 })
 
+const dataValue2 = ref<string>(props.modelValue as string)
+
 const emit = defineEmits<{
   'update:modelValue': [val: string]
-  'seleccionar': [producto: ProductoCatalogo]
-  'escanear': []
+  seleccionar: [producto: ProductoCatalogo]
+  escanear: []
 }>()
 
 function seleccionarPrimero(): void {
@@ -94,15 +108,20 @@ function seleccionarPrimero(): void {
 </script>
 
 <style scoped lang="scss">
-.buscador-producto { position: relative; }
+.buscador-producto {
+  position: relative;
+}
 .buscador-resultados {
   position: absolute;
   top: calc(100% + 4px);
-  left: 0; right: 0;
+  left: 0;
+  right: 0;
   z-index: 9999;
   max-height: 320px;
   overflow-y: auto;
   box-shadow: var(--sgi-shadow-lg);
 }
-.text-mono { font-family: monospace; }
+.text-mono {
+  font-family: monospace;
+}
 </style>

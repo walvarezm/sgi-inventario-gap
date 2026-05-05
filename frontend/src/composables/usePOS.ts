@@ -4,6 +4,10 @@
 import { ref, computed } from 'vue'
 import { useFacturaStore } from 'src/stores/facturaStore'
 import { useProductoStore } from 'src/stores/productoStore'
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { inventarioService } from 'src/services/inventarioService'
 import type { ItemCarrito, ProductoCatalogo } from 'src/types'
 

@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { QForm } from 'quasar'
+import { QForm } from 'quasar'
 import type { Proveedor, ProveedorForm } from 'src/types'
 import { useProveedorStore } from 'src/stores/proveedorStore'
 import { required, minLength, emailValid, phoneBolivia } from 'src/utils/validators'

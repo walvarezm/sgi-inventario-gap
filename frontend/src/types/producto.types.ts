@@ -7,12 +7,30 @@ export interface Categoria {
   nombre: string
   descripcion: string
   activo: boolean
+  fechaCreacion: string
 }
+
+export type CategoriaForm = Omit<Categoria, 'id' | 'fechaCreacion'>
+
+// ── Marca ──────────────────────────────────────────────────────
+
+export interface Marca {
+  id: string
+  nombre: string
+  descripcion: string
+  activo: boolean
+  fechaCreacion: string
+}
+
+export type MarcaForm = Omit<Marca, 'id' | 'fechaCreacion'>
+
+// ── Producto ───────────────────────────────────────────────────
 
 export interface Producto {
   id: string
   sku: string
-  marca: string
+  marcaId?: string   // referencia a Marca.id
+  marca: string   // referencia a Marca.id
   nombre: string
   descripcion: string
   categoriaId: string
@@ -34,10 +52,11 @@ export interface Producto {
 export type ProductoForm = Omit<Producto, 'id' | 'fechaCreacion'>
 
 /** Vista de producto para el catálogo de una sucursal */
-export interface ProductoCatalogo {
+export interface ProductoCatalogo extends Producto{
   id: string
   sku: string
-  marca: string
+  marcaId?: string
+  marca: string          // nombre de la marca (desnormalizado)
   nombre: string
   descripcion: string
   categoriaId: string

@@ -110,7 +110,8 @@ const ProductoService = {
     )
     const file = folder.createFile(blob)
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW)
-    const url = 'https://drive.google.com/uc?export=view&id=' + file.getId()
+    const url = 'https://drive.google.com/file/d/' + file.getId()
+    //const url = 'https://drive.google.com/uc?export=view&id=' + file.getId()
 
     LogService.registrar(session.userId, 'UPLOAD', 'Productos', null, 'Imagen: ' + nombre)
     return url

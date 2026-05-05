@@ -3,9 +3,9 @@
     <!-- Preview -->
     <div class="imagen-preview">
       <q-img
-        v-if="modelValue"
+        v-if="false"
         :src="modelValue"
-        style="height:180px; border-radius:12px"
+        style="height: 180px; border-radius: 12px"
         fit="contain"
         class="q-mb-sm"
       >
@@ -16,8 +16,12 @@
         </template>
       </q-img>
 
+      <div v-if="modelValue" class="q-mb-sm text-center" style="height: 180px; border-radius: 12px">
+        <iframe :src="modelValue + '/preview'" width="180" height="180"></iframe>
+      </div>
+
       <div v-else class="placeholder-img flex flex-center column text-muted">
-        <q-icon name="image" size="48px" style="opacity:0.3" />
+        <q-icon name="image" size="48px" style="opacity: 0.3" />
         <span class="text-caption q-mt-sm">Sin imagen</span>
       </div>
     </div>
@@ -25,20 +29,30 @@
     <!-- Botones -->
     <div class="row q-gutter-sm q-mt-sm">
       <q-btn
-        outline color="primary" icon="upload" label="Subir imagen"
-        size="sm" :loading="uploading" @click="triggerFile"
+        outline
+        color="primary"
+        icon="upload"
+        label="Subir imagen"
+        size="sm"
+        :loading="uploading"
+        @click="triggerFile"
       />
       <q-btn
         v-if="modelValue"
-        outline color="negative" icon="delete" label="Quitar"
-        size="sm" @click="emit('update:modelValue', '')"
+        outline
+        color="negative"
+        icon="delete"
+        label="Quitar"
+        size="sm"
+        @click="emit('update:modelValue', '')"
       />
     </div>
 
     <input
-      ref="fileInput" type="file"
+      ref="fileInput"
+      type="file"
       accept="image/jpeg,image/png,image/webp"
-      style="display:none"
+      style="display: none"
       @change="onFileChange"
     />
 
@@ -62,7 +76,9 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
 const errorMsg = ref('')
 
-function triggerFile(): void { fileInput.value?.click() }
+function triggerFile(): void {
+  fileInput.value?.click()
+}
 
 async function onFileChange(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement
@@ -70,7 +86,10 @@ async function onFileChange(event: Event): Promise<void> {
   if (!file) return
   errorMsg.value = ''
   const validError = validateImageFile(file, 5)
-  if (validError) { errorMsg.value = validError; return }
+  if (validError) {
+    errorMsg.value = validError
+    return
+  }
 
   uploading.value = true
   try {
