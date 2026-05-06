@@ -7,8 +7,13 @@
         <div class="text-muted text-body2 q-mt-xs">Historial de facturas y notas de crédito</div>
       </div>
       <q-space />
-      <q-btn color="primary" unelevated icon="point_of_sale" label="Ir al POS"
-        :to="{ name: 'pos' }" />
+      <q-btn
+        color="primary"
+        unelevated
+        icon="point_of_sale"
+        label="Ir al POS"
+        :to="{ name: 'pos' }"
+      />
     </div>
 
     <!-- Filtros -->
@@ -18,15 +23,24 @@
           <q-select
             v-model="filtroSucursal"
             :options="[{ label: 'Todas las sucursales', value: null }, ...opcionesSucursal]"
-            label="Sucursal" outlined dense emit-value map-options
+            label="Sucursal"
+            outlined
+            dense
+            emit-value
+            map-options
             :disable="!authStore.isGlobal"
           />
         </div>
         <div class="col-12 col-sm-2">
           <q-select
             v-model="filtroEstado"
-            :options="opcionesEstado" label="Estado"
-            outlined dense emit-value map-options clearable
+            :options="opcionesEstado"
+            label="Estado"
+            outlined
+            dense
+            emit-value
+            map-options
+            clearable
           />
         </div>
         <div class="col-12 col-sm-2">
@@ -36,8 +50,14 @@
           <q-input v-model="filtroHasta" label="Hasta" outlined dense type="date" />
         </div>
         <div class="col-auto">
-          <q-btn color="primary" unelevated icon="search" label="Buscar"
-            :loading="store.loading" @click="cargar" />
+          <q-btn
+            color="primary"
+            unelevated
+            icon="search"
+            label="Buscar"
+            :loading="store.loading"
+            @click="cargar"
+          />
         </div>
         <q-space />
         <!-- KPIs -->
@@ -48,7 +68,9 @@
           </div>
           <q-separator vertical inset />
           <div class="text-center">
-            <div class="text-h6 text-weight-bold text-positive">{{ formatCurrency(totalVentas) }}</div>
+            <div class="text-h6 text-weight-bold text-positive">
+              {{ formatCurrency(totalVentas) }}
+            </div>
             <div class="text-caption text-muted">Total emitido</div>
           </div>
         </div>
@@ -58,8 +80,12 @@
     <!-- Tabla de facturas -->
     <q-card class="sgi-card" flat>
       <q-table
-        :rows="facturas" :columns="columnas" :loading="store.loading"
-        row-key="id" flat class="sgi-table"
+        :rows="facturas"
+        :columns="columnas"
+        :loading="store.loading"
+        row-key="id"
+        flat
+        class="sgi-table"
         :pagination="{ rowsPerPage: 20 }"
         no-data-label="No hay facturas en el período seleccionado"
       >
@@ -94,28 +120,46 @@
         <!-- Estado -->
         <template #body-cell-estado="{ value }">
           <q-td class="text-center">
-            <q-chip dense size="sm"
-              :color="colorEstado(value)" text-color="white"
-              :label="value"
-            />
+            <q-chip dense size="sm" :color="colorEstado(value)" text-color="white" :label="value" />
           </q-td>
         </template>
 
         <!-- Acciones -->
         <template #body-cell-acciones="{ row }">
           <q-td class="text-right">
-            <q-btn flat round dense icon="print" color="primary" size="sm"
-              @click="imprimir(row.id)">
+            <q-btn
+              flat
+              round
+              dense
+              icon="print"
+              color="primary"
+              size="sm"
+              @click="imprimir(row.id)"
+            >
               <q-tooltip>Imprimir / PDF</q-tooltip>
             </q-btn>
-            <q-btn flat round dense icon="visibility" color="teal" size="sm"
-              @click="verDetalle(row)">
+            <q-btn
+              flat
+              round
+              dense
+              icon="visibility"
+              color="teal"
+              size="sm"
+              :loading="store.loading"
+              @click="verDetalle(row)"
+            >
               <q-tooltip>Ver detalle</q-tooltip>
             </q-btn>
             <q-btn
               v-if="row.estado === 'EMITIDA' && authStore.hasRole(['ADMINISTRADOR', 'SUPERVISOR'])"
-              flat round dense icon="cancel" color="negative" size="sm"
-              @click="confirmarAnular(row)">
+              flat
+              round
+              dense
+              icon="cancel"
+              color="negative"
+              size="sm"
+              @click="confirmarAnular(row)"
+            >
               <q-tooltip>Anular</q-tooltip>
             </q-btn>
           </q-td>
@@ -123,7 +167,7 @@
 
         <template #no-data="{ message }">
           <div class="full-width column flex-center q-pa-xl text-muted">
-            <q-icon name="receipt_long" size="48px" style="opacity:0.3" class="q-mb-md" />
+            <q-icon name="receipt_long" size="48px" style="opacity: 0.3" class="q-mb-md" />
             <span>{{ message }}</span>
           </div>
         </template>
@@ -132,7 +176,7 @@
 
     <!-- Dialog: Detalle de factura -->
     <q-dialog v-model="dialogDetalle">
-      <q-card class="sgi-card" style="min-width:480px; max-width:600px">
+      <q-card class="sgi-card" style="min-width: 480px; max-width: 600px">
         <q-card-section class="row items-center q-pb-none">
           <div>
             <div class="text-h6 text-weight-bold">{{ facturaDetalle?.numero }}</div>
@@ -140,7 +184,11 @@
           </div>
           <q-space />
           <q-btn
-            flat dense icon="print" color="primary" label="Imprimir"
+            flat
+            dense
+            icon="print"
+            color="primary"
+            label="Imprimir"
             @click="imprimir(facturaDetalle?.id ?? '')"
           />
           <q-btn icon="close" flat round dense v-close-popup class="q-ml-sm" />
@@ -150,7 +198,10 @@
           <q-table
             :rows="facturaDetalle.detalles ?? []"
             :columns="columnasDetalle"
-            row-key="id" flat dense hide-bottom
+            row-key="id"
+            flat
+            dense
+            hide-bottom
           >
             <template #body-cell-subtotal="{ value }">
               <q-td class="text-right text-weight-bold">{{ formatCurrency(value) }}</q-td>
@@ -159,7 +210,7 @@
 
           <q-separator class="q-my-md" />
           <div class="row justify-end q-gutter-xs">
-            <div style="width:280px">
+            <div style="width: 280px">
               <div class="row q-mb-xs">
                 <span class="text-muted">Subtotal:</span>
                 <q-space />
@@ -223,30 +274,41 @@ const totalVentas = computed(() =>
 )
 
 const columnas: QTableColumn[] = [
-  { name: 'numero',     label: 'Número',    field: 'numero',    align: 'left',  sortable: true },
-  { name: 'fecha',      label: 'Fecha',     field: 'fecha',     align: 'left',  sortable: true },
-  { name: 'cliente',    label: 'Cliente',   field: 'cliente',   align: 'left' },
-  { name: 'sucursalId', label: 'Sucursal',  field: 'sucursalId',align: 'left' },
-  { name: 'total',      label: 'Total',     field: 'total',     align: 'right', sortable: true },
-  { name: 'estado',     label: 'Estado',    field: 'estado',    align: 'center', sortable: true },
-  { name: 'acciones',   label: 'Acciones',  field: 'id',        align: 'right' },
+  { name: 'numero', label: 'Número', field: 'numero', align: 'left', sortable: true },
+  { name: 'fecha', label: 'Fecha', field: 'fecha', align: 'left', sortable: true },
+  { name: 'cliente', label: 'Cliente', field: 'cliente', align: 'left' },
+  { name: 'sucursalId', label: 'Sucursal', field: 'sucursalId', align: 'left' },
+  { name: 'total', label: 'Total', field: 'total', align: 'right', sortable: true },
+  { name: 'estado', label: 'Estado', field: 'estado', align: 'center', sortable: true },
+  { name: 'acciones', label: 'Acciones', field: 'id', align: 'right' },
 ]
 
 const columnasDetalle: QTableColumn[] = [
-  { name: 'productoSku',    label: 'SKU',       field: 'productoSku',    align: 'left' },
-  { name: 'productoNombre', label: 'Producto',  field: 'productoNombre', align: 'left' },
-  { name: 'cantidad',       label: 'Cant.',     field: 'cantidad',       align: 'center' },
-  { name: 'precioUnitario', label: 'P. Unit.',  field: 'precioUnitario',
-    align: 'right', format: (v) => formatCurrency(v) },
-  { name: 'subtotal',       label: 'Subtotal',  field: 'subtotal',       align: 'right' },
+  { name: 'productoSku', label: 'SKU', field: 'productoSku', align: 'left' },
+  { name: 'productoNombre', label: 'Producto', field: 'productoNombre', align: 'left' },
+  { name: 'cantidad', label: 'Cant.', field: 'cantidad', align: 'center' },
+  {
+    name: 'precioUnitario',
+    label: 'P. Unit.',
+    field: 'precioUnitario',
+    align: 'right',
+    format: (v) => formatCurrency(v),
+  },
+  { name: 'subtotal', label: 'Subtotal', field: 'subtotal', align: 'right' },
 ]
 
-function labelTipo(tipo: TipoFactura): string { return TIPO_FACTURA_LABELS[tipo] ?? tipo }
-function colorEstado(estado: EstadoFactura): string { return ESTADO_FACTURA_COLOR[estado] ?? 'grey' }
+function labelTipo(tipo: TipoFactura): string {
+  return TIPO_FACTURA_LABELS[tipo] ?? tipo
+}
+function colorEstado(estado: EstadoFactura): string {
+  return ESTADO_FACTURA_COLOR[estado] ?? 'grey'
+}
 
 function formatTime(iso: string): string {
   if (!iso) return ''
-  return new Intl.DateTimeFormat('es-BO', { hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
+  return new Intl.DateTimeFormat('es-BO', { hour: '2-digit', minute: '2-digit' }).format(
+    new Date(iso),
+  )
 }
 
 async function cargar(): Promise<void> {
@@ -271,10 +333,15 @@ async function imprimir(id: string): Promise<void> {
 }
 
 async function verDetalle(factura: Factura): Promise<void> {
+  store.loading = true
   try {
     facturaDetalle.value = await facturaService.getById(factura.id)
     dialogDetalle.value = true
-  } catch (e) { notifyError((e as Error).message) }
+  } catch (e) {
+    notifyError((e as Error).message)
+  } finally {
+    store.loading = false
+  }
 }
 
 function confirmarAnular(factura: Factura): void {
@@ -290,7 +357,9 @@ function confirmarAnular(factura: Factura): void {
       notifySuccess(`Factura ${factura.numero} anulada`)
       const idx = facturas.value.findIndex((f) => f.id === factura.id)
       if (idx !== -1) facturas.value[idx] = { ...facturas.value[idx], estado: 'ANULADA' }
-    } catch (e) { notifyError((e as Error).message) }
+    } catch (e) {
+      notifyError((e as Error).message)
+    }
   })
 }
 

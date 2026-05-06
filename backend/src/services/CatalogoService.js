@@ -37,6 +37,7 @@ const CatalogoService = {
     const resultado = productos.map(p => ({
       id: p.id,
       sku: p.sku,
+      marcaId: p.marca_id || '',
       marca: p.marca || '',
       nombre: p.nombre,
       descripcion: p.descripcion || '',
@@ -47,6 +48,7 @@ const CatalogoService = {
       imagenUrl: p.imagen_url || '',
       qrCode: p.qr_code || p.sku,
       stockBajo: (stockMap[p.id] || 0) <= Number(p.stock_minimo || 0),
+      stockMinimo: p.stock_minimo || 0
     }))
 
     cache.put(cacheKey, JSON.stringify(resultado), 300) // 5 minutos

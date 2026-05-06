@@ -2,7 +2,16 @@
 // productoService.ts — CRUD de Productos contra GAS
 // =============================================================
 import { api } from './api'
-import type { ApiResponse, Producto, ProductoForm, ImagenUploadPayload } from 'src/types'
+import type {
+  ApiResponse,
+  Producto,
+  ProductoForm,
+  ImagenUploadPayload,
+  ImportProductoRow,
+  ImportProductosResponse,
+  ImportStockResponse,
+  ImportStockRow,
+} from 'src/types'
 
 export const productoService = {
   async getAll(): Promise<Producto[]> {
@@ -62,6 +71,31 @@ export const productoService = {
     const { data } = await api.post<ApiResponse<string>>('', {
       action: 'subirImagenProducto',
       payload,
+    })
+    if (!data.success) throw new Error(data.message)
+    return data.result
+  },
+
+  async importarProductos(
+    rows: ImportProductoRow[],
+    dryRun = false,
+    mode: 'upsert' | 'create_only' = 'upsert',
+  ): Promise<ImportProductosResponse> {
+    const { data } = await api.post<ApiResponse<ImportProductosResponse>>('', {
+      action: 'importarProductosMasivo',
+      payload: { rows, dryRun, mode },
+    })
+    if (!data.success) throw new Error(data.message)
+    return data.result
+  },
+
+  async importarStockInicial(
+    rows: ImportStockRow[],
+    dryRun = false,
+  ): Promise<ImportStockResponse> {
+    const { data } = await api.post<ApiResponse<ImportStockResponse>>('', {
+      action: 'importarStockInicial',
+      payload: { rows, dryRun },
     })
     if (!data.success) throw new Error(data.message)
     return data.result

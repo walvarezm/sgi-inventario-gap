@@ -121,15 +121,16 @@
             no-data-label="No hay registros de stock para esta sucursal"
           >
             <!-- Imagen -->
-            <template #body-cell-imagenUrl="{ value }">
+            <template #body-cell-imagenUrl="{ row }">
               <q-td>
                 <q-avatar size="36px" square rounded>
-<!--                  <img v-if="value" :src="value" loading="lazy" />-->
+                  <!--                  <img v-if="value" :src="value" loading="lazy" />-->
                   <ProductoImagenIFrame
-                    v-if="value"
-                    :imagen-url="value"
-                    :width="40"
-                    :height="40"
+                    v-if="row.imagenUrl"
+                    :imagen-url="row.imagenUrl"
+                    :width="36"
+                    :height="36"
+                    :imagen-location="row.imagenLocation"
                   />
                   <q-icon v-else name="image" color="grey-4" size="26px" />
                 </q-avatar>
@@ -190,12 +191,23 @@ import type { QTableColumn } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
 import { inventarioService } from 'src/services/inventarioService'
-import type { InventarioItem, StockResumen } from 'src/types'
+import type { InventarioItem } from 'src/types'
 import EntradaForm from 'src/components/inventario/EntradaForm.vue'
 import SalidaForm from 'src/components/inventario/SalidaForm.vue'
 import TransferenciaForm from 'src/components/inventario/TransferenciaForm.vue'
 import MovimientosTable from 'src/components/inventario/MovimientosTable.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
+
+type InventarioRow = InventarioItem & {
+  stockMinimo: number
+  stockBajo: boolean
+  sku: string
+  nombre: string
+  marca: string
+  unidad: string
+  imagenUrl: string
+  imagenLocation: string
+}
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
@@ -204,9 +216,9 @@ const sucursalStore = useSucursalStore()
 const sucursalActiva = ref(authStore.sucursalId ?? '')
 const busqueda = ref('')
 const tabActivo = ref('stock')
-const stock = ref<(InventarioItem & Record<string, unknown>)[]>([])
+const stock = ref<InventarioRow[]>([])
 const movimientos = ref([])
-const alertas = ref<StockResumen[]>([])
+const alertas = ref<InventarioRow[]>([])
 const loadingStock = ref(false)
 const loadingMovimientos = ref(false)
 const dialogEntrada = ref(false)
@@ -223,9 +235,10 @@ const opcionesSucursal = computed(() =>
 )
 
 const stockFiltrado = computed(() => {
-  if (!busqueda.value.trim()) return stock.value
+  let products = stock.value
+  if (!busqueda.value) return stock.value
   const q = busqueda.value.toLowerCase()
-  return stock.value.filter(
+  products = stock.value.filter(
     (s) =>
       String(s.sku ?? '')
         .toLowerCase()
@@ -237,11 +250,16 @@ const stockFiltrado = computed(() => {
         .toLowerCase()
         .includes(q),
   )
+/*  products = products.map((p) => ({
+    ...p,
+    imagenLocation: p.imagenUrl ? 'drive' : 'local',
+    imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
+  }))*/
+  console.log('products', products)
+  return products
 })
 
-const totalUnidades = computed(() =>
-  stock.value.reduce((sum, s) => sum + (s.stockActual as number), 0),
-)
+const totalUnidades = computed(() => stock.value.reduce((sum, s) => sum + s.stockActual, 0))
 
 const columnasStock: QTableColumn[] = [
   { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:52px' },
@@ -263,8 +281,19 @@ async function cargarStock(): Promise<void> {
   if (!sucursalActiva.value) return
   loadingStock.value = true
   try {
-    stock.value = (await inventarioService.getStockPorSucursal(sucursalActiva.value)) as never[]
-    alertas.value = await inventarioService.getAlertasStock(sucursalActiva.value)
+    stock.value = (await inventarioService.getStockPorSucursal(
+      sucursalActiva.value,
+    )) as InventarioRow[]
+
+    stock.value = stock.value.map((p) => ({
+      ...p,
+      imagenLocation: p.imagenUrl ? 'drive' : 'local',
+      imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
+    }))
+
+    alertas.value = (await inventarioService.getAlertasStock(
+      sucursalActiva.value,
+    )) as InventarioRow[]
   } catch (e) {
     console.error(e)
   } finally {

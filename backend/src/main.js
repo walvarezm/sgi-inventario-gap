@@ -46,6 +46,8 @@ function doPost(e) {
       'updateProducto':          () => ProductoService.update(payload, session),
       'deleteProducto':          () => ProductoService.remove(payload, session),
       'subirImagenProducto':     () => ProductoService.subirImagen(payload, session),
+      'importarProductosMasivo': () => ProductoService.importarMasivo(payload, session),
+      'importarStockInicial':    () => ProductoService.importarStockInicial(payload, session),
       // Inventario
       'getStockPorSucursal':     () => InventarioService.getStockPorSucursal(payload, session),
       'getStockProducto':        () => InventarioService.getStockProducto(payload),

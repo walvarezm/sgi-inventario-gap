@@ -48,7 +48,7 @@ const MarcaService = {
     const nueva = {
       id: Sheets.generateId(),
       nombre: payload.nombre.trim().toUpperCase(),
-      descripcion: payload.descripcion || '',
+      descripcion: payload.descripcion || payload.nombre.trim() || '',
       activo: true,
       fecha_creacion: new Date().toISOString(),
     }
@@ -59,6 +59,22 @@ const MarcaService = {
       'Marca creada: ' + nueva.nombre)
 
     return this._mapear(nueva)
+  },
+
+  findByNombre(nombre) {
+    if (!nombre || !String(nombre).trim()) return null
+    const buscado = String(nombre).trim().toUpperCase()
+    const marca = Sheets.getAll('Marcas').find(
+      m => String(m.nombre || '').trim().toUpperCase() === buscado
+    )
+    return marca ? this._mapear(marca) : null
+  },
+
+  ensureByNombre(nombre, session) {
+    if (!nombre || !String(nombre).trim()) return null
+    const existente = this.findByNombre(nombre)
+    if (existente) return existente
+    return this.create({ nombre: String(nombre).trim() }, session)
   },
 
   update(payload, session) {

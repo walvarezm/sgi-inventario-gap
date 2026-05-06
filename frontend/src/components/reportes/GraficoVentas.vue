@@ -88,10 +88,10 @@ async function renderChart(): Promise<void> {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (ctx) => ` ${formatCurrency(ctx.parsed.y)}`,
+            label: (ctx) => ` ${formatCurrency(Number(ctx.parsed.y ?? 0))}`,
             afterLabel: (ctx) => {
               const d = props.datos[ctx.dataIndex]
-              return ` ${d.cantidad} factura(s)`
+              return d ? ` ${d.cantidad} factura(s)` : ''
             },
           },
         },

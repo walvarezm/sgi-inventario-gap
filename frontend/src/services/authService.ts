@@ -7,6 +7,7 @@ import type { ApiResponse, LoginCredentials, LoginResponse } from 'src/types'
 
 // Instancia específica para login (sin interceptor de token)
 const gasAxios = axios.create({
+  baseURL: import.meta.env.VITE_GAS_API_URL,
   headers: {
     'Content-Type': 'text/plain',
   },

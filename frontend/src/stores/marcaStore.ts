@@ -3,8 +3,8 @@
 // =============================================================
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Marca } from 'src/types'
-import { marcaService, type MarcaForm } from 'src/services/marcaService'
+import type { Marca, MarcaForm } from 'src/types'
+import { marcaService } from 'src/services/marcaService'
 
 export const useMarcaStore = defineStore('marca', () => {
   const items = ref<Marca[]>([])

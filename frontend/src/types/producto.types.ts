@@ -43,6 +43,7 @@ export interface Producto {
   stockMinimo: number
   /** URL pública del archivo en Google Drive */
   imagenUrl: string
+  imagenLocation: string
   /** Cadena codificada en el QR (SKU o URL de consulta) */
   qrCode: string
   activo: boolean
@@ -76,4 +77,63 @@ export interface ImagenUploadPayload {
   mimeType: string
   nombre: string
   productoId?: string
+}
+
+export interface ImportProductoRow {
+  sku: string
+  marca: string
+  nombre: string
+  descripcion?: string
+  categoria?: string
+  unidad?: string
+  precioCompra?: number
+  precioOfrecido?: number
+  precioFinal: number
+  stockMinimo?: number
+  imagenUrl?: string
+  activo?: boolean
+  __rowNumber?: number
+}
+
+export interface ImportStockRow {
+  sku: string
+  sucursal: string
+  stockInicial: number
+  referencia?: string
+  notas?: string
+  __rowNumber?: number
+}
+
+export interface ImportResultItem {
+  rowNumber: number
+  sku: string
+  action: 'created' | 'updated' | 'skipped' | 'error' | 'imported'
+  message: string
+}
+
+export interface ImportProductosSummary {
+  total: number
+  created: number
+  updated: number
+  skipped: number
+  errors: number
+}
+
+export interface ImportStockSummary {
+  total: number
+  imported: number
+  skipped: number
+  errors: number
+}
+
+export interface ImportProductosResponse {
+  dryRun: boolean
+  summary: ImportProductosSummary
+  results: ImportResultItem[]
+}
+
+export interface ImportStockResponse {
+  dryRun: boolean
+  summary: ImportStockSummary
+  results: ImportResultItem[]
 }

@@ -66,6 +66,7 @@ export interface ItemCarrito {
   nombre: string
   marca: string
   imagenUrl: string
+  imagenLocation: string
   precioUnitario: number
   cantidad: number
   subtotal: number

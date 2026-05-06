@@ -9,7 +9,7 @@ import { useAuthStore } from 'src/stores/authStore'
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_GAS_API_URL,
-  timeout: 30000,
+  timeout: 300000,
   headers: {
     // GAS no responde el preflight OPTIONS para application/json
     // text/plain evita el preflight y GAS igual parsea el JSON del body

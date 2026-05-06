@@ -9,6 +9,14 @@
       </div>
       <q-space />
       <q-btn
+        label="Importar Excel"
+        icon="upload_file"
+        color="secondary"
+        outline
+        class="q-mr-sm"
+        @click="dialogImport = true"
+      />
+      <q-btn
         label="Nuevo producto"
         icon="add"
         color="primary"
@@ -93,11 +101,17 @@
         :pagination="{ rowsPerPage: 10 }"
         no-data-label="No hay productos registrados"
       >
-        <template #body-cell-imagenUrl="{ value }">
+        <template #body-cell-imagenUrl="{ row }">
           <q-td>
             <q-avatar size="40px" square rounded>
               <!-- <img v-else-if="value" :src="value" loading="lazy" />-->
-              <ProductoImagenIFrame v-if="value" :imagen-url="value" :width="40" :height="40" />
+              <ProductoImagenIFrame
+                v-if="row.imagenUrl"
+                :imagen-url="row.imagenUrl"
+                :width="40"
+                :height="40"
+                :imagen-location="row.imagenLocation"
+              />
               <q-icon v-else name="image" color="grey-4" size="30px" />
             </q-avatar>
           </q-td>
@@ -198,6 +212,10 @@
       <ProductoForm :producto="productoEditar" @saved="onSaved" @cancelled="dialogForm = false" />
     </q-dialog>
 
+    <q-dialog v-model="dialogImport" persistent>
+      <ProductoImportDialog @imported="onImported" @cancelled="dialogImport = false" />
+    </q-dialog>
+
     <!-- Dialog QR -->
     <q-dialog v-model="dialogQR">
       <q-card class="sgi-card q-pa-md text-center" style="min-width: 280px">
@@ -226,6 +244,7 @@ import { useMarcaStore } from 'src/stores/marcaStore'
 import { useNotify } from 'src/composables/useNotify'
 import { formatCurrency } from 'src/utils/formatters'
 import ProductoForm from 'src/components/productos/ProductoForm.vue'
+import ProductoImportDialog from 'src/components/productos/ProductoImportDialog.vue'
 import ProductoQR from 'src/components/productos/ProductoQR.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
 
@@ -240,6 +259,7 @@ const filtroCategoria = ref<string | null>(null)
 const filtroMarca = ref<string | null>(null)
 const filtroActivo = ref<boolean | null>(true)
 const dialogForm = ref(false)
+const dialogImport = ref(false)
 const dialogQR = ref(false)
 const productoEditar = ref<Producto | null>(null)
 const productoQR = ref<Producto | null>(null)
@@ -260,6 +280,14 @@ const productosFiltrados = computed(() => {
         p.descripcion.toLowerCase().includes(q),
     )
   }
+
+  lista = lista.map((p) => ({
+    ...p,
+    imagenLocation: p.imagenUrl ? 'drive' : 'local',
+    imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
+  }))
+
+  console.log('lista', lista)
   return lista
 })
 
@@ -295,6 +323,9 @@ function abrirFormulario(p?: Producto): void {
 }
 function onSaved(_p: Producto): void {
   dialogForm.value = false
+}
+function onImported(): void {
+  dialogImport.value = false
 }
 function verQR(p: Producto): void {
   productoQR.value = p

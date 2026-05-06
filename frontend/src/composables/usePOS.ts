@@ -38,6 +38,7 @@ export function usePOS() {
     nombre: string
     marca: string
     imagenUrl: string
+    imagenLocation: string
     precioFinal: number
     stock: number
   }): void {
@@ -49,6 +50,7 @@ export function usePOS() {
       nombre: producto.nombre,
       marca: producto.marca,
       imagenUrl: producto.imagenUrl,
+      imagenLocation: producto.imagenLocation,
       precioUnitario: producto.precioFinal,
       cantidad: 1,
       subtotal: producto.precioFinal,
@@ -65,6 +67,7 @@ export function usePOS() {
       nombre: producto.nombre,
       marca: producto.marca,
       imagenUrl: producto.imagenUrl,
+      imagenLocation: producto.imagenLocation,
       precioFinal: producto.precioFinal,
       stock: producto.stock,
     })

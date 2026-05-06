@@ -43,6 +43,22 @@ const CategoriaService = {
     return this._mapear(nueva)
   },
 
+  findByNombre(nombre) {
+    if (!nombre || !String(nombre).trim()) return null
+    const buscado = String(nombre).trim().toUpperCase()
+    const categoria = Sheets.getAll('Categorias').find(
+      c => String(c.nombre || '').trim().toUpperCase() === buscado
+    )
+    return categoria ? this._mapear(categoria) : null
+  },
+
+  ensureByNombre(nombre, session) {
+    if (!nombre || !String(nombre).trim()) return null
+    const existente = this.findByNombre(nombre)
+    if (existente) return existente
+    return this.create({ nombre: String(nombre).trim() }, session)
+  },
+
   update(payload, session) {
     if (session.rol !== 'ADMINISTRADOR' && session.rol !== 'SUPERVISOR') {
       throw new Error('Sin permiso para actualizar categorías')

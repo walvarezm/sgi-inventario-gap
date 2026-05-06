@@ -54,7 +54,7 @@
                   :class="{ agotado: p.stock <= 0 }"
                   @click="pos.agregarDesdeCatalogo(p)"
                 >
-<!--                  <q-img
+                  <!--                  <q-img
                     :src="p.imagenUrl || ''"
                     style="height: 70px"
                     fit="contain"
@@ -68,13 +68,16 @@
                   </q-img>-->
 
                   <ProductoImagenIFrame
-                    v-if="p.imagenUrl"
+                    v-if="p.imagenUrl && false"
                     :imagen-url="p.imagenUrl"
-                    :width="40"
-                    :height="40"
+                    :width="70"
+                    :height="70"
+                    :imagen-location="p.imagenLocation"
                   />
 
                   <div class="q-pa-xs">
+                    <div class="text-caption ellipsis text-weight-medium">{{ p.sku }}</div>
+                    <div class="text-caption ellipsis text-weight-medium">{{ p.marca }}</div>
                     <div class="text-caption ellipsis text-weight-medium">{{ p.nombre }}</div>
                     <div class="text-caption text-positive text-weight-bold">
                       {{ formatCurrency(p.precioFinal) }}
@@ -276,10 +279,19 @@ async function imprimirUltimaFactura(): Promise<void> {
 }
 
 async function cargarCatalogo(): Promise<void> {
+  console.log('sucursalActiva.value', sucursalActiva.value)
   if (!sucursalActiva.value) return
   cargandoCatalogo.value = true
   try {
     productosCatalogo.value = await cataloStore.getCatalogo(sucursalActiva.value)
+
+    productosCatalogo.value = productosCatalogo.value.map((p) => ({
+      ...p,
+      imagenLocation: p.imagenUrl ? 'drive' : 'local',
+      imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
+    }))
+
+    console.log('productosCatalogo.value', productosCatalogo.value)
   } finally {
     cargandoCatalogo.value = false
   }

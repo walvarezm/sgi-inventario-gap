@@ -17,7 +17,14 @@
       </q-img>
 
       <div v-if="modelValue" class="q-mb-sm text-center" style="height: 180px; border-radius: 12px">
-        <iframe :src="modelValue + '/preview'" width="180" height="180"></iframe>
+        <!--        <iframe :src="modelValue + '/preview'" width="180" height="180"></iframe>-->
+        <ProductoImagenIFrame
+          v-if="modelValue"
+          :imagen-url="modelValue"
+          :width="180"
+          :height="180"
+          :imagen-location="props.imagenLocation"
+        />
       </div>
 
       <div v-else class="placeholder-img flex flex-center column text-muted">
@@ -64,12 +71,18 @@
 import { ref } from 'vue'
 import { fileToBase64, resizeImage, validateImageFile } from 'src/utils/qrUtils'
 import { productoService } from 'src/services/productoService'
+import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
 
 interface Props {
   modelValue: string
   productoId?: string
+  imagenLocation?: string
 }
-const props = withDefaults(defineProps<Props>(), { modelValue: '', productoId: '' })
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: '',
+  productoId: '',
+  imagenLocation: 'local',
+})
 const emit = defineEmits<{ 'update:modelValue': [url: string] }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)

@@ -21,6 +21,7 @@ export const useCataloStore = defineStore('catalo', () => {
   async function getCatalogo(sucursalId: string, forceRefresh = false): Promise<ProductoCatalogo[]> {
     const now = Date.now()
     const cached = cache.value[sucursalId]
+    console.log('cached', cached)
     if (!forceRefresh && cached && now - cached.ts < CACHE_TTL) {
       return cached.data
     }
@@ -29,6 +30,7 @@ export const useCataloStore = defineStore('catalo', () => {
     try {
       const data = await cataloService.getBySucursal(sucursalId)
       cache.value[sucursalId] = { data, ts: now }
+      console.log('data cache', data, cache)
       return data
     } catch (e) {
       error.value = (e as Error).message

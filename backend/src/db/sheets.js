@@ -61,6 +61,26 @@ const Sheets = {
   },
 
   /**
+   * Inserta varias filas de una sola vez usando el orden de encabezados.
+   * @param {string} nombre
+   * @param {Object[]} items
+   */
+  insertMany(nombre, items) {
+    if (!items || items.length === 0) return []
+
+    const sheet = this.getSheet(nombre)
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    const filas = items.map(datos => headers.map(h => {
+      const val = datos[h]
+      return val !== undefined ? val : ''
+    }))
+
+    const startRow = sheet.getLastRow() + 1
+    sheet.getRange(startRow, 1, filas.length, headers.length).setValues(filas)
+    return items
+  },
+
+  /**
    * Actualiza una fila existente buscando por campo 'id'.
    * @param {string} nombre - Nombre de la hoja
    * @param {string} id - Valor del campo id

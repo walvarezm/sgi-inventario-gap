@@ -17,7 +17,7 @@
             <ProductoImagen
               v-model="form.imagenUrl"
               :producto-id="editId"
-            />
+              :imagen-location="form.imagenLocation" />
 
             <q-separator class="q-my-md" />
 
@@ -47,8 +47,22 @@
                   :disable="isEdit"
                 />
               </div>
-              <div class="col-6">
+              <!--              <div class="col-6">
                 <q-input v-model="form.marca" label="Marca / Fabricante" outlined dense />
+              </div>-->
+              <div class="col-6">
+                <q-select
+                  v-model="form.marcaId"
+                  :options="marcaStore.options"
+                  label="Marca"
+                  outlined
+                  dense
+                  emit-value
+                  map-options
+                  clearable
+                  :loading="marcaStore.loading"
+                  :rules="[required]"
+                />
               </div>
 
               <div class="col-12">
@@ -95,6 +109,7 @@
                   dense
                   emit-value
                   map-options
+                  clearable
                   :rules="[required]"
                 />
               </div>
@@ -185,6 +200,7 @@ import {
 import { useNotify } from 'src/composables/useNotify'
 import ProductoImagen from './ProductoImagen.vue'
 import ProductoQR from './ProductoQR.vue'
+import { useMarcaStore } from 'src/stores/marcaStore.ts'
 
 interface Props {
   producto?: Producto | null
@@ -194,6 +210,7 @@ const emit = defineEmits<{ saved: [producto: Producto]; cancelled: [] }>()
 
 const productoStore = useProductoStore()
 const categoriaStore = useCategoriaStore()
+const marcaStore = useMarcaStore()
 const { notifySuccess, notifyError } = useNotify()
 const formRef = ref<InstanceType<typeof QForm> | null>(null)
 const isEdit = ref(false)
@@ -212,6 +229,7 @@ const unidades = [
 
 const defaultForm = (): ProductoForm => ({
   sku: '',
+  marcaId: '',
   marca: '',
   nombre: '',
   descripcion: '',
@@ -224,6 +242,7 @@ const defaultForm = (): ProductoForm => ({
   imagenUrl: '',
   qrCode: '',
   activo: true,
+  imagenLocation: 'local'
 })
 const form = ref<ProductoForm>(defaultForm())
 
@@ -235,6 +254,7 @@ watch(
     form.value = p
       ? {
           sku: p.sku,
+          marcaId: p.marcaId,
           marca: p.marca,
           nombre: p.nombre,
           descripcion: p.descripcion,
@@ -247,6 +267,7 @@ watch(
           imagenUrl: p.imagenUrl,
           qrCode: p.qrCode,
           activo: p.activo,
+          imagenLocation: p.imagenLocation,
         }
       : defaultForm()
   },
@@ -272,5 +293,8 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
-onMounted(() => categoriaStore.fetchAll())
+onMounted(() => {
+  categoriaStore.fetchAll()
+  marcaStore.fetchAll()
+})
 </script>

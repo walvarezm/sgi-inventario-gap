@@ -6,19 +6,20 @@
     row-key="id"
     flat
     class="sgi-table catalogo-tabla"
-    :pagination="{ rowsPerPage: 25 }"
+    :pagination="{ rowsPerPage: 10 }"
     no-data-label="No hay productos en el catálogo"
   >
     <!-- Imagen thumbnail -->
-    <template #body-cell-imagenUrl="{ value }">
+    <template #body-cell-imagenUrl="{ row }">
       <q-td>
         <q-avatar size="44px" square rounded>
-<!--          <img v-if="value" :src="value" loading="lazy" />-->
+          <!--          <img v-if="value" :src="value" loading="lazy" />-->
           <ProductoImagenIFrame
-            v-if="value"
-            :imagen-url="value"
+            v-if="row.imagenUrl"
+            :imagen-url="row.imagenUrl"
             :width="44"
             :height="44"
+            :imagen-location="row.imagenLocation"
           />
           <q-icon v-else name="image" color="grey-4" size="32px" />
         </q-avatar>
@@ -29,12 +30,12 @@
     <template #body-cell-sku="{ row }">
       <q-td>
         <div class="row items-center no-wrap q-gutter-xs">
-          <span class="text-weight-bold text-mono">{{ row.sku }}</span>
+          <span class="text-weight-bold text-mono text-body2">{{ row.sku }}</span>
           <q-btn
             flat
             round
             dense
-            size="xs"
+            size="sm"
             icon="qr_code"
             color="primary"
             @click="emit('ver-qr', row)"
@@ -46,24 +47,29 @@
     </template>
 
     <!-- Marca + Nombre -->
+    <template #body-cell-marca="{ row }">
+      <q-td>
+        <div class="text-caption text-muted">{{ row.marca }}</div>
+      </q-td>
+    </template>
     <template #body-cell-nombre="{ row }">
       <q-td>
         <div class="text-weight-medium">{{ row.nombre }}</div>
-        <div class="text-caption text-muted">{{ row.marca }}</div>
-        <div
+<!--        <div class="text-caption text-muted">{{ row.marca }}</div>-->
+<!--        <div
           v-if="row.descripcion"
           class="text-caption text-muted ellipsis"
           style="max-width: 240px"
         >
           {{ row.descripcion }}
-        </div>
+        </div>-->
       </q-td>
     </template>
 
     <!-- Precio ofrecido (tachado) -->
     <template #body-cell-precioOfrecido="{ value }">
       <q-td class="text-right">
-        <span class="text-muted" style="text-decoration: line-through; font-size: 0.85em">
+        <span class="text-muted" style="text-decoration: line-through; font-size: 1.0em">
           {{ formatCurrency(value) }}
         </span>
       </q-td>
@@ -72,7 +78,7 @@
     <!-- Precio final -->
     <template #body-cell-precioFinal="{ value }">
       <q-td class="text-right">
-        <span class="text-h6 text-weight-bold text-positive">{{ formatCurrency(value) }}</span>
+        <span class="text-body1 text-weight-bold text-positive">{{ formatCurrency(value) }}</span>
       </q-td>
     </template>
 
@@ -121,6 +127,7 @@ const emit = defineEmits<{
 const columnas: QTableColumn[] = [
   { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:60px' },
   { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
+  { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
   { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
   {
     name: 'precioOfrecido',

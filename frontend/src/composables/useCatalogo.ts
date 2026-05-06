@@ -11,6 +11,7 @@ export function useCatalogo() {
   const productos = ref<ProductoCatalogo[]>([])
   const busqueda = ref('')
   const categoriaFiltro = ref<string | null>(null)
+  const marcaFiltro = ref<string | null>(null)
   const vistaTabla = ref(true)
 
   const productosFiltrados = computed(() => {
@@ -28,6 +29,9 @@ export function useCatalogo() {
     if (categoriaFiltro.value) {
       lista = lista.filter((p) => p.categoriaId === categoriaFiltro.value)
     }
+    if (marcaFiltro.value) {
+      lista = lista.filter((p) => p.marca === marcaFiltro.value || p.marcaId === marcaFiltro.value)
+    }
     return lista
   })
 
@@ -41,12 +45,13 @@ export function useCatalogo() {
   function limpiarFiltros(): void {
     busqueda.value = ''
     categoriaFiltro.value = null
+    marcaFiltro.value = null
   }
 
   function toggleVista(): void { vistaTabla.value = !vistaTabla.value }
 
   return {
-    productos, busqueda, categoriaFiltro, vistaTabla,
+    productos, busqueda, categoriaFiltro, marcaFiltro, vistaTabla,
     productosFiltrados, conStockBajo, totalProductos,
     loading: computed(() => cataloStore.loading),
     error: computed(() => cataloStore.error),

@@ -8,7 +8,7 @@
       dense
       clearable
       autofocus
-      @update:model-value="emit('update:modelValue', $event ? $event as string : '')"
+      @update:model-value="emit('update:modelValue', dataValue2 ?? '')"
       @keydown.enter="seleccionarPrimero"
     >
       <template #prepend>
@@ -44,6 +44,7 @@
               :imagen-url="producto.imagenUrl"
               :width="40"
               :height="40"
+              :imagen-location="producto.imagenLocation"
             />
             <q-icon v-else name="inventory_2" color="grey-4" />
           </q-avatar>
@@ -81,7 +82,7 @@
 import type { ProductoCatalogo } from 'src/types'
 import { formatCurrency } from 'src/utils/formatters'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, toRef } from 'vue'
 
 interface Props {
   modelValue: string
@@ -94,7 +95,8 @@ const props = withDefaults(defineProps<Props>(), {
   label: 'Buscar producto por SKU, nombre o marca…',
 })
 
-const dataValue2 = ref<string>(props.modelValue as string)
+const dataValue2 = ref<string>(props.dataValue as string)
+//const dataValue2 = computed(() => props.modelValue)
 
 const emit = defineEmits<{
   'update:modelValue': [val: string]

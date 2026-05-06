@@ -109,8 +109,6 @@ const formRef = ref<InstanceType<typeof QForm> | null>(null)
 const loading = ref(false)
 const productoSeleccionado = ref<string | null>(null)
 const stockActual = ref<number | null>(null)
-const filtro = ref('')
-
 const form = ref<Omit<EntradaPayload, 'productoId'>>({
   sucursalId: authStore.sucursalId ?? '',
   cantidad: 0,
