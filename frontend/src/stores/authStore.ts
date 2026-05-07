@@ -4,7 +4,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { LocalStorage } from 'quasar'
-import type { SesionUsuario, LoginCredentials, Rol } from 'src/types'
+import type { SesionUsuario, LoginCredentials, PermissionScope, Rol } from 'src/types'
 import { ROLES_GLOBALES } from 'src/types'
 import { authService } from 'src/services/authService'
 
@@ -26,11 +26,17 @@ export const useAuthStore = defineStore('auth', () => {
 
   const token = computed(() => sesion.value?.token ?? null)
   const rol = computed(() => sesion.value?.rol ?? null)
+  const roles = computed<Rol[]>(() => {
+    if (!sesion.value) return []
+    if (sesion.value.roles && sesion.value.roles.length) return sesion.value.roles
+    return sesion.value.rol ? [sesion.value.rol] : []
+  })
   const sucursalId = computed(() => sesion.value?.sucursalId ?? null)
   const nombreUsuario = computed(() => sesion.value?.nombre ?? '')
+  const permissions = computed(() => sesion.value?.permissions ?? [])
 
   const isGlobal = computed(() =>
-    sesion.value ? ROLES_GLOBALES.includes(sesion.value.rol as Rol) : false,
+    sesion.value ? (sesion.value.isGlobal === true || ROLES_GLOBALES.includes(sesion.value.rol as Rol)) : false,
   )
 
   // ── Actions ──────────────────────────────────────────────
@@ -55,17 +61,54 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function hasRole(roles: Rol[]): boolean {
-    return sesion.value ? roles.includes(sesion.value.rol) : false
+    const currentSession = sesion.value
+    if (!currentSession) return false
+    const currentRoles = currentSession.roles && currentSession.roles.length
+      ? currentSession.roles
+      : [currentSession.rol]
+    return roles.some(role => currentRoles.includes(role))
+  }
+
+  function can(permission: string, sucursalScopeId?: string): boolean {
+    if (!sesion.value) return false
+    if (permissions.value.includes('*') || permissions.value.includes(permission)) {
+      if (!sucursalScopeId) return true
+      if (isGlobal.value) return true
+
+      const scopes = sesion.value.permissionScopes?.[permission] || sesion.value.permissionScopes?.['*'] || []
+      if (!scopes.length) return canAccessSucursal(sucursalScopeId)
+      return scopes.some(scope => scopeAllowsSucursal(scope, sucursalScopeId))
+    }
+    return false
+  }
+
+  function canAny(perms: string[], sucursalScopeId?: string): boolean {
+    return perms.some(permission => can(permission, sucursalScopeId))
   }
 
   function canAccessSucursal(id: string): boolean {
     if (!sesion.value) return false
     if (isGlobal.value) return true
+    const accesibles = sesion.value.accessibleSucursales || []
+    if (accesibles.length) return accesibles.includes(id)
     return sesion.value.sucursalId === id
+  }
+
+  function scopeAllowsSucursal(scope: PermissionScope, sucursalScopeId: string): boolean {
+    const scopeType = String(scope.scopeType || '').toUpperCase()
+    const scopeValue = String(scope.scopeValue || '').toUpperCase()
+    if (scopeType === 'GLOBAL' || scopeValue === 'ALL' || scopeValue === '*') return true
+    if (scopeType === 'SUCURSAL_PROPIA') return sesion.value?.sucursalId === sucursalScopeId
+    return String(scope.scopeValue || '')
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+      .includes(sucursalScopeId)
   }
 
   return {
     sesion, loading, error, isAuthenticated, token, rol,
-    sucursalId, nombreUsuario, isGlobal, login, logout, hasRole, canAccessSucursal,
+    roles, sucursalId, nombreUsuario, permissions, isGlobal,
+    login, logout, hasRole, can, canAny, canAccessSucursal,
   }
 })

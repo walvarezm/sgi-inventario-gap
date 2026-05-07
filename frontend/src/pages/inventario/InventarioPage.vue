@@ -93,7 +93,11 @@
     </q-card>
 
     <!-- Alertas de stock bajo -->
-    <q-banner v-if="alertas.length > 0" class="bg-orange-1 rounded-borders q-mb-md" dense>
+    <q-banner
+      v-if="alertas.length > 0"
+      class="bg-orange-1 rounded-borders q-mb-md text-warning-c"
+      dense
+    >
       <template #avatar><q-icon name="warning" color="warning" /></template>
       <strong>{{ alertas.length }} producto(s) con stock bajo.</strong>
       {{ alertas.map((a) => a.sku).join(', ') }}
@@ -250,7 +254,7 @@ const stockFiltrado = computed(() => {
         .toLowerCase()
         .includes(q),
   )
-/*  products = products.map((p) => ({
+  /*  products = products.map((p) => ({
     ...p,
     imagenLocation: p.imagenUrl ? 'drive' : 'local',
     imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,

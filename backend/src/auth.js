@@ -21,12 +21,20 @@ const Auth = {
     }
 
     const ahora = Date.now()
+    const sessionUser = AccessService.buildSessionUser(usuario)
     const payload = {
-      userId: usuario.id,
-      nombre: usuario.nombre,
-      email: usuario.email,
-      rol: usuario.rol,
-      sucursalId: usuario.sucursal_id,
+      userId: sessionUser.userId,
+      nombre: sessionUser.nombre,
+      email: sessionUser.email,
+      rol: sessionUser.rol,
+      roles: sessionUser.roles,
+      permissions: sessionUser.permissions,
+      permissionScopes: sessionUser.permissionScopes,
+      sucursalId: sessionUser.sucursalId,
+      accessibleSucursales: sessionUser.accessibleSucursales,
+      isGlobal: sessionUser.isGlobal,
+      scopeType: sessionUser.scopeType,
+      scopeValues: sessionUser.scopeValues,
       iat: ahora,
       exp: ahora + this.TOKEN_TTL_MS,
     }
@@ -38,11 +46,18 @@ const Auth = {
 
     return {
       sesion: {
-        userId: usuario.id,
-        nombre: usuario.nombre,
-        email: usuario.email,
-        rol: usuario.rol,
-        sucursalId: usuario.sucursal_id,
+        userId: sessionUser.userId,
+        nombre: sessionUser.nombre,
+        email: sessionUser.email,
+        rol: sessionUser.rol,
+        roles: sessionUser.roles,
+        permissions: sessionUser.permissions,
+        permissionScopes: sessionUser.permissionScopes,
+        sucursalId: sessionUser.sucursalId,
+        accessibleSucursales: sessionUser.accessibleSucursales,
+        isGlobal: sessionUser.isGlobal,
+        scopeType: sessionUser.scopeType,
+        scopeValues: sessionUser.scopeValues,
         token: token,
         expiresAt: payload.exp,
       },
@@ -66,7 +81,14 @@ const Auth = {
         nombre: payload.nombre,
         email: payload.email,
         rol: payload.rol,
+        roles: payload.roles || [payload.rol],
+        permissions: payload.permissions || [],
+        permissionScopes: payload.permissionScopes || {},
         sucursalId: payload.sucursalId,
+        accessibleSucursales: payload.accessibleSucursales || [],
+        isGlobal: payload.isGlobal === true,
+        scopeType: payload.scopeType || '',
+        scopeValues: payload.scopeValues || [],
       }
     } catch (e) {
       throw new Error('Token inválido: ' + e.message)

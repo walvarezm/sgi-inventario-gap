@@ -19,7 +19,22 @@ function doPost(e) {
     const session = Auth.verifyToken(token)
 
     const routes = {
-      'verificarToken':          () => true,
+      'verificarToken':          () => Auth.verifyToken(token),
+      'getMiSesion':             () => Auth.verifyToken(token),
+      // Seguridad
+      'getUsuarios':             () => UsuarioService.getAll(payload, session),
+      'getUsuarioById':          () => UsuarioService.getById(payload, session),
+      'createUsuario':           () => UsuarioService.create(payload, session),
+      'updateUsuario':           () => UsuarioService.update(payload, session),
+      'deleteUsuario':           () => UsuarioService.remove(payload, session),
+      'getRoles':                () => RolService.getAll(payload, session),
+      'getRoleById':             () => RolService.getById(payload, session),
+      'createRole':              () => RolService.create(payload, session),
+      'updateRole':              () => RolService.update(payload, session),
+      'deleteRole':              () => RolService.remove(payload, session),
+      'getRolePermisos':         () => RolService.getPermisos(payload, session),
+      'setRolePermisos':         () => RolService.setPermisos(payload, session),
+      'getPermisos':             () => PermisoService.getAll(payload, session),
       // Sucursales
       'getSucursales':           () => SucursalService.getAll(),
       'getSucursalById':         () => SucursalService.getById(payload),

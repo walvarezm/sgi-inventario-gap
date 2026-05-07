@@ -22,13 +22,14 @@
       <!-- ── Columna izquierda: búsqueda + catálogo ──────── -->
       <div class="col-12 col-md-7">
         <!-- Buscador -->
+
         <div class="q-mb-md" style="position: relative">
           <ProductoBuscador
             v-model="pos.busqueda.value"
-            :data-value="pos.busqueda.value"
             :resultados="pos.resultadosBusqueda.value as ProductoCatalogo[]"
             @seleccionar="agregarDesdeResultado"
             @escanear="activarEscaner"
+            @update:modelValue="pos.busqueda.value = $event"
           />
         </div>
 
@@ -283,7 +284,7 @@ async function cargarCatalogo(): Promise<void> {
   if (!sucursalActiva.value) return
   cargandoCatalogo.value = true
   try {
-    productosCatalogo.value = await cataloStore.getCatalogo(sucursalActiva.value)
+    productosCatalogo.value = await cataloStore.getCatalogo(sucursalActiva.value, true)
 
     productosCatalogo.value = productosCatalogo.value.map((p) => ({
       ...p,

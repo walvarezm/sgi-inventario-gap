@@ -104,20 +104,22 @@ const sucursalActiva = computed(() => {
 })
 
 const navItems = [
-  { name: 'dashboard',   label: 'Dashboard',     icon: 'dashboard',      roles: null },
-  { name: 'sucursales',  label: 'Sucursales',     icon: 'store',          roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
-  { name: 'productos',   label: 'Productos',      icon: 'inventory_2',    roles: null },
-  { name: 'inventario',  label: 'Inventario',     icon: 'warehouse',      roles: null },
-  { name: 'catalogo',    label: 'Catálogo',       icon: 'menu_book',      roles: null },
-  { name: 'proveedores', label: 'Proveedores',    icon: 'local_shipping', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'BODEGUERO', 'CONTADOR'] },
-  { name: 'pos',         label: 'Punto de Venta', icon: 'point_of_sale',  roles: ['ADMINISTRADOR', 'SUPERVISOR', 'VENDEDOR'] },
-  { name: 'facturacion', label: 'Facturación',    icon: 'receipt_long',   roles: ['ADMINISTRADOR', 'SUPERVISOR', 'VENDEDOR', 'CONTADOR'] },
-  { name: 'reportes',    label: 'Reportes',       icon: 'bar_chart',      roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTADOR'] },
+  { name: 'dashboard',   label: 'Dashboard',     icon: 'dashboard',      permission: 'dashboard.ver' },
+  { name: 'seguridad',   label: 'Seguridad',     icon: 'admin_panel_settings', anyPermissions: ['usuarios.ver', 'roles.ver'] },
+  { name: 'sucursales',  label: 'Sucursales',    icon: 'store',          permission: 'sucursales.ver' },
+  { name: 'productos',   label: 'Productos',     icon: 'inventory_2',    permission: 'productos.ver' },
+  { name: 'inventario',  label: 'Inventario',    icon: 'warehouse',      permission: 'inventario.ver' },
+  { name: 'catalogo',    label: 'Catálogo',      icon: 'menu_book',      permission: 'catalogo.ver' },
+  { name: 'proveedores', label: 'Proveedores',   icon: 'local_shipping', permission: 'proveedores.ver' },
+  { name: 'pos',         label: 'Punto de Venta', icon: 'point_of_sale', permission: 'pos.ver' },
+  { name: 'facturacion', label: 'Facturación',   icon: 'receipt_long',   permission: 'facturas.ver' },
+  { name: 'reportes',    label: 'Reportes',      icon: 'bar_chart',      permission: 'reportes.ver' },
 ]
 
-function canSeeItem(item: { roles: string[] | null }): boolean {
-  if (!item.roles) return true
-  return authStore.hasRole(item.roles as Rol[])
+function canSeeItem(item: { permission?: string; anyPermissions?: string[] }): boolean {
+  if (item.permission) return authStore.can(item.permission)
+  if (item.anyPermissions) return authStore.canAny(item.anyPermissions)
+  return true
 }
 
 function toggleDrawer(): void { drawerOpen.value = !drawerOpen.value }

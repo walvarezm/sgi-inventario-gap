@@ -18,6 +18,10 @@ function seedDatosIniciales() {
     seedCategoriasInicial()
     seedMarcasInicial()
     Logger.log('✅ Categorias y Marcas creados')
+    seedSeguridadBase()
+    Logger.log('✅ Seguridad base verificada')
+    seedRelacionesSeguridad()
+    Logger.log('✅ Relaciones de seguridad verificadas')
     Logger.log('=== SGI: Seed completado ===')
     //ui.alert('✅ Datos iniciales cargados correctamente.\n\nRevisa el log de Apps Script para detalles.')
   } catch (e) {
@@ -88,6 +92,17 @@ function verificarEstructura() {
   }
 }
 
+function verificarEstructuraSeguridad() {
+  const hojasSeguridad = ['Roles', 'Permisos', 'RolPermisos', 'UsuarioRoles', 'UsuarioPermisos']
+  const ss = Sheets.getSpreadsheet()
+  const faltantes = hojasSeguridad.filter(n => !ss.getSheetByName(n))
+  if (faltantes.length > 0) {
+    Logger.log('⚠️ Faltan hojas de seguridad:\n\n' + faltantes.join('\n'))
+  } else {
+    Logger.log('✅ Todas las hojas de seguridad existen correctamente.')
+  }
+}
+
 function _sha256(str) {
   const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, str)
   return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('')
@@ -123,4 +138,195 @@ function seedMarcasInicial() {
     [id3, 'UYUSTOOLS',    'Marca UYUSTOOLS', true, new Date().toISOString()]
   ]
   data.forEach(row => sheet.appendRow(row))
+}
+
+function seedSeguridadBase() {
+  const ss = Sheets.getSpreadsheet()
+  if (!ss.getSheetByName('Roles') || !ss.getSheetByName('Permisos')) {
+    Logger.log('⚠️ Hojas de seguridad no encontradas. Se omite seed de seguridad.')
+    return
+  }
+
+  const now = new Date().toISOString()
+  const rolesSheet = ss.getSheetByName('Roles')
+  if (rolesSheet.getLastRow() <= 1) {
+    const roles = [
+      ['ADMINISTRADOR', 'Administrador', 'Acceso total al sistema'],
+      ['SUPERVISOR', 'Supervisor', 'Gestión operativa multi-sucursal'],
+      ['VENDEDOR', 'Vendedor', 'POS y facturación de su sucursal'],
+      ['CONSULTA_CATALOGO', 'Consulta catálogo', 'Consulta del catálogo por sucursal'],
+      ['BODEGUERO', 'Bodeguero', 'Gestión operativa de inventario'],
+      ['CONTADOR', 'Contador', 'Consulta de facturas y reportes'],
+      ['COMPRAS', 'Compras', 'Proveedores y órdenes de compra'],
+      ['AUDITOR', 'Auditor', 'Consulta y auditoría sin edición'],
+    ]
+    roles.forEach(role => rolesSheet.appendRow([Utilities.getUuid(), role[0], role[1], role[2], true, true, now]))
+  }
+
+  const permisosSheet = ss.getSheetByName('Permisos')
+  if (permisosSheet.getLastRow() <= 1) {
+    AccessService.getAllPermissions().forEach(permiso => {
+      permisosSheet.appendRow([
+        Utilities.getUuid(),
+        permiso.codigo,
+        permiso.modulo,
+        permiso.accion,
+        permiso.descripcion,
+        true,
+        now,
+      ])
+    })
+  }
+}
+
+function seedRelacionesSeguridad() {
+  const ss = Sheets.getSpreadsheet()
+  const required = ['Roles', 'Permisos', 'RolPermisos', 'UsuarioRoles', 'UsuarioPermisos', 'Usuarios']
+  const missing = required.filter(name => !ss.getSheetByName(name))
+  if (missing.length > 0) {
+    Logger.log('⚠️ Faltan hojas para seedRelacionesSeguridad: ' + missing.join(', '))
+    return
+  }
+
+  seedRolPermisos()
+  seedUsuarioRoles()
+  seedUsuarioPermisos()
+}
+
+function seedRolPermisos() {
+  const roles = Sheets.getAll('Roles')
+  const permisos = Sheets.getAll('Permisos')
+  const existentes = Sheets.getAll('RolPermisos')
+
+  if (!roles.length || !permisos.length) {
+    Logger.log('⚠️ No hay roles o permisos para seedRolPermisos')
+    return
+  }
+
+  const rolesByCodigo = {}
+  roles.forEach(role => {
+    rolesByCodigo[String(role.codigo || '').trim().toUpperCase()] = role
+  })
+
+  const permisosByCodigo = {}
+  permisos.forEach(permiso => {
+    permisosByCodigo[String(permiso.codigo || '').trim()] = permiso
+  })
+
+  let created = 0
+  Object.keys(AccessService.LEGACY_ROLE_PERMISSIONS).forEach(roleCode => {
+    const role = rolesByCodigo[String(roleCode || '').trim().toUpperCase()]
+    if (!role) {
+      Logger.log('⚠️ Rol no encontrado para seedRolPermisos: ' + roleCode)
+      return
+    }
+
+    let codigosPermiso = AccessService.LEGACY_ROLE_PERMISSIONS[roleCode] || []
+    if (codigosPermiso.indexOf('*') !== -1) {
+      codigosPermiso = permisos.map(permiso => String(permiso.codigo || '').trim()).filter(Boolean)
+    }
+
+    codigosPermiso.forEach(codigo => {
+      const permiso = permisosByCodigo[codigo]
+      if (!permiso) {
+        Logger.log('⚠️ Permiso no encontrado para rol ' + roleCode + ': ' + codigo)
+        return
+      }
+
+      const exists = existentes.some(item =>
+        String(item.rol_id) === String(role.id) &&
+        String(item.permiso_id) === String(permiso.id)
+      )
+      if (exists) return
+
+      Sheets.insert('RolPermisos', {
+        id: Sheets.generateId(),
+        rol_id: role.id,
+        permiso_id: permiso.id,
+        allow: true,
+        fecha_creacion: new Date().toISOString(),
+      })
+      existentes.push({ rol_id: role.id, permiso_id: permiso.id })
+      created++
+    })
+  })
+
+  Logger.log('✅ seedRolPermisos completado. Nuevas relaciones: ' + created)
+}
+
+function seedUsuarioRoles() {
+  const roles = Sheets.getAll('Roles')
+  const usuarios = Sheets.getAll('Usuarios')
+  const existentes = Sheets.getAll('UsuarioRoles')
+
+  if (!roles.length || !usuarios.length) {
+    Logger.log('⚠️ No hay roles o usuarios para seedUsuarioRoles')
+    return
+  }
+
+  const rolesByCodigo = {}
+  roles.forEach(role => {
+    rolesByCodigo[String(role.codigo || '').trim().toUpperCase()] = role
+  })
+
+  let created = 0
+  usuarios.forEach(usuario => {
+    const roleCode = String(usuario.rol || '').trim().toUpperCase()
+    if (!roleCode) return
+
+    const role = rolesByCodigo[roleCode]
+    if (!role) {
+      Logger.log('⚠️ Rol no encontrado para usuario ' + usuario.email + ': ' + roleCode)
+      return
+    }
+
+    const scopeType = _resolveUserScopeType(usuario, roleCode)
+    const scopeValue = _resolveUserScopeValue(usuario, scopeType)
+
+    const exists = existentes.some(item =>
+      String(item.usuario_id) === String(usuario.id) &&
+      String(item.rol_id) === String(role.id) &&
+      (item.activo === true || item.activo === 'TRUE' || item.activo === 1 || item.activo === '')
+    )
+    if (exists) return
+
+    Sheets.insert('UsuarioRoles', {
+      id: Sheets.generateId(),
+      usuario_id: usuario.id,
+      rol_id: role.id,
+      scope_type: scopeType,
+      scope_value: scopeValue,
+      activo: true,
+      fecha_creacion: new Date().toISOString(),
+    })
+    existentes.push({
+      usuario_id: usuario.id,
+      rol_id: role.id,
+      activo: true,
+    })
+    created++
+  })
+
+  Logger.log('✅ seedUsuarioRoles completado. Nuevas relaciones: ' + created)
+}
+
+function seedUsuarioPermisos() {
+  const overrides = Sheets.getAll('UsuarioPermisos')
+  if (overrides.length > 0) {
+    Logger.log('ℹ️ UsuarioPermisos ya tiene overrides configurados, no se modifican.')
+    return
+  }
+  Logger.log('✅ UsuarioPermisos verificado. Sin overrides iniciales por crear.')
+}
+
+function _resolveUserScopeType(usuario, roleCode) {
+  const current = String(usuario.scope_type || '').trim().toUpperCase()
+  if (current) return current
+  return AccessService._defaultScopeForLegacyRole(roleCode, usuario)
+}
+
+function _resolveUserScopeValue(usuario, scopeType) {
+  const defaultSucursal = String(usuario.sucursal_default || usuario.sucursal_id || '').trim()
+  if (String(scopeType || '').trim().toUpperCase() === 'GLOBAL') return 'ALL'
+  return defaultSucursal || 'ALL'
 }

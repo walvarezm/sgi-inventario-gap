@@ -43,6 +43,8 @@ coverage/
 backend/.clasprc.json
 backend/src/.clasp.json
 
+frontend/public/images/products/*
+
 # Misc
 *.zip
 *.tar.gz

@@ -3,7 +3,7 @@
 // IMPORTANTE: Content-Type text/plain para evitar preflight CORS
 // =============================================================
 import axios from 'axios'
-import type { ApiResponse, LoginCredentials, LoginResponse } from 'src/types'
+import type { ApiResponse, LoginCredentials, LoginResponse, SesionUsuario } from 'src/types'
 
 // Instancia específica para login (sin interceptor de token)
 const gasAxios = axios.create({
@@ -27,14 +27,14 @@ export const authService = {
     return data.result
   },
 
-  async verificarToken(token: string): Promise<boolean> {
-    const { data } = await gasAxios.post<ApiResponse<boolean>>(
+  async verificarToken(token: string): Promise<SesionUsuario | null> {
+    const { data } = await gasAxios.post<ApiResponse<SesionUsuario>>(
       import.meta.env.VITE_GAS_API_URL,
       JSON.stringify({
         action: 'verificarToken',
         token,
       }),
     )
-    return data.success && data.result === true
+    return data.success ? data.result : null
   },
 }

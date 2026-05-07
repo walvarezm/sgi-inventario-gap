@@ -54,6 +54,32 @@ export function roleGuard(roles: Rol[]) {
   }
 }
 
+export function permissionGuard(permission: string) {
+  return (
+    _to: RouteLocationNormalized,
+    _from: RouteLocationNormalized,
+    next: NavigationGuardNext,
+  ): void => {
+    const auth = useAuthStore()
+    if (!auth.isAuthenticated) { next({ name: 'login' }); return }
+    if (!auth.can(permission)) { next({ name: 'sin-permiso' }); return }
+    next()
+  }
+}
+
+export function anyPermissionGuard(permissions: string[]) {
+  return (
+    _to: RouteLocationNormalized,
+    _from: RouteLocationNormalized,
+    next: NavigationGuardNext,
+  ): void => {
+    const auth = useAuthStore()
+    if (!auth.isAuthenticated) { next({ name: 'login' }); return }
+    if (!auth.canAny(permissions)) { next({ name: 'sin-permiso' }); return }
+    next()
+  }
+}
+
 export function sucursalGuard(
   to: RouteLocationNormalized,
   _from: RouteLocationNormalized,

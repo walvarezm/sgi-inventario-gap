@@ -2,13 +2,13 @@
   <div class="buscador-producto">
     <!-- Input de búsqueda -->
     <q-input
-      v-model="dataValue2"
+      v-model="dataValueInput"
       :label="label"
       outlined
       dense
       clearable
       autofocus
-      @update:model-value="emit('update:modelValue', dataValue2 ?? '')"
+      @update:model-value="dataValueInput = $event as string"
       @keydown.enter="seleccionarPrimero"
     >
       <template #prepend>
@@ -82,21 +82,17 @@
 import type { ProductoCatalogo } from 'src/types'
 import { formatCurrency } from 'src/utils/formatters'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
-import { computed, ref, toRef } from 'vue'
+import { ref, watch } from 'vue'
 
 interface Props {
   modelValue: string
-  dataValue: string
   resultados: ProductoCatalogo[]
   label?: string
 }
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   //modelValue: '',
   label: 'Buscar producto por SKU, nombre o marca…',
 })
-
-const dataValue2 = ref<string>(props.dataValue as string)
-//const dataValue2 = computed(() => props.modelValue)
 
 const emit = defineEmits<{
   'update:modelValue': [val: string]
@@ -104,9 +100,18 @@ const emit = defineEmits<{
   escanear: []
 }>()
 
+const dataValueInput = ref<string>('')
+
 function seleccionarPrimero(): void {
   // handled via enter key — the parent decides which product to add
 }
+watch(
+  () => dataValueInput.value,
+  () => {
+    console.log('dataValue2.value', dataValueInput.value)
+    emit('update:modelValue', (dataValueInput.value as string) || '')
+  },
+)
 </script>
 
 <style scoped lang="scss">
