@@ -2,29 +2,33 @@
   <q-page class="sgi-page">
     <!-- ── Header ──────────────────────────────────────────── -->
     <div class="row items-center q-mb-lg">
-      <div>
+      <div class="col-lg-4 col-md-4 col-sm-5">
         <div class="sgi-page-title">Catálogo de Productos</div>
-        <div class="text-muted text-body2 q-mt-xs">Precios y disponibilidad en tiempo real</div>
+        <div class="text-muted text-body2 q-mt-none q-mb-sm sgi-page-subtitle">
+          Precios y disponibilidad en tiempo real
+        </div>
       </div>
       <q-space />
-      <div class="row q-gutter-sm">
-        <q-btn
-          outline
-          color="primary"
-          icon="picture_as_pdf"
-          label="Exportar PDF"
-          size="sm"
-          :loading="exportandoPDF"
-          @click="exportarPDF"
-        />
-        <q-btn
-          outline
-          color="positive"
-          icon="table_chart"
-          label="Exportar Excel"
-          size="sm"
-          @click="exportarExcel"
-        />
+      <div class="col-lg-4 col-md-4 col-sm-6">
+        <div class="row q-gutter-sm sgi-page-button justify-end">
+          <q-btn
+            outline
+            color="primary"
+            icon="picture_as_pdf"
+            label="Exportar PDF"
+            size="sm"
+            :loading="exportandoPDF"
+            @click="exportarPDF"
+          />
+          <q-btn
+            outline
+            color="positive"
+            icon="table_chart"
+            label="Exportar Excel"
+            size="sm"
+            @click="exportarExcel"
+          />
+        </div>
       </div>
     </div>
 
@@ -32,7 +36,7 @@
     <q-card class="sgi-card q-mb-md" flat>
       <q-card-section class="row items-center q-col-gutter-sm">
         <!-- Selector de sucursal (solo Admin/Supervisor) -->
-        <div class="col-12 col-sm-4">
+        <div class="col-12 col-sm-6 col-md-4">
           <q-select
             v-model="sucursalSeleccionada"
             :options="opcionesSucursal"
@@ -62,20 +66,21 @@
         </div>
 
         <!-- Búsqueda -->
-        <div class="col-12 col-sm-3">
+        <div class="col-12 col-sm-6 col-md-3">
           <q-input
             v-model="catalogo.busqueda.value"
             placeholder="Buscar código, marca, descripción…"
             outlined
             dense
             clearable
+            autofocus
           >
             <template #prepend><q-icon name="search" /></template>
           </q-input>
         </div>
 
         <!-- Filtro categoría -->
-        <div class="col-12 col-sm-2">
+        <div class="col-12 col-sm-6 col-md-2">
           <q-select
             v-model="catalogo.categoriaFiltro.value"
             :options="[{ label: 'Todas las categorías', value: null }, ...categoriaStore.options]"
@@ -86,7 +91,7 @@
             map-options
           />
         </div>
-        <div class="col-12 col-sm-2">
+        <div class="col-12 col-sm-6 col-md-2">
           <q-select
             v-model="catalogo.marcaFiltro.value"
             :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
@@ -413,10 +418,13 @@ function exportarExcel(): void {
 
 // ── Lifecycle ──────────────────────────────────────────────────
 onMounted(async () => {
+  cataloStore.loading = true
   await Promise.all([
     sucursalStore.items.length === 0 ? sucursalStore.fetchAll() : Promise.resolve(),
     categoriaStore.fetchAll(),
+    marcaStore.fetchAll(),
   ])
+  cataloStore.loading = false
 
   // Si no es global, fijar sucursal y cargar
   if (!authStore.isGlobal && authStore.sucursalId) {

@@ -5,6 +5,7 @@
     :loading="loading"
     row-key="id"
     flat
+    dense
     class="sgi-table catalogo-tabla"
     :pagination="{ rowsPerPage: 10 }"
     no-data-label="No hay productos en el catálogo"
@@ -12,13 +13,13 @@
     <!-- Imagen thumbnail -->
     <template #body-cell-imagenUrl="{ row }">
       <q-td>
-        <q-avatar size="44px" square rounded>
+        <q-avatar size="40px" square rounded>
           <!--          <img v-if="value" :src="value" loading="lazy" />-->
           <ProductoImagenIFrame
             v-if="row.imagenUrl"
             :imagen-url="row.imagenUrl"
-            :width="44"
-            :height="44"
+            :width="40"
+            :height="40"
             :imagen-location="row.imagenLocation"
           />
           <q-icon v-else name="image" color="grey-4" size="32px" />

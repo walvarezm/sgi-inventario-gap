@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "sgi-maxel-1",
+    "maxel-1": "sgi-maxel-1"
+  },
+  "targets": {},
+  "etags": {}
+}

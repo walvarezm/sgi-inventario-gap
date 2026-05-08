@@ -270,7 +270,7 @@ const productosFiltrados = computed(() => {
   if (filtroCategoria.value) lista = lista.filter((p) => p.categoriaId === filtroCategoria.value)
   if (filtroMarca.value) lista = lista.filter((p) => p.marca === filtroMarca.value)
   //if (filtroMarca.value) lista = lista.filter((p) => p.marcaId === filtroMarca.value)
-  if (busqueda.value.trim()) {
+  if (busqueda.value) {
     const q = busqueda.value.toLowerCase()
     lista = lista.filter(
       (p) =>

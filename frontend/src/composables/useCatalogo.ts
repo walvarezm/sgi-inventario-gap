@@ -16,7 +16,7 @@ export function useCatalogo() {
 
   const productosFiltrados = computed(() => {
     let lista = productos.value
-    if (busqueda.value.trim()) {
+    if (busqueda.value) {
       const q = busqueda.value.toLowerCase()
       lista = lista.filter(
         (p) =>

@@ -94,7 +94,7 @@ const soloStockBajo = ref(false)
 const stockFiltrado = computed(() => {
   let lista = props.stock
   if (soloStockBajo.value) lista = lista.filter((s) => s.stockBajo)
-  if (busqueda.value.trim()) {
+  if (busqueda.value) {
     const q = busqueda.value.toLowerCase()
     lista = lista.filter(
       (s) =>

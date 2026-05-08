@@ -95,12 +95,13 @@
     <!-- Alertas de stock bajo -->
     <q-banner
       v-if="alertas.length > 0"
-      class="bg-orange-1 rounded-borders q-mb-md text-warning-c"
+      class="bg-orange-1 rounded-borders q-mb-md"
       dense
     >
       <template #avatar><q-icon name="warning" color="warning" /></template>
-      <strong>{{ alertas.length }} producto(s) con stock bajo.</strong>
-      {{ alertas.map((a) => a.sku).join(', ') }}
+      <span class="text-warning-c">
+      <strong >{{ alertas.length }} producto(s) con stock bajo.</strong>
+        {{ alertas.map((a) => a.sku).join(', ') }} </span>
     </q-banner>
 
     <!-- Tabs: Stock | Movimientos -->

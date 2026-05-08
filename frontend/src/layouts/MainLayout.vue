@@ -7,7 +7,7 @@
 
         <q-toolbar-title class="sgi-logo">
           <q-icon name="inventory_2" size="22px" class="q-mr-xs" />
-          SGI <span class="sgi-logo-sub">Inventarios</span>
+          SGI <span class="sgi-logo-sub">MAXEL Inventarios</span>
         </q-toolbar-title>
 
         <q-chip
@@ -17,7 +17,7 @@
         />
 
         <q-btn flat round dense icon="notifications">
-          <q-badge color="negative" floating>3</q-badge>
+          <q-badge color="negative" floating>0</q-badge>
           <q-tooltip>Alertas de stock</q-tooltip>
         </q-btn>
 
@@ -33,7 +33,7 @@
               <q-item-label caption class="q-px-md q-pb-xs text-muted">{{ rolLabel }}</q-item-label>
               <q-separator />
               <q-item v-close-popup clickable @click="logout">
-                <q-item-section avatar><q-icon name="logout" color="negative" /></q-item-section>
+                <q-item-section avatar><q-icon name="logout" color="" /></q-item-section>
                 <q-item-section>Cerrar sesión</q-item-section>
               </q-item>
             </q-list>
@@ -137,7 +137,7 @@ onMounted(async () => {
 <style scoped lang="scss">
 .sgi-header { background: var(--sgi-dark); height: var(--sgi-header-height); }
 .sgi-logo { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; }
-.sgi-logo-sub { font-weight: 300; font-size: 0.85rem; margin-left: 4px; opacity: 0.7; }
+.sgi-logo-sub { font-weight: 600; font-size: 0.95rem; margin-left: 4px; opacity: 0.7; }
 .sgi-drawer {
   background: var(--sgi-surface);
   border-right: 1px solid var(--sgi-border);

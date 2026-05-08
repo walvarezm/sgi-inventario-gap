@@ -18,6 +18,7 @@
   --sgi-border: #e0e7ef;
   --sgi-text: #1a1a2e;
   --sgi-text-muted: #6b7a99;
+  --sgi-header-table: #f6f6f6;
 
   --sgi-sidebar-width: 260px;
   --sgi-header-height: 60px;
@@ -35,6 +36,7 @@
   --sgi-text: #e8eaf6;
   --sgi-text-muted: #8892b0;
   --sgi-dark: #1d1d1d;
+  --sgi-header-table: rgba(37, 42, 61, 0.5);
 }
 
 // ── Utilidades globales ───────────────────────────────────────
@@ -43,6 +45,9 @@
   box-shadow: var(--sgi-shadow);
   background: var(--sgi-surface);
   border: 1px solid var(--sgi-border);
+  .text-caption-error{
+    display: block;
+  }
 }
 
 .sgi-page {
@@ -72,8 +77,19 @@
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--sgi-text-muted);
-    background: var(--sgi-surface-alt);
+    color: var(--sgi-text);
+    background: var(--sgi-header-table);
+    border: 0px solid var(--sgi-border);
+  }
+  thead tr th {
+    border-top: 1px solid var(--sgi-border) !important;
+    border-bottom: 1px solid var(--sgi-border) !important;
+  }
+  tbody tr {
+    border: 1px solid var(--sgi-border);
+  }
+  .text-caption-error{
+    display: none;
   }
 }
 
@@ -82,3 +98,64 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--sgi-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--sgi-text-muted); }
+
+
+.container {
+  height: 80vh
+}
+
+@media (max-width: 400px) {
+  .container {
+    height: 60vh
+  }
+
+}
+@media (max-width: 600px) {
+
+  .sgi-page-title {
+    font-size: 1.3rem;
+  }
+  .sgi-page-subtitle {
+    display: none !important;
+  }
+  .sgi-page-button{
+    display: none !important;
+  }
+
+  .container {
+    height: 70vh
+  }
+
+}
+
+@media (max-width: 980px) {
+  .container {
+    height: 70vh
+  }
+  .sgi-page-title {
+    font-size: 1.3rem;
+  }
+}
+@media (min-height: 1200px) {
+  .container {
+    height: 80vh
+  }
+}
+
+@media (min-width: 600px) {
+  .masonry-container {
+    columns: 2 auto
+  }
+}
+
+@media (min-width: 900px) {
+  .masonry-container {
+    columns: 3 auto
+  }
+}
+
+@media (min-width: 1200px) {
+  .masonry-container {
+    columns: 4 auto
+  }
+}

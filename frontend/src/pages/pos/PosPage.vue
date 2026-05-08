@@ -29,7 +29,7 @@
             :resultados="pos.resultadosBusqueda.value as ProductoCatalogo[]"
             @seleccionar="agregarDesdeResultado"
             @escanear="activarEscaner"
-            @update:modelValue="pos.busqueda.value = $event"
+
           />
         </div>
 

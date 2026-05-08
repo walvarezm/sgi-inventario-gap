@@ -33,19 +33,6 @@
         <q-card class="sgi-card catalogo-card" flat>
           <!-- Imagen -->
           <div class="card-image-wrapper">
-<!--            <q-img
-              :src="producto.imagenUrl || ''"
-              style="height: 160px"
-              fit="contain"
-              class="catalogo-img"
-            >
-              <template #error>
-                <div class="absolute-full flex flex-center bg-grey-2">
-                  <q-icon name="image" color="grey-4" size="48px" />
-                </div>
-              </template>
-            </q-img>-->
-
             <ProductoImagenIFrame
               v-if="producto.imagenUrl"
               :imagen-url="producto.imagenUrl"
@@ -86,38 +73,40 @@
           </div>
 
           <q-card-section class="q-pb-xs">
-            <!-- SKU -->
-            <div class="text-caption text-muted text-mono q-mb-xs">{{ producto.sku }}</div>
+            <!-- SKU | Marca-->
+            <div class="text-caption text-weight-bold text-muted text-mono q-mb-xs">
+              {{ producto.sku }} | {{ producto.marca }}
+            </div>
 
             <!-- Nombre -->
             <div class="text-subtitle2 text-weight-bold ellipsis-2-lines" style="min-height: 2.8em">
               {{ producto.nombre }}
             </div>
-
-            <!-- Marca -->
-            <div class="text-caption text-muted">{{ producto.marca }}</div>
           </q-card-section>
 
           <q-card-section class="q-pt-xs">
             <!-- Precios -->
-            <div class="row items-baseline q-gutter-xs">
+            <div class="row items-baseline q-gutter-md">
               <span
-                v-if="producto.precioOfrecido > producto.precioFinal"
+                v-if="producto.precioOfrecido >= producto.precioFinal"
                 class="text-caption text-muted"
                 style="text-decoration: line-through"
               >
                 {{ formatCurrency(producto.precioOfrecido) }}
+                <q-tooltip>Precio Lista</q-tooltip>
               </span>
+              <span>|</span>
               <span class="text-h6 text-weight-bold text-positive">
                 {{ formatCurrency(producto.precioFinal) }}
+                <q-tooltip>Precio Venta</q-tooltip>
               </span>
             </div>
 
             <!-- Stock chip -->
-            <div class="q-mt-xs">
+            <div class="q-mt-xs text-right">
               <q-chip
                 dense
-                size="sm"
+                size="md"
                 :color="
                   producto.stock === 0 ? 'grey-3' : producto.stockBajo ? 'orange-2' : 'green-2'
                 "
@@ -165,7 +154,7 @@ const emit = defineEmits<{
   cursor: default;
   &:hover {
     box-shadow: var(--sgi-shadow-lg);
-    transform: translateY(-2px);
+    transform: translateY(-10px);
   }
   .card-image-wrapper {
     position: relative;

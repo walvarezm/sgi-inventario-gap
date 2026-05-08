@@ -191,7 +191,7 @@ const proveedorEditar = ref<Proveedor | null>(null)
 const ordenRecepcion = ref<OrdenCompra | null>(null)
 
 const proveedoresFiltrados = computed(() => {
-  if (!busqueda.value.trim()) return store.items
+  if (!busqueda.value) return store.items
   const q = busqueda.value.toLowerCase()
   return store.items.filter((p) =>
     p.nombre.toLowerCase().includes(q) ||

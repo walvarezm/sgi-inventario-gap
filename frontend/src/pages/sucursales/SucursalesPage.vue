@@ -96,7 +96,7 @@ const sucursalEditar = ref<Sucursal | null>(null)
 
 const sucursalesFiltradas = computed(() => {
   let lista = store.items
-  if (busqueda.value.trim()) {
+  if (busqueda.value) {
     const q = busqueda.value.toLowerCase()
     lista = lista.filter((s) =>
       s.nombre.toLowerCase().includes(q) ||
