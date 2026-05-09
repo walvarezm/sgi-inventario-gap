@@ -58,18 +58,33 @@
             />
 
             <!-- QR button -->
-            <q-btn
-              round
-              unelevated
-              size="sm"
-              color="white"
-              text-color="primary"
-              icon="qr_code"
-              class="qr-fab"
-              @click="emit('ver-qr', producto)"
-            >
-              <q-tooltip>Ver QR</q-tooltip>
-            </q-btn>
+            <div class="card-actions">
+              <q-btn
+                round
+                unelevated
+                size="sm"
+                color="white"
+                text-color="primary"
+                icon="qr_code"
+                class="qr-fab"
+                @click="emit('ver-qr', producto)"
+              >
+                <q-tooltip>Ver QR</q-tooltip>
+              </q-btn>
+              <q-btn
+                v-if="canEdit"
+                round
+                unelevated
+                size="sm"
+                color="white"
+                text-color="secondary"
+                icon="edit"
+                class="edit-fab"
+                @click="emit('editar', producto)"
+              >
+                <q-tooltip>Editar producto</q-tooltip>
+              </q-btn>
+            </div>
           </div>
 
           <q-card-section class="q-pb-xs">
@@ -88,15 +103,22 @@
             <!-- Precios -->
             <div class="row items-baseline q-gutter-md">
               <span
+                v-if="canViewPurchasePrice"
+                class="text-subtitle1 text-captio text-primary q-mb-xs q-gutter-md"
+              >
+                <strong>{{ formatCurrency(Number(producto.precioCompra) || 0) }}</strong>
+                <q-tooltip>Precio Compra</q-tooltip>
+                <span>|</span>
+              </span>
+              <span
                 v-if="producto.precioOfrecido >= producto.precioFinal"
-                class="text-caption text-muted"
-                style="text-decoration: line-through"
+                class="text-captio text-subtitle1 text-muted text-strike"
               >
                 {{ formatCurrency(producto.precioOfrecido) }}
                 <q-tooltip>Precio Lista</q-tooltip>
               </span>
               <span>|</span>
-              <span class="text-h6 text-weight-bold text-positive">
+              <span class="text-body1 text-weight-bold text-positive">
                 {{ formatCurrency(producto.precioFinal) }}
                 <q-tooltip>Precio Venta</q-tooltip>
               </span>
@@ -132,6 +154,8 @@
 
 <script setup lang="ts">
 import type { ProductoCatalogo } from 'src/types'
+import { computed } from 'vue'
+import { useAuthStore } from 'src/stores/authStore'
 import { formatCurrency } from 'src/utils/formatters'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
 
@@ -143,7 +167,12 @@ withDefaults(defineProps<Props>(), { loading: false })
 
 const emit = defineEmits<{
   'ver-qr': [producto: ProductoCatalogo]
+  editar: [producto: ProductoCatalogo]
 }>()
+
+const authStore = useAuthStore()
+const canEdit = computed(() => authStore.can('productos.editar'))
+const canViewPurchasePrice = computed(() => authStore.can('productos.editar'))
 </script>
 
 <style scoped lang="scss">
@@ -168,6 +197,12 @@ const emit = defineEmits<{
     position: absolute;
     bottom: 8px;
     right: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  .edit-fab {
+    position: absolute;
+    bottom: 8px;
+    right: 48px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 }

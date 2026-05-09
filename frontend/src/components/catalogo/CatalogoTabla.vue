@@ -1,3 +1,68 @@
+<script setup lang="ts">
+import type { QTableColumn } from 'quasar'
+import type { ProductoCatalogo } from 'src/types'
+import { computed } from 'vue'
+import { useAuthStore } from 'src/stores/authStore'
+import { formatCurrency } from 'src/utils/formatters'
+import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
+
+interface Props {
+  productos: ProductoCatalogo[]
+  loading?: boolean
+}
+withDefaults(defineProps<Props>(), { loading: false })
+
+const emit = defineEmits<{
+  'ver-qr': [producto: ProductoCatalogo]
+  editar: [producto: ProductoCatalogo]
+}>()
+
+const authStore = useAuthStore()
+const canEdit = computed(() => authStore.can('productos.editar'))
+const canViewPurchasePrice = computed(() => authStore.can('productos.editar'))
+
+const columnas = computed<QTableColumn[]>(() => {
+  const cols: QTableColumn[] = [
+    { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:60px' },
+    { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
+    { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
+    { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
+  ]
+
+  if (canViewPurchasePrice.value) {
+    cols.push({
+      name: 'precioCompra',
+      label: 'Precio Compra',
+      field: 'precioCompra',
+      align: 'right',
+      sortable: true,
+    })
+  }
+
+  cols.push({
+    name: 'precioOfrecido',
+    label: 'Precio Lista',
+    field: 'precioOfrecido',
+    align: 'right',
+    sortable: true,
+  })
+  cols.push({
+    name: 'precioFinal',
+    label: 'Precio Venta',
+    field: 'precioFinal',
+    align: 'right',
+    sortable: true,
+  })
+  cols.push({ name: 'stock', label: 'Stock', field: 'stock', align: 'center', sortable: true })
+
+  if (canEdit.value) {
+    cols.push({ name: 'acciones', label: 'Acciones', field: 'id', align: 'right' })
+  }
+
+  return cols
+})
+</script>
+
 <template>
   <q-table
     :rows="productos"
@@ -56,8 +121,8 @@
     <template #body-cell-nombre="{ row }">
       <q-td>
         <div class="text-weight-medium">{{ row.nombre }}</div>
-<!--        <div class="text-caption text-muted">{{ row.marca }}</div>-->
-<!--        <div
+        <!--        <div class="text-caption text-muted">{{ row.marca }}</div>-->
+        <!--        <div
           v-if="row.descripcion"
           class="text-caption text-muted ellipsis"
           style="max-width: 240px"
@@ -67,10 +132,19 @@
       </q-td>
     </template>
 
+    <!-- Precio Compra -->
+    <template #body-cell-precioCompra="{ value }">
+      <q-td class="text-right">
+        <span class="text-body2 text-weight-medium">
+          {{ formatCurrency(Number(value) || 0) }}
+        </span>
+      </q-td>
+    </template>
+
     <!-- Precio ofrecido (tachado) -->
     <template #body-cell-precioOfrecido="{ value }">
       <q-td class="text-right">
-        <span class="text-muted" style="text-decoration: line-through; font-size: 1.0em">
+        <span class="text-muted" style="text-decoration: line-through; font-size: 1em">
           {{ formatCurrency(value) }}
         </span>
       </q-td>
@@ -99,6 +173,14 @@
       </q-td>
     </template>
 
+    <template v-if="canEdit" #body-cell-acciones="{ row }">
+      <q-td class="text-center">
+        <q-btn flat round dense size="sm" icon="edit" color="primary" @click="emit('editar', row)">
+          <q-tooltip>Editar producto</q-tooltip>
+        </q-btn>
+      </q-td>
+    </template>
+
     <!-- Sin datos -->
     <template #no-data="{ message }">
       <div class="full-width column flex-center q-pa-xl text-muted">
@@ -108,45 +190,6 @@
     </template>
   </q-table>
 </template>
-
-<script setup lang="ts">
-import type { QTableColumn } from 'quasar'
-import type { ProductoCatalogo } from 'src/types'
-import { formatCurrency } from 'src/utils/formatters'
-import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
-
-interface Props {
-  productos: ProductoCatalogo[]
-  loading?: boolean
-}
-withDefaults(defineProps<Props>(), { loading: false })
-
-const emit = defineEmits<{
-  'ver-qr': [producto: ProductoCatalogo]
-}>()
-
-const columnas: QTableColumn[] = [
-  { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:60px' },
-  { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
-  { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
-  { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
-  {
-    name: 'precioOfrecido',
-    label: 'Precio Lista',
-    field: 'precioOfrecido',
-    align: 'right',
-    sortable: true,
-  },
-  {
-    name: 'precioFinal',
-    label: 'Precio Venta',
-    field: 'precioFinal',
-    align: 'right',
-    sortable: true,
-  },
-  { name: 'stock', label: 'Stock', field: 'stock', align: 'center', sortable: true },
-]
-</script>
 
 <style scoped lang="scss">
 .text-mono {

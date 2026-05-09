@@ -88,7 +88,7 @@ const emit = defineEmits<{
   border: 1px solid var(--sgi-border);
   transition: background 0.15s;
   &:hover {
-    background: rgba(21, 101, 192, 0.04);
+    background: rgba(21, 101, 192, 0.1);
   }
 }
 </style>

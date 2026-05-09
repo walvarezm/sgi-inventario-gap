@@ -1,0 +1,1 @@
+import{P as e}from"./event-DfJPWGIS.js";function t(){return e(`_q_`)}export{t};

@@ -7,13 +7,18 @@
 
         <q-toolbar-title class="sgi-logo">
           <q-icon name="inventory_2" size="22px" class="q-mr-xs" />
-          SGI <span class="sgi-logo-sub">MAXEL Inventarios</span>
+          SGI - MAXEL
+          <span class="sgi-logo-sub">Inventarios</span>
         </q-toolbar-title>
 
         <q-chip
           v-if="sucursalActiva"
-          icon="store" :label="sucursalActiva.nombre"
-          color="blue-2" text-color="blue-10" dense class="q-mr-sm"
+          icon="store"
+          :label="sucursalActiva.nombre"
+          color="blue-2"
+          text-color="blue-10"
+          dense
+          class="q-mr-sm"
         />
 
         <q-btn flat round dense icon="notifications">
@@ -47,7 +52,8 @@
       <q-scroll-area class="fit">
         <div class="sgi-drawer-brand q-pa-md">
           <div class="text-h6 text-weight-bold text-primary">
-            <q-icon name="inventory_2" class="q-mr-sm" />SGI
+            <q-icon name="inventory_2" class="q-mr-sm" />
+            SGI - MAXEL
           </div>
           <div class="text-caption text-muted">Sistema de Gestión de Inventarios</div>
         </div>
@@ -58,7 +64,9 @@
               v-if="canSeeItem(item)"
               :to="{ name: item.name }"
               active-class="sgi-nav-active"
-              clickable v-ripple class="sgi-nav-item"
+              clickable
+              v-ripple
+              class="sgi-nav-item"
             >
               <q-item-section avatar><q-icon :name="item.icon" /></q-item-section>
               <q-item-section>{{ item.label }}</q-item-section>
@@ -96,7 +104,7 @@ const drawerOpen = ref(true)
 const avatarLetra = computed(() =>
   authStore.nombreUsuario ? authStore.nombreUsuario[0].toUpperCase() : 'U',
 )
-const rolLabel = computed(() => authStore.rol ? ROL_LABELS[authStore.rol as Rol] : '')
+const rolLabel = computed(() => (authStore.rol ? ROL_LABELS[authStore.rol as Rol] : ''))
 const appVersion = computed(() => import.meta.env.VITE_APP_VERSION)
 const sucursalActiva = computed(() => {
   if (!authStore.sucursalId || authStore.sucursalId === 'ALL') return null
@@ -104,16 +112,26 @@ const sucursalActiva = computed(() => {
 })
 
 const navItems = [
-  { name: 'dashboard',   label: 'Dashboard',     icon: 'dashboard',      permission: 'dashboard.ver' },
-  { name: 'seguridad',   label: 'Seguridad',     icon: 'admin_panel_settings', anyPermissions: ['usuarios.ver', 'roles.ver'] },
-  { name: 'sucursales',  label: 'Sucursales',    icon: 'store',          permission: 'sucursales.ver' },
-  { name: 'productos',   label: 'Productos',     icon: 'inventory_2',    permission: 'productos.ver' },
-  { name: 'inventario',  label: 'Inventario',    icon: 'warehouse',      permission: 'inventario.ver' },
-  { name: 'catalogo',    label: 'Catálogo',      icon: 'menu_book',      permission: 'catalogo.ver' },
-  { name: 'proveedores', label: 'Proveedores',   icon: 'local_shipping', permission: 'proveedores.ver' },
-  { name: 'pos',         label: 'Punto de Venta', icon: 'point_of_sale', permission: 'pos.ver' },
-  { name: 'facturacion', label: 'Facturación',   icon: 'receipt_long',   permission: 'facturas.ver' },
-  { name: 'reportes',    label: 'Reportes',      icon: 'bar_chart',      permission: 'reportes.ver' },
+  { name: 'dashboard', label: 'Dashboard', icon: 'dashboard', permission: 'dashboard.ver' },
+  {
+    name: 'seguridad',
+    label: 'Seguridad',
+    icon: 'admin_panel_settings',
+    anyPermissions: ['usuarios.ver', 'roles.ver'],
+  },
+  { name: 'sucursales', label: 'Sucursales', icon: 'store', permission: 'sucursales.ver' },
+  { name: 'productos', label: 'Productos', icon: 'inventory_2', permission: 'productos.ver' },
+  { name: 'inventario', label: 'Inventario', icon: 'warehouse', permission: 'inventario.ver' },
+  { name: 'catalogo', label: 'Catálogo', icon: 'menu_book', permission: 'catalogo.ver' },
+  {
+    name: 'proveedores',
+    label: 'Proveedores',
+    icon: 'local_shipping',
+    permission: 'proveedores.ver',
+  },
+  { name: 'pos', label: 'Punto de Venta', icon: 'point_of_sale', permission: 'pos.ver' },
+  { name: 'facturacion', label: 'Facturación', icon: 'receipt_long', permission: 'facturas.ver' },
+  { name: 'reportes', label: 'Reportes', icon: 'bar_chart', permission: 'reportes.ver' },
 ]
 
 function canSeeItem(item: { permission?: string; anyPermissions?: string[] }): boolean {
@@ -122,8 +140,12 @@ function canSeeItem(item: { permission?: string; anyPermissions?: string[] }): b
   return true
 }
 
-function toggleDrawer(): void { drawerOpen.value = !drawerOpen.value }
-function toggleDark(): void { $q.dark.toggle() }
+function toggleDrawer(): void {
+  drawerOpen.value = !drawerOpen.value
+}
+function toggleDark(): void {
+  $q.dark.toggle()
+}
 async function logout(): Promise<void> {
   authStore.logout()
   await router.push({ name: 'login' })
@@ -131,24 +153,53 @@ async function logout(): Promise<void> {
 
 onMounted(async () => {
   if (sucursalStore.items.length === 0) await sucursalStore.fetchAll()
+
+  if (authStore.rol === 'CONSULTA_CATALOGO') {
+    await router.push({ name: 'catalogo' })
+  }
 })
 </script>
 
 <style scoped lang="scss">
-.sgi-header { background: var(--sgi-dark); height: var(--sgi-header-height); }
-.sgi-logo { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; }
-.sgi-logo-sub { font-weight: 600; font-size: 0.95rem; margin-left: 4px; opacity: 0.7; }
+.sgi-header {
+  background: var(--sgi-dark);
+  height: var(--sgi-header-height);
+}
+.sgi-logo {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.sgi-logo-sub {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-left: 4px;
+  opacity: 0.7;
+}
 .sgi-drawer {
   background: var(--sgi-surface);
   border-right: 1px solid var(--sgi-border);
-  .sgi-drawer-brand { background: var(--sgi-surface-alt); }
-  .sgi-drawer-footer { position: absolute; bottom: 0; width: 100%; border-top: 1px solid var(--sgi-border); }
+  .sgi-drawer-brand {
+    background: var(--sgi-surface-alt);
+  }
+  .sgi-drawer-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    border-top: 1px solid var(--sgi-border);
+  }
 }
-.sgi-nav-item { border-radius: var(--sgi-radius); margin: 2px 8px; transition: background 0.15s; }
+.sgi-nav-item {
+  border-radius: var(--sgi-radius);
+  margin: 2px 8px;
+  transition: background 0.15s;
+}
 :deep(.sgi-nav-active) {
   background: rgba(21, 101, 192, 0.1) !important;
   color: var(--sgi-primary) !important;
   font-weight: 600;
-  .q-icon { color: var(--sgi-primary) !important; }
+  .q-icon {
+    color: var(--sgi-primary) !important;
+  }
 }
 </style>

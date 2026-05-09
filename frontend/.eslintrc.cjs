@@ -23,7 +23,7 @@ module.exports = {
     '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
     'vue/multi-word-component-names': 'off',
     'vue/component-api-style': ['error', ['script-setup']],
-    'vue/block-order': ['error', { order: ['template', 'script', 'style'] }],
+    //'vue/block-order': ['error', { order: ['template', 'script', 'style'] }],
     'vue/component-name-in-template-casing': ['error', 'PascalCase'],
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',

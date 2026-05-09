@@ -39,11 +39,3 @@ $warning: #f2c037;
 $notifyWarning: #f7ec24;
 $notifyDanger: #f59127;
 
-/* En tu archivo de estilos (ej: App.vue o quasar.variables.sass) */
-.my-custom-modal {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 1200px;
-  max-height: 900px;
-  border-radius: 12px; /* Bordes redondeados */
-}

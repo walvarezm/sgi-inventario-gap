@@ -3,27 +3,28 @@
 // =============================================================
 import { ref, computed } from 'vue'
 import { useFacturaStore } from 'src/stores/facturaStore'
-import { useProductoStore } from 'src/stores/productoStore'
 import type { ItemCarrito, ProductoCatalogo } from 'src/types'
+import { useCataloStore } from 'src/stores/cataloStore.ts'
 
 export function usePOS() {
   const facturaStore = useFacturaStore()
-  const productoStore = useProductoStore()
-  //const cataloStore = useCataloStore()
+  const cataloStore = useCataloStore()
 
   const busqueda = ref('')
   const cliente = ref('Sin nombre')
   const procesando = ref(false)
+  const sucursalActiva = computed(() => (cataloStore.sucursalIdCurrent as string) ?? '')
 
   const resultadosBusqueda = computed(() => {
     if (!busqueda.value.trim()) return []
     const q = busqueda.value.toLowerCase()
-    return productoStore.activos
+
+    return cataloStore.cache[sucursalActiva.value].data
       .filter(
         (p) =>
           p.sku.toLowerCase().includes(q) ||
           p.nombre.toLowerCase().includes(q) ||
-          p.marca.toLowerCase().includes(q)
+          p.marca.toLowerCase().includes(q),
       )
       .slice(0, 8)
   })

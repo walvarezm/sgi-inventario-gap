@@ -1,1 +1,0 @@
-import{N as e}from"./event-D376fR4B.js";function t(){return e(`_q_`)}export{t};

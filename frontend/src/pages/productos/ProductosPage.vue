@@ -287,7 +287,7 @@ const productosFiltrados = computed(() => {
     imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
   }))
 
-  console.log('lista', lista)
+
   return lista
 })
 

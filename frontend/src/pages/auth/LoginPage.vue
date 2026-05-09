@@ -3,7 +3,7 @@
     <div class="login-card">
       <div class="login-brand q-mb-lg text-center">
         <q-icon name="inventory_2" size="56px" color="white" />
-        <div class="text-h4 text-white text-weight-bold q-mt-sm">SGI</div>
+        <div class="text-h4 text-white text-weight-bold q-mt-sm">SGI - MAXEL</div>
         <div class="text-subtitle2 text-blue-2">Sistema de Gestión de Inventarios</div>
       </div>
 

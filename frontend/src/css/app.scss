@@ -37,6 +37,8 @@
   --sgi-text-muted: #8892b0;
   --sgi-dark: #1d1d1d;
   --sgi-header-table: rgba(37, 42, 61, 0.5);
+  --sgi-negative: var(--sgi-warning);
+  --q-negative: var(--sgi-warning);
 }
 
 // ── Utilidades globales ───────────────────────────────────────
@@ -93,8 +95,17 @@
   }
 }
 
+input[type=number],
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button
+{
+  -webkit-appearance: none;
+  margin-left: 10px;
+  -moz-appearance: textfield;
+}
+
 // ── Scrollbar ─────────────────────────────────────────────────
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 10px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--sgi-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--sgi-text-muted); }

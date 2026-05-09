@@ -35,7 +35,7 @@ export interface Producto {
   descripcion: string
   categoriaId: string
   unidad: string
-  precioCompra: number
+  precioCompra?: number | null
   /** Precio de lista / referencia antes de descuento */
   precioOfrecido: number
   /** Precio de venta efectivo al cliente */
@@ -61,6 +61,7 @@ export interface ProductoCatalogo extends Producto{
   nombre: string
   descripcion: string
   categoriaId: string
+  precioCompra?: number | null
   precioOfrecido: number
   precioFinal: number
   /** Stock disponible en la sucursal consultada */

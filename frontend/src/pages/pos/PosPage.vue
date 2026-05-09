@@ -13,6 +13,7 @@
         map-options
         style="min-width: 220px"
         :disable="!authStore.isGlobal"
+        @update:model-value="cargarCatalogo"
       >
         <template #prepend><q-icon name="store" /></template>
       </q-select>
@@ -29,7 +30,6 @@
             :resultados="pos.resultadosBusqueda.value as ProductoCatalogo[]"
             @seleccionar="agregarDesdeResultado"
             @escanear="activarEscaner"
-
           />
         </div>
 
@@ -55,21 +55,8 @@
                   :class="{ agotado: p.stock <= 0 }"
                   @click="pos.agregarDesdeCatalogo(p)"
                 >
-                  <!--                  <q-img
-                    :src="p.imagenUrl || ''"
-                    style="height: 70px"
-                    fit="contain"
-                    class="bg-grey-2"
-                  >
-                    <template #error>
-                      <div class="absolute-full flex flex-center bg-grey-2">
-                        <q-icon name="image" color="grey-4" size="28px" />
-                      </div>
-                    </template>
-                  </q-img>-->
-
                   <ProductoImagenIFrame
-                    v-if="p.imagenUrl && false"
+                    v-if="p.imagenUrl"
                     :imagen-url="p.imagenUrl"
                     :width="70"
                     :height="70"
@@ -77,20 +64,26 @@
                   />
 
                   <div class="q-pa-xs">
-                    <div class="text-caption ellipsis text-weight-medium">{{ p.sku }}</div>
-                    <div class="text-caption ellipsis text-weight-medium">{{ p.marca }}</div>
-                    <div class="text-caption ellipsis text-weight-medium">{{ p.nombre }}</div>
-                    <div class="text-caption text-positive text-weight-bold">
+                    <div class="text-caption ellipsis text-weight-medium">
+                      {{ p.sku }} | {{ p.marca }}
+                    </div>
+                    <div class="text-caption ellipsis text-weight-medium">
+                      {{ p.nombre }}
+                      <q-tooltip>{{ p.nombre }}</q-tooltip>
+                    </div>
+                    <div class="text-caption- text-subtitle2 text-positive text-weight-bold">
                       {{ formatCurrency(p.precioFinal) }}
                     </div>
-                    <q-chip
-                      dense
-                      size="md"
-                      :color="p.stock <= 0 ? 'grey' : p.stockBajo ? 'orange' : 'positive'"
-                      text-color="white"
-                    >
-                      {{ p.stock }}
-                    </q-chip>
+                    <div class="text-right">
+                      <q-chip
+                        dense
+                        size="sm"
+                        :color="p.stock <= 0 ? 'grey' : p.stockBajo ? 'orange' : 'positive'"
+                        text-color="white"
+                      >
+                        Stock: {{ p.stock }}
+                      </q-chip>
+                    </div>
                   </div>
                   <q-badge v-if="p.stock <= 0" floating color="grey" label="Agotado" />
                 </q-card>
@@ -214,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
@@ -264,8 +257,7 @@ function confirmarVaciar(): void {
 async function cobrar(): Promise<void> {
   if (!sucursalActiva.value) return
   try {
-    const facturaId = await pos.procesarVenta(sucursalActiva.value)
-    ultimaFacturaId.value = facturaId
+    ultimaFacturaId.value = await pos.procesarVenta(sucursalActiva.value)
     dialogFacturaEmitida.value = true
     // Recargar catálogo para reflejar nuevo stock
     cataloStore.invalidateCache(sucursalActiva.value)
@@ -280,7 +272,6 @@ async function imprimirUltimaFactura(): Promise<void> {
 }
 
 async function cargarCatalogo(): Promise<void> {
-  console.log('sucursalActiva.value', sucursalActiva.value)
   if (!sucursalActiva.value) return
   cargandoCatalogo.value = true
   try {
@@ -291,8 +282,6 @@ async function cargarCatalogo(): Promise<void> {
       imagenLocation: p.imagenUrl ? 'drive' : 'local',
       imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
     }))
-
-    console.log('productosCatalogo.value', productosCatalogo.value)
   } finally {
     cargandoCatalogo.value = false
   }
@@ -314,6 +303,7 @@ onMounted(async () => {
 }
 .producto-rapido-card {
   border-radius: var(--sgi-radius);
+  background: var(--sgi-surface-alt);
   transition:
     box-shadow 0.15s,
     transform 0.1s;
@@ -324,6 +314,9 @@ onMounted(async () => {
   &.agotado {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+  &:hover {
+    background: rgba(21, 101, 192, 0.09);
   }
 }
 </style>

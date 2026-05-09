@@ -260,7 +260,7 @@ const stockFiltrado = computed(() => {
     imagenLocation: p.imagenUrl ? 'drive' : 'local',
     imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
   }))*/
-  console.log('products', products)
+
   return products
 })
 

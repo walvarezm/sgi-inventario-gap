@@ -65,7 +65,7 @@
             </div>
             <q-chip
               dense
-              size="xs"
+              size="sm"
               :color="producto.stock <= 0 ? 'grey' : producto.stockBajo ? 'orange' : 'positive'"
               text-color="white"
             >
@@ -108,7 +108,6 @@ function seleccionarPrimero(): void {
 watch(
   () => dataValueInput.value,
   () => {
-    console.log('dataValue2.value', dataValueInput.value)
     emit('update:modelValue', (dataValueInput.value as string) || '')
   },
 )

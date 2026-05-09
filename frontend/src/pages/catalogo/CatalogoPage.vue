@@ -1,3 +1,223 @@
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from 'src/stores/authStore'
+import { useSucursalStore } from 'src/stores/sucursalStore'
+import { useCategoriaStore } from 'src/stores/categoriaStore'
+import { useCataloStore } from 'src/stores/cataloStore'
+import { useCatalogo } from 'src/composables/useCatalogo'
+import type { ProductoCatalogo } from 'src/types'
+import { formatCurrency } from 'src/utils/formatters'
+import CatalogoEditDialog from 'src/components/catalogo/CatalogoEditDialog.vue'
+import CatalogoTabla from 'src/components/catalogo/CatalogoTabla.vue'
+import CatalogoTarjeta from 'src/components/catalogo/CatalogoTarjeta.vue'
+import ProductoQR from 'src/components/productos/ProductoQR.vue'
+import { useMarcaStore } from 'src/stores/marcaStore.ts'
+
+// ── Stores ─────────────────────────────────────────────────────
+const authStore = useAuthStore()
+const sucursalStore = useSucursalStore()
+const categoriaStore = useCategoriaStore()
+const marcaStore = useMarcaStore()
+const cataloStore = useCataloStore()
+const catalogo = useCatalogo()
+
+// ── State ──────────────────────────────────────────────────────
+const sucursalSeleccionada = ref(authStore.isGlobal ? '' : (authStore.sucursalId ?? ''))
+const dialogQR = ref(false)
+const dialogEditarProducto = ref(false)
+const productoQR = ref<ProductoCatalogo | null>(null)
+const productoEditar = ref<ProductoCatalogo | null>(null)
+const mostrarSoloStockBajo = ref(false)
+const mostrarSoloAgotados = ref(false)
+const exportandoPDF = ref(false)
+
+// ── Computed ───────────────────────────────────────────────────
+const opcionesSucursal = computed(() =>
+  sucursalStore.activas.map((s) => ({ label: `${s.nombre} — ${s.ciudad}`, value: s.id })),
+)
+
+const productosAgotados = computed(
+  () => catalogo.productosFiltrados.value.filter((p) => p.stock === 0).length,
+)
+
+const productosMostrados = computed(() => {
+  let lista = catalogo.productosFiltrados.value
+  if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
+  if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
+
+  lista = lista.map((p) => ({
+    ...p,
+    imagenLocation: p.imagenUrl ? 'drive' : 'local',
+    imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
+  }))
+
+  return lista
+})
+
+// ── Actions ────────────────────────────────────────────────────
+async function cargarCatalogo(): Promise<void> {
+  if (!sucursalSeleccionada.value) return
+  await catalogo.cargarCatalogo(sucursalSeleccionada.value)
+}
+
+async function cargarCatalogoForzado(): Promise<void> {
+  if (!sucursalSeleccionada.value) return
+  await catalogo.cargarCatalogo(sucursalSeleccionada.value, true)
+}
+
+async function onCambioSucursal(): Promise<void> {
+  catalogo.limpiarFiltros()
+  mostrarSoloStockBajo.value = false
+  mostrarSoloAgotados.value = false
+  await cargarCatalogo()
+}
+
+async function recargar(): Promise<void> {
+  if (sucursalSeleccionada.value) {
+    cataloStore.invalidateCache(sucursalSeleccionada.value)
+    await cargarCatalogoForzado()
+  }
+}
+
+function verQR(producto: ProductoCatalogo): void {
+  productoQR.value = producto
+  dialogQR.value = true
+}
+
+function abrirEdicion(producto: ProductoCatalogo): void {
+  productoEditar.value = producto
+  dialogEditarProducto.value = true
+}
+
+async function onProductoEditado(): Promise<void> {
+  dialogEditarProducto.value = false
+  productoEditar.value = null
+  await recargar()
+}
+
+// ── Exportación PDF ────────────────────────────────────────────
+async function exportarPDF(): Promise<void> {
+  exportandoPDF.value = true
+  try {
+    const sucursal = sucursalStore.getById(sucursalSeleccionada.value)
+    const nombreSucursal = sucursal?.nombre ?? 'Sucursal'
+    const fecha = new Date().toLocaleDateString('es-BO')
+
+    const filas = productosMostrados.value
+      .map(
+        (p) => `
+        <tr>
+          <td>${p.sku}</td>
+          <td>${p.marca}</td>
+          <td>${p.nombre}</td>
+          ${authStore.can('productos.editar') ? `<td style="text-align:right">${formatCurrency(Number(p.precioCompra) || 0)}</td>` : ''}
+          <td style="text-align:right">${formatCurrency(p.precioOfrecido)}</td>
+          <td style="text-align:right"><strong>${formatCurrency(p.precioFinal)}</strong></td>
+          <td style="text-align:center;color:${p.stock === 0 ? '#c62828' : p.stockBajo ? '#f57f17' : '#2e7d32'}">${p.stock}</td>
+        </tr>`,
+      )
+      .join('')
+
+    const html = `
+      <!DOCTYPE html><html><head><meta charset="UTF-8">
+      <title>Catálogo — ${nombreSucursal}</title>
+      <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #1a1a2e; }
+        h1 { font-size: 18px; margin-bottom: 4px; }
+        .subtitle { color: #6b7a99; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1565c0; color: white; padding: 8px; text-align: left; }
+        td { padding: 6px 8px; border-bottom: 1px solid #e0e7ef; }
+        tr:nth-child(even) { background: #f5f7fa; }
+      </style></head><body>
+      <h1>Catálogo de Productos — ${nombreSucursal}</h1>
+      <div class="subtitle">Generado: ${fecha} · ${productosMostrados.value.length} productos</div>
+      <table>
+        <thead><tr>
+          <th>SKU</th><th>Marca</th><th>Producto</th>
+          ${authStore.can('productos.editar') ? '<th style="text-align:right">P. Compra</th>' : ''}
+          <th style="text-align:right">P. Lista</th>
+          <th style="text-align:right">P. Venta</th>
+          <th style="text-align:center">Stock</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      </body></html>`
+
+    const ventana = window.open('', '_blank')
+    if (ventana) {
+      ventana.document.write(html)
+      ventana.document.close()
+      ventana.print()
+    }
+  } finally {
+    exportandoPDF.value = false
+  }
+}
+
+// ── Exportación Excel (CSV) ────────────────────────────────────
+function exportarExcel(): void {
+  const sucursal = sucursalStore.getById(sucursalSeleccionada.value)
+  const nombreSucursal = (sucursal?.nombre ?? 'catalogo').replace(/\s+/g, '_')
+
+  const encabezados = [
+    'SKU',
+    'Marca',
+    'Nombre',
+    'Descripcion',
+    ...(authStore.can('productos.editar') ? ['Precio_Compra'] : []),
+    'Precio_Lista',
+    'Precio_Venta',
+    'Stock',
+    'Stock_Bajo',
+  ]
+  const filas = productosMostrados.value.map((p) => [
+    p.sku,
+    p.marca,
+    `"${p.nombre}"`,
+    `"${p.descripcion}"`,
+    ...(authStore.can('productos.editar') ? [Number(p.precioCompra) || 0] : []),
+    p.precioOfrecido,
+    p.precioFinal,
+    p.stock,
+    p.stockBajo ? 'SI' : 'NO',
+  ])
+
+  const csv = [encabezados, ...filas].map((r) => r.join(',')).join('\n')
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `catalogo_${nombreSucursal}_${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+// ── Lifecycle ──────────────────────────────────────────────────
+onMounted(async () => {
+  cataloStore.loading = true
+  await Promise.all([
+    sucursalStore.items.length === 0 ? sucursalStore.fetchAll() : Promise.resolve(),
+    categoriaStore.fetchAll(),
+    marcaStore.fetchAll(),
+  ])
+  cataloStore.loading = false
+
+  // Si no es global, fijar sucursal y cargar
+  if (!authStore.isGlobal && authStore.sucursalId) {
+    sucursalSeleccionada.value = authStore.sucursalId
+    await cargarCatalogo()
+  } else if (
+    authStore.isGlobal &&
+    sucursalStore.activas.length > 0 &&
+    !sucursalSeleccionada.value
+  ) {
+    sucursalSeleccionada.value = sucursalStore.activas[0].id
+    await cargarCatalogo()
+  }
+})
+</script>
+
 <template>
   <q-page class="sgi-page">
     <!-- ── Header ──────────────────────────────────────────── -->
@@ -10,7 +230,9 @@
       </div>
       <q-space />
       <div class="col-lg-4 col-md-4 col-sm-6">
-        <div class="row q-gutter-sm sgi-page-button justify-end">
+        <div
+          v-if="authStore.can('productos.editar')"
+          class="row q-gutter-sm sgi-page-button justify-end">
           <q-btn
             outline
             color="primary"
@@ -190,6 +412,7 @@
       :productos="productosMostrados"
       :loading="catalogo.loading.value"
       @ver-qr="verQR"
+      @editar="abrirEdicion"
     />
 
     <!-- Vista tarjetas -->
@@ -198,7 +421,16 @@
       :productos="productosMostrados"
       :loading="catalogo.loading.value"
       @ver-qr="verQR"
+      @editar="abrirEdicion"
     />
+
+    <q-dialog v-model="dialogEditarProducto" persistent>
+      <CatalogoEditDialog
+        :producto="productoEditar"
+        @saved="onProductoEditado"
+        @cancelled="dialogEditarProducto = false"
+      />
+    </q-dialog>
 
     <!-- ── Dialog QR ────────────────────────────────────────── -->
     <q-dialog v-model="dialogQR">
@@ -243,203 +475,6 @@
     </q-dialog>
   </q-page>
 </template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from 'src/stores/authStore'
-import { useSucursalStore } from 'src/stores/sucursalStore'
-import { useCategoriaStore } from 'src/stores/categoriaStore'
-import { useCataloStore } from 'src/stores/cataloStore'
-import { useCatalogo } from 'src/composables/useCatalogo'
-import type { ProductoCatalogo } from 'src/types'
-import { formatCurrency } from 'src/utils/formatters'
-import CatalogoTabla from 'src/components/catalogo/CatalogoTabla.vue'
-import CatalogoTarjeta from 'src/components/catalogo/CatalogoTarjeta.vue'
-import ProductoQR from 'src/components/productos/ProductoQR.vue'
-import { useMarcaStore } from 'src/stores/marcaStore.ts'
-
-// ── Stores ─────────────────────────────────────────────────────
-const authStore = useAuthStore()
-const sucursalStore = useSucursalStore()
-const categoriaStore = useCategoriaStore()
-const marcaStore = useMarcaStore()
-const cataloStore = useCataloStore()
-const catalogo = useCatalogo()
-
-// ── State ──────────────────────────────────────────────────────
-const sucursalSeleccionada = ref(authStore.isGlobal ? '' : (authStore.sucursalId ?? ''))
-const dialogQR = ref(false)
-const productoQR = ref<ProductoCatalogo | null>(null)
-const mostrarSoloStockBajo = ref(false)
-const mostrarSoloAgotados = ref(false)
-const exportandoPDF = ref(false)
-
-// ── Computed ───────────────────────────────────────────────────
-const opcionesSucursal = computed(() =>
-  sucursalStore.activas.map((s) => ({ label: `${s.nombre} — ${s.ciudad}`, value: s.id })),
-)
-
-const productosAgotados = computed(
-  () => catalogo.productosFiltrados.value.filter((p) => p.stock === 0).length,
-)
-
-const productosMostrados = computed(() => {
-  let lista = catalogo.productosFiltrados.value
-  if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
-  if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
-
-  lista = lista.map((p) => ({
-    ...p,
-    imagenLocation: p.imagenUrl ? 'drive' : 'local',
-    imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
-  }))
-
-  return lista
-})
-
-// ── Actions ────────────────────────────────────────────────────
-async function cargarCatalogo(): Promise<void> {
-  if (!sucursalSeleccionada.value) return
-  await catalogo.cargarCatalogo(sucursalSeleccionada.value)
-}
-
-async function onCambioSucursal(): Promise<void> {
-  catalogo.limpiarFiltros()
-  mostrarSoloStockBajo.value = false
-  mostrarSoloAgotados.value = false
-  await cargarCatalogo()
-}
-
-async function recargar(): Promise<void> {
-  if (sucursalSeleccionada.value) {
-    cataloStore.invalidateCache(sucursalSeleccionada.value)
-    await cargarCatalogo()
-  }
-}
-
-function verQR(producto: ProductoCatalogo): void {
-  productoQR.value = producto
-  dialogQR.value = true
-}
-
-// ── Exportación PDF ────────────────────────────────────────────
-async function exportarPDF(): Promise<void> {
-  exportandoPDF.value = true
-  try {
-    const sucursal = sucursalStore.getById(sucursalSeleccionada.value)
-    const nombreSucursal = sucursal?.nombre ?? 'Sucursal'
-    const fecha = new Date().toLocaleDateString('es-BO')
-
-    const filas = productosMostrados.value
-      .map(
-        (p) => `
-        <tr>
-          <td>${p.sku}</td>
-          <td>${p.marca}</td>
-          <td>${p.nombre}</td>
-          <td style="text-align:right">${formatCurrency(p.precioOfrecido)}</td>
-          <td style="text-align:right"><strong>${formatCurrency(p.precioFinal)}</strong></td>
-          <td style="text-align:center;color:${p.stock === 0 ? '#c62828' : p.stockBajo ? '#f57f17' : '#2e7d32'}">${p.stock}</td>
-        </tr>`,
-      )
-      .join('')
-
-    const html = `
-      <!DOCTYPE html><html><head><meta charset="UTF-8">
-      <title>Catálogo — ${nombreSucursal}</title>
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; color: #1a1a2e; }
-        h1 { font-size: 18px; margin-bottom: 4px; }
-        .subtitle { color: #6b7a99; margin-bottom: 16px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #1565c0; color: white; padding: 8px; text-align: left; }
-        td { padding: 6px 8px; border-bottom: 1px solid #e0e7ef; }
-        tr:nth-child(even) { background: #f5f7fa; }
-      </style></head><body>
-      <h1>Catálogo de Productos — ${nombreSucursal}</h1>
-      <div class="subtitle">Generado: ${fecha} · ${productosMostrados.value.length} productos</div>
-      <table>
-        <thead><tr>
-          <th>SKU</th><th>Marca</th><th>Producto</th>
-          <th style="text-align:right">P. Lista</th>
-          <th style="text-align:right">P. Venta</th>
-          <th style="text-align:center">Stock</th>
-        </tr></thead>
-        <tbody>${filas}</tbody>
-      </table>
-      </body></html>`
-
-    const ventana = window.open('', '_blank')
-    if (ventana) {
-      ventana.document.write(html)
-      ventana.document.close()
-      ventana.print()
-    }
-  } finally {
-    exportandoPDF.value = false
-  }
-}
-
-// ── Exportación Excel (CSV) ────────────────────────────────────
-function exportarExcel(): void {
-  const sucursal = sucursalStore.getById(sucursalSeleccionada.value)
-  const nombreSucursal = (sucursal?.nombre ?? 'catalogo').replace(/\s+/g, '_')
-
-  const encabezados = [
-    'SKU',
-    'Marca',
-    'Nombre',
-    'Descripcion',
-    'Precio_Lista',
-    'Precio_Venta',
-    'Stock',
-    'Stock_Bajo',
-  ]
-  const filas = productosMostrados.value.map((p) => [
-    p.sku,
-    p.marca,
-    `"${p.nombre}"`,
-    `"${p.descripcion}"`,
-    p.precioOfrecido,
-    p.precioFinal,
-    p.stock,
-    p.stockBajo ? 'SI' : 'NO',
-  ])
-
-  const csv = [encabezados, ...filas].map((r) => r.join(',')).join('\n')
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `catalogo_${nombreSucursal}_${new Date().toISOString().slice(0, 10)}.csv`
-  link.click()
-  URL.revokeObjectURL(url)
-}
-
-// ── Lifecycle ──────────────────────────────────────────────────
-onMounted(async () => {
-  cataloStore.loading = true
-  await Promise.all([
-    sucursalStore.items.length === 0 ? sucursalStore.fetchAll() : Promise.resolve(),
-    categoriaStore.fetchAll(),
-    marcaStore.fetchAll(),
-  ])
-  cataloStore.loading = false
-
-  // Si no es global, fijar sucursal y cargar
-  if (!authStore.isGlobal && authStore.sucursalId) {
-    sucursalSeleccionada.value = authStore.sucursalId
-    await cargarCatalogo()
-  } else if (
-    authStore.isGlobal &&
-    sucursalStore.activas.length > 0 &&
-    !sucursalSeleccionada.value
-  ) {
-    sucursalSeleccionada.value = sucursalStore.activas[0].id
-    await cargarCatalogo()
-  }
-})
-</script>
 
 <style scoped lang="scss">
 .catalogo-header-chip {

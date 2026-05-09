@@ -26,6 +26,7 @@ const ProductoService = {
   },
 
   create(payload, session) {
+    AccessService.assert(session, 'productos.crear', 'Sin permiso para crear productos')
     this._validar(payload)
     this._validarSkuUnico(payload.sku)
 
@@ -39,6 +40,7 @@ const ProductoService = {
   },
 
   update(payload, session) {
+    AccessService.assert(session, 'productos.editar', 'Sin permiso para editar productos')
     if (!payload.id) throw new Error('ID de producto requerido')
 
     const existente = Sheets.getBy('Productos', 'id', payload.id)
@@ -337,9 +339,7 @@ const ProductoService = {
   },
 
   remove(payload, session) {
-    if (session.rol !== 'ADMINISTRADOR') {
-      throw new Error('Solo el Administrador puede eliminar productos')
-    }
+    AccessService.assert(session, 'productos.desactivar', 'Sin permiso para desactivar productos')
     Sheets.update('Productos', payload.id, { activo: false })
     this._invalidarCachesCatalogo()
     LogService.registrar(session.userId, 'DELETE', 'Productos', null, 'ID: ' + payload.id)
@@ -347,6 +347,7 @@ const ProductoService = {
   },
 
   subirImagen(payload, session) {
+    AccessService.assert(session, 'productos.subir_imagen', 'Sin permiso para subir imágenes de productos')
     if (!payload.base64) throw new Error('base64 es requerido')
     if (!payload.mimeType) throw new Error('mimeType es requerido')
 
@@ -384,7 +385,11 @@ const ProductoService = {
     try {
       const sucursales = Sheets.getAll('Sucursales')
       const cache = CacheService.getScriptCache()
-      sucursales.forEach(s => cache.remove('catalogo_' + s.id))
+      sucursales.forEach(s => {
+        cache.remove('catalogo_' + s.id)
+        cache.remove('catalogo_' + s.id + '_view')
+        cache.remove('catalogo_' + s.id + '_edit')
+      })
     } catch (e) {
       Logger.log('Error invalidando cache catalogo: ' + e.message)
     }

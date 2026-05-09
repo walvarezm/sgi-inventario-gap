@@ -53,7 +53,11 @@
             <q-btn flat round dense icon="edit" color="primary" size="sm" @click="abrirFormulario(row)">
               <q-tooltip>Editar</q-tooltip>
             </q-btn>
-            <q-btn flat round dense :icon="row.activo ? 'toggle_on' : 'toggle_off'" :color="row.activo ? 'positive' : 'grey'" size="sm" @click="confirmarToggle(row)">
+            <q-btn
+              flat round dense :icon="row.activo ? 'toggle_on' : 'toggle_off'"
+              :color="row.activo ? 'positive' : 'grey'"
+              size="sm"
+              @click="confirmarToggle(row)">
               <q-tooltip>{{ row.activo ? 'Desactivar' : 'Activar' }}</q-tooltip>
             </q-btn>
             <q-btn flat round dense icon="delete" color="negative" size="sm" @click="confirmarEliminar(row)">
