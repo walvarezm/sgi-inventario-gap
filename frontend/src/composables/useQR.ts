@@ -26,6 +26,20 @@ export function useQR() {
     return `${baseUrl}/producto/${sku}`
   }
 
+  function addContentBreak(qrContent: string): string {
+    const content = qrContent.replace(/\|/g, '|\n')
+    console.log('addContentBreak-in', qrContent)
+    console.log('addContentBreak-out', content)
+    return content
+  }
+
+  function clearContentBreak(qrContent: string): string {
+    const content = qrContent.replace(/\n/g, '')
+    console.log('clearContentBreak-in', qrContent)
+    console.log('clearContentBreak-out', content)
+    return content
+  }
+
   async function descargarQR(texto: string, nombreArchivo: string): Promise<void> {
     const dataUrl = await generarDataUrl(texto, 400)
     const link = document.createElement('a')
@@ -34,5 +48,12 @@ export function useQR() {
     link.click()
   }
 
-  return { generarDataUrl, generarSvg, buildQrContent, descargarQR }
+  return {
+    generarDataUrl,
+    generarSvg,
+    buildQrContent,
+    descargarQR,
+    addContentBreak,
+    clearContentBreak,
+  }
 }

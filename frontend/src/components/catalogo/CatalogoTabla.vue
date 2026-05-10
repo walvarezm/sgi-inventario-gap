@@ -20,6 +20,7 @@ const emit = defineEmits<{
 const authStore = useAuthStore()
 const canEdit = computed(() => authStore.can('productos.editar'))
 const canViewPurchasePrice = computed(() => authStore.can('productos.editar'))
+const paginacion = { rowsPerPage: 12 }
 
 const columnas = computed<QTableColumn[]>(() => {
   const cols: QTableColumn[] = [
@@ -72,7 +73,8 @@ const columnas = computed<QTableColumn[]>(() => {
     flat
     dense
     class="sgi-table catalogo-tabla"
-    :pagination="{ rowsPerPage: 10 }"
+    :pagination="paginacion"
+    wrap-cells
     no-data-label="No hay productos en el catálogo"
   >
     <!-- Imagen thumbnail -->
@@ -197,6 +199,16 @@ const columnas = computed<QTableColumn[]>(() => {
   letter-spacing: 0.04em;
 }
 .catalogo-tabla :deep(tbody tr:hover) {
-  background: rgba(21, 101, 192, 0.04);
+  background: color-mix(in srgb, var(--sgi-primary) 8%, transparent);
+}
+
+.catalogo-tabla :deep(.q-table__middle) {
+  max-height: calc(100vh - 310px);
+}
+
+.catalogo-tabla :deep(thead tr th) {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 </style>

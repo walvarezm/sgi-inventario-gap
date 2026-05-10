@@ -1,5 +1,5 @@
 <template>
-  <q-card class="sgi-card" style="width: 760px; max-width: 96vw">
+  <q-card class="sgi-card catalogo-edit-card" style="width: 760px; max-width: 96vw">
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6 text-weight-bold">Editar desde catálogo</div>
       <q-space />
@@ -8,41 +8,39 @@
 
     <q-card-section>
       <q-form ref="formRef" @submit.prevent="handleSubmit">
-        <div class="row q-col-gutter-md">
+        <div class="row q-col-gutter-sm">
           <div class="col-12 col-md-6">
             <q-input v-model="form.sku" label="SKU" outlined dense disable />
           </div>
           <div class="col-12 col-md-6">
             <q-input v-model="form.marca" label="Marca" outlined dense disable />
           </div>
-
-          <div class="col-12">
+          <div class="col-12 col-md-6">
             <q-input
               v-model="form.nombre"
               label="Nombre del producto *"
               outlined
               dense
+              type="textarea"
               :rules="[required, minLength(3)]"
+              :autogrow="true"
             />
           </div>
-
-          <div class="col-12">
+          <div class="col-12 col-md-6">
             <q-input
               v-model="form.descripcion"
               label="Descripción"
               outlined
               dense
               type="textarea"
-              rows="3"
-              autogrow
+              :autogrow="true"
             />
           </div>
-
           <div class="col-12 q-mt-xs">
             <div class="text-subtitle2 text-weight-bold q-mb-xs">Precios (Bs.)</div>
           </div>
 
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-4 col-sm-6">
             <q-input
               v-model.number="form.precioCompra"
               label="Precio compra"
@@ -54,10 +52,10 @@
               :rules="[required, nonNegativeNumber]"
             />
           </div>
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-4 col-sm-6">
             <q-input
               v-model.number="form.precioOfrecido"
-              label="Precio ofrecido"
+              label="Precio Venta"
               outlined
               dense
               type="number"
@@ -65,7 +63,7 @@
               :rules="[nonNegativeNumber]"
             />
           </div>
-          <div class="col-12 col-md-4">
+          <div class="col-12 col-md-4 col-sm-6">
             <q-input
               v-model.number="form.precioFinal"
               label="Precio final *"
@@ -80,7 +78,7 @@
       </q-form>
     </q-card-section>
 
-    <q-card-actions align="right" class="q-px-md q-pb-md">
+    <q-card-actions align="right" class="q-px-md q-pb-md catalogo-edit-card__actions">
       <q-btn label="Cancelar" flat color="grey" v-close-popup />
       <q-btn
         label="Guardar cambios"
@@ -94,12 +92,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { QForm } from 'quasar'
+import { computed, ref, watch } from 'vue'
+import { QForm, useQuasar } from 'quasar'
 import type { Producto, ProductoCatalogo } from 'src/types'
 import { useNotify } from 'src/composables/useNotify'
 import { minLength, nonNegativeNumber, positiveNumber, required } from 'src/utils/validators'
 import { useProductoStore } from 'src/stores/productoStore'
+const $q = useQuasar()
+
+const esMovil = computed(() => $q.screen.lt.md)
 
 interface Props {
   producto: ProductoCatalogo | null
@@ -176,3 +177,15 @@ async function handleSubmit(): Promise<void> {
   }
 }
 </script>
+
+<style scoped lang="scss">
+.catalogo-edit-card__actions {
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .catalogo-edit-card__actions :deep(.q-btn) {
+    width: 100%;
+  }
+}
+</style>

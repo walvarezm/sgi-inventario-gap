@@ -18,7 +18,15 @@
 
     <!-- Filtros -->
     <q-card class="sgi-card q-mb-md" flat>
-      <q-card-section class="row items-center q-col-gutter-sm">
+      <q-expansion-item
+        icon="tune"
+        label="Filtros y búsqueda"
+        caption="Sucursal, estado y rango de fechas"
+        expand-separator
+        :default-opened="!esMovil"
+        header-class="sgi-filter-toggle"
+      >
+      <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
         <div class="col-12 col-sm-3">
           <q-select
             v-model="filtroSucursal"
@@ -75,6 +83,7 @@
           </div>
         </div>
       </q-card-section>
+      </q-expansion-item>
     </q-card>
 
     <!-- Tabla de facturas -->
@@ -252,6 +261,7 @@ const sucursalStore = useSucursalStore()
 const store = useFacturaStore()
 const { notifySuccess, notifyError } = useNotify()
 const $q = useQuasar()
+const esMovil = computed(() => $q.screen.lt.md)
 
 const facturas = ref<Factura[]>([])
 const filtroSucursal = ref<string | null>(authStore.isGlobal ? null : authStore.sucursalId)

@@ -38,7 +38,15 @@
       <q-tab-panels v-model="tab" animated>
         <q-tab-panel name="usuarios" class="q-pa-md">
           <q-card class="sgi-card q-mb-md" flat>
-            <q-card-section class="row items-center q-col-gutter-sm">
+            <q-expansion-item
+              icon="tune"
+              label="Filtros de usuarios"
+              caption="Busca y filtra usuarios por estado"
+              expand-separator
+              :default-opened="!esMovil"
+              header-class="sgi-filter-toggle"
+            >
+            <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
               <div class="col-12 col-sm-4">
                 <q-input v-model="busquedaUsuarios" placeholder="Buscar usuario…" outlined dense clearable>
                   <template #prepend><q-icon name="search" /></template>
@@ -62,6 +70,7 @@
                 </q-btn>
               </div>
             </q-card-section>
+            </q-expansion-item>
           </q-card>
 
           <q-table
@@ -138,7 +147,15 @@
 
         <q-tab-panel name="roles" class="q-pa-md">
           <q-card class="sgi-card q-mb-md" flat>
-            <q-card-section class="row items-center q-col-gutter-sm">
+            <q-expansion-item
+              icon="tune"
+              label="Filtros de roles"
+              caption="Busca roles rápidamente"
+              expand-separator
+              :default-opened="!esMovil"
+              header-class="sgi-filter-toggle"
+            >
+            <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
               <div class="col-12 col-sm-4">
                 <q-input v-model="busquedaRoles" placeholder="Buscar rol…" outlined dense clearable>
                   <template #prepend><q-icon name="search" /></template>
@@ -150,6 +167,7 @@
                 </q-btn>
               </div>
             </q-card-section>
+            </q-expansion-item>
           </q-card>
 
           <q-table
@@ -226,6 +244,7 @@ const rolStore = useRolStore()
 const sucursalStore = useSucursalStore()
 const { notifyError, notifySuccess } = useNotify()
 const $q = useQuasar()
+const esMovil = computed(() => $q.screen.lt.md)
 
 const tab = ref(authStore.can('usuarios.ver') ? 'usuarios' : 'roles')
 const busquedaUsuarios = ref('')

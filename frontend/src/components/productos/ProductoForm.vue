@@ -17,20 +17,14 @@
             <ProductoImagen
               v-model="form.imagenUrl"
               :producto-id="editId"
-              :imagen-location="form.imagenLocation" />
+              :imagen-location="form.imagenLocation"
+            />
 
             <q-separator class="q-my-md" />
 
             <div class="text-subtitle2 text-weight-bold q-mb-sm">Código QR</div>
             <ProductoQR :sku="form.sku" :qr-code="form.qrCode" />
-            <q-input
-              v-model="form.qrCode"
-              label="Contenido del QR"
-              outlined
-              dense
-              class="q-mt-sm"
-              hint="Vacío = usa el SKU automáticamente"
-            />
+
           </div>
 
           <!-- Columna derecha: datos -->
@@ -117,6 +111,7 @@
               <div class="col-12 q-mt-xs">
                 <div class="text-subtitle2 text-weight-bold q-mb-xs">Precios (Bs.)</div>
               </div>
+
               <div class="col-4">
                 <q-input
                   v-model.number="form.precioCompra"
@@ -165,6 +160,18 @@
               <div class="col-8 flex items-center">
                 <q-toggle v-model="form.activo" label="Producto activo" color="positive" />
               </div>
+              <div class="col-12 q-mt-xs">
+                <q-input
+                  v-model="form.qrCode"
+                  label="Contenido del QR"
+                  outlined
+                  dense
+                  type="textarea"
+                  rows="6"
+                  class="q-mt-sm"
+                  hint="Vacío = usa el SKU automáticamente"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -185,22 +192,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { QForm } from 'quasar'
 import type { Producto, ProductoForm } from 'src/types'
 import { useProductoStore } from 'src/stores/productoStore'
 import { useCategoriaStore } from 'src/stores/categoriaStore'
 import {
-  required,
   minLength,
-  skuFormat,
-  positiveNumber,
   nonNegativeNumber,
+  positiveNumber,
+  required,
+  skuFormat,
 } from 'src/utils/validators'
 import { useNotify } from 'src/composables/useNotify'
 import ProductoImagen from './ProductoImagen.vue'
 import ProductoQR from './ProductoQR.vue'
 import { useMarcaStore } from 'src/stores/marcaStore.ts'
+import { useQR } from 'src/composables/useQR.ts'
+const { addContentBreak, clearContentBreak } = useQR()
 
 interface Props {
   producto?: Producto | null
@@ -242,7 +251,7 @@ const defaultForm = (): ProductoForm => ({
   imagenUrl: '',
   qrCode: '',
   activo: true,
-  imagenLocation: 'local'
+  imagenLocation: 'local',
 })
 const form = ref<ProductoForm>(defaultForm())
 
@@ -265,7 +274,7 @@ watch(
           precioFinal: p.precioFinal,
           stockMinimo: p.stockMinimo,
           imagenUrl: p.imagenUrl,
-          qrCode: p.qrCode,
+          qrCode: addContentBreak(p.qrCode),
           activo: p.activo,
           imagenLocation: p.imagenLocation,
         }
@@ -278,6 +287,9 @@ async function handleSubmit(): Promise<void> {
   const valid = await formRef.value?.validate()
   if (!valid) return
   if (!form.value.qrCode.trim()) form.value.qrCode = form.value.sku
+
+  form.value.qrCode = clearContentBreak(form.value.qrCode.trim())
+
   try {
     let resultado: Producto
     if (isEdit.value && props.producto) {
@@ -297,4 +309,37 @@ onMounted(() => {
   categoriaStore.fetchAll()
   marcaStore.fetchAll()
 })
+
+const formQrCode = computed(() => {
+  return (
+    'Código: ' +
+    form.value.sku +
+    ' | ' +
+    'Marca: ' +
+    form.value.marca +
+    ' | ' +
+    'Producto: ' +
+    form.value.nombre +
+    ' | ' +
+    'Precio Catalogo: Bs. ' +
+    form.value.precioOfrecido +
+    ' | ' +
+    'Precio Venta: Bs. ' +
+    form.value.precioFinal
+  )
+})
+
+watch(
+  () => [
+    form.value.sku,
+    form.value.marca,
+    form.value.nombre,
+    form.value.descripcion,
+    form.value.precioOfrecido,
+    form.value.precioFinal,
+  ],
+  (p) => {
+    form.value.qrCode = addContentBreak(formQrCode.value)
+  },
+)
 </script>

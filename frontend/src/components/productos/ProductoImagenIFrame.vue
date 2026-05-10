@@ -3,8 +3,10 @@
     <!-- Preview -->
     <div class="imagen-preview">
       <q-img
-        v-if="props.imagenLocation === 'local' && props.imagenUrl"
-        :src="imagenUrl || ''"
+        v-if="
+          props.imagenLocation === 'drive' || (props.imagenLocation === 'local' && props.imagenUrl)
+        "
+        :src="imagenUrl"
         :width="width + 'px'"
         :height="height + 'px'"
         style="border-radius: 10px"
@@ -21,10 +23,7 @@
               class="absolute-center"
               style="opacity: 0.5"
             />
-            <span
-              class="text-caption q-mt-none text-caption-error"
-              style="font-size: 1rem"
-            >
+            <span class="text-caption q-mt-none text-caption-error" style="font-size: 1rem">
               Sin imagen
             </span>
             <q-tooltip>Sin imagen</q-tooltip>
@@ -33,11 +32,11 @@
       </q-img>
 
       <div
-        v-if="props.imagenLocation === 'drive' && props.imagenUrl"
+        v-if="props.imagenLocation === 'driveOld' && props.imagenUrl"
         class="flex flex-inline text-left"
       >
         <iframe
-          :src="imagenUrl + '/preview'"
+          :src="imagenUrl"
           :width="width"
           :height="height"
           class="q-ma-none"
@@ -57,6 +56,8 @@
 </template>
 
 <script setup lang="ts">
+import { drivePreviewUrl } from 'src/utils/qrUtils.ts'
+
 const URL_BASE_DRIVE = 'https://drive.google.com/file/d/'
 const URL_BASE_LOCAL = 'images/products/'
 
@@ -77,7 +78,7 @@ const imagenUrl =
   props.imagenLocation === 'local'
     ? URL_BASE_LOCAL + props.imagenUrl + '.jpg'
     : props.imagenLocation === 'drive'
-      ? URL_BASE_DRIVE + props.imagenUrl
+      ? drivePreviewUrl(props.imagenUrl)
       : null
 </script>
 

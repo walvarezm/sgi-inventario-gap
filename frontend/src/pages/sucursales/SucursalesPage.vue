@@ -10,7 +10,15 @@
     </div>
 
     <q-card class="sgi-card q-mb-md" flat>
-      <q-card-section class="row items-center q-col-gutter-sm">
+      <q-expansion-item
+        icon="tune"
+        label="Filtros y búsqueda"
+        caption="Encuentra sucursales por nombre, ciudad o estado"
+        expand-separator
+        :default-opened="!esMovil"
+        header-class="sgi-filter-toggle"
+      >
+      <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
         <div class="col-12 col-sm-4">
           <q-input v-model="busqueda" placeholder="Buscar por nombre o ciudad…" outlined dense clearable>
             <template #prepend><q-icon name="search" /></template>
@@ -30,6 +38,7 @@
         <q-space />
         <div class="text-caption text-muted">{{ sucursalesFiltradas.length }} resultado(s)</div>
       </q-card-section>
+      </q-expansion-item>
     </q-card>
 
     <q-card class="sgi-card" flat>
@@ -93,6 +102,7 @@ import SucursalForm from 'src/components/sucursales/SucursalForm.vue'
 const store = useSucursalStore()
 const { notifySuccess, notifyError } = useNotify()
 const $q = useQuasar()
+const esMovil = computed(() => $q.screen.lt.md)
 const busqueda = ref('')
 const filtroActivo = ref<boolean | null>(null)
 const dialogForm = ref(false)

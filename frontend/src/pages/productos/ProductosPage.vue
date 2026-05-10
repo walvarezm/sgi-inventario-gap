@@ -27,7 +27,15 @@
 
     <!-- Filtros -->
     <q-card class="sgi-card q-mb-md" flat>
-      <q-card-section class="row items-center q-col-gutter-sm">
+      <q-expansion-item
+        icon="tune"
+        label="Filtros y búsqueda"
+        caption="Busca por SKU, marca, categoría y estado"
+        expand-separator
+        :default-opened="!esMovil"
+        header-class="sgi-filter-toggle"
+      >
+      <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
         <div class="col-12 col-sm-4">
           <q-input
             v-model="busqueda"
@@ -87,6 +95,7 @@
         <q-space />
         <div class="text-caption text-muted">{{ productosFiltrados.length }} resultado(s)</div>
       </q-card-section>
+      </q-expansion-item>
     </q-card>
 
     <!-- Tabla -->
@@ -253,6 +262,7 @@ const categoriaStore = useCategoriaStore()
 const marcaStore = useMarcaStore()
 const { notifySuccess, notifyError } = useNotify()
 const $q = useQuasar()
+const esMovil = computed(() => $q.screen.lt.md)
 
 const busqueda = ref('')
 const filtroCategoria = ref<string | null>(null)
@@ -284,7 +294,7 @@ const productosFiltrados = computed(() => {
   lista = lista.map((p) => ({
     ...p,
     imagenLocation: p.imagenUrl ? 'drive' : 'local',
-    imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
+    imagenUrl: p.imagenUrl ? p.imagenUrl : '' , // p.sku,
   }))
 
 

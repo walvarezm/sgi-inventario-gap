@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
 import { useCategoriaStore } from 'src/stores/categoriaStore'
@@ -20,6 +21,7 @@ const categoriaStore = useCategoriaStore()
 const marcaStore = useMarcaStore()
 const cataloStore = useCataloStore()
 const catalogo = useCatalogo()
+const $q = useQuasar()
 
 // ── State ──────────────────────────────────────────────────────
 const sucursalSeleccionada = ref(authStore.isGlobal ? '' : (authStore.sucursalId ?? ''))
@@ -39,6 +41,29 @@ const opcionesSucursal = computed(() =>
 const productosAgotados = computed(
   () => catalogo.productosFiltrados.value.filter((p) => p.stock === 0).length,
 )
+const esMovil = computed(() => $q.screen.lt.md)
+const vistaActivaEsTabla = computed(() => !esMovil.value && catalogo.vistaTabla.value)
+const puedeCambiarVista = computed(() => !esMovil.value)
+const chipsResumen = computed(() => [
+  {
+    label: 'Mostrados',
+    value: productosMostrados.value.length,
+    tone: 'primary',
+    icon: 'inventory_2',
+  },
+  {
+    label: 'Stock bajo',
+    value: catalogo.conStockBajo.value.length,
+    tone: 'warning',
+    icon: 'warning_amber',
+  },
+  {
+    label: 'Agotados',
+    value: productosAgotados.value,
+    tone: 'grey-7',
+    icon: 'remove_circle_outline',
+  },
+])
 
 const productosMostrados = computed(() => {
   let lista = catalogo.productosFiltrados.value
@@ -216,187 +241,192 @@ onMounted(async () => {
     await cargarCatalogo()
   }
 })
+
+watch(
+  esMovil,
+  (movil) => {
+    if (movil) {
+      catalogo.vistaTabla.value = false
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <q-page class="sgi-page">
     <!-- ── Header ──────────────────────────────────────────── -->
-    <div class="row items-center q-mb-lg">
-      <div class="col-lg-4 col-md-4 col-sm-5">
+    <section class="catalogo-hero q-mb-md">
+      <div class="catalogo-hero__copy">
+        <!--        <q-chip dense outline color="primary" icon="flash_on" class="q-mb-sm">
+          Consulta rápida
+        </q-chip>-->
         <div class="sgi-page-title">Catálogo de Productos</div>
-        <div class="text-muted text-body2 q-mt-none q-mb-sm sgi-page-subtitle">
-          Precios y disponibilidad en tiempo real
-        </div>
+        <!--        <div class="text-body2 sgi-page-subtitle q-mt-xs">
+          Visualiza precios y stock de forma ágil, especialmente desde celular para consulta en piso
+          de venta.
+        </div>-->
       </div>
-      <q-space />
-      <div class="col-lg-4 col-md-4 col-sm-6">
-        <div
-          v-if="authStore.can('productos.editar')"
-          class="row q-gutter-sm sgi-page-button justify-end">
-          <q-btn
-            outline
-            color="primary"
-            icon="picture_as_pdf"
-            label="Exportar PDF"
-            size="sm"
-            :loading="exportandoPDF"
-            @click="exportarPDF"
-          />
-          <q-btn
-            outline
-            color="positive"
-            icon="table_chart"
-            label="Exportar Excel"
-            size="sm"
-            @click="exportarExcel"
-          />
-        </div>
+
+      <div v-if="authStore.can('productos.editar')" class="catalogo-hero__actions">
+        <q-btn
+          outline
+          color="primary"
+          icon="picture_as_pdf"
+          :label="esMovil ? 'PDF' : 'Exportar PDF'"
+          size="sm"
+          :loading="exportandoPDF"
+          @click="exportarPDF"
+        />
+        <q-btn
+          outline
+          color="positive"
+          icon="table_chart"
+          :label="esMovil ? 'Excel' : 'Exportar Excel'"
+          size="sm"
+          @click="exportarExcel"
+        />
       </div>
-    </div>
+    </section>
 
     <!-- ── Controles / Filtros ──────────────────────────────── -->
-    <q-card class="sgi-card q-mb-md" flat>
-      <q-card-section class="row items-center q-col-gutter-sm">
-        <!-- Selector de sucursal (solo Admin/Supervisor) -->
-        <div class="col-12 col-sm-6 col-md-4">
-          <q-select
-            v-model="sucursalSeleccionada"
-            :options="opcionesSucursal"
-            :label="authStore.isGlobal ? 'Sucursal' : 'Su sucursal'"
-            outlined
-            dense
-            emit-value
-            map-options
-            :disable="!authStore.isGlobal"
-            @update:model-value="onCambioSucursal"
-          >
-            <template #prepend><q-icon name="store" /></template>
-            <template #after>
-              <q-btn
-                flat
-                round
-                dense
-                icon="refresh"
-                color="primary"
-                :loading="catalogo.loading.value"
-                @click="recargar"
-              >
-                <q-tooltip>Recargar catálogo</q-tooltip>
-              </q-btn>
-            </template>
-          </q-select>
-        </div>
-
-        <!-- Búsqueda -->
-        <div class="col-12 col-sm-6 col-md-3">
-          <q-input
-            v-model="catalogo.busqueda.value"
-            placeholder="Buscar código, marca, descripción…"
-            outlined
-            dense
-            clearable
-            autofocus
-          >
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-        </div>
-
-        <!-- Filtro categoría -->
-        <div class="col-12 col-sm-6 col-md-2">
-          <q-select
-            v-model="catalogo.categoriaFiltro.value"
-            :options="[{ label: 'Todas las categorías', value: null }, ...categoriaStore.options]"
-            label="Categoría"
-            outlined
-            dense
-            emit-value
-            map-options
-          />
-        </div>
-        <div class="col-12 col-sm-6 col-md-2">
-          <q-select
-            v-model="catalogo.marcaFiltro.value"
-            :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
-            label="Marca"
-            outlined
-            dense
-            emit-value
-            map-options
-          />
-        </div>
-
-        <!-- Toggle vista -->
-        <div class="col-auto">
-          <q-btn-toggle
-            v-model="catalogo.vistaTabla.value"
-            :options="[
-              { value: true, slot: 'tabla' },
-              { value: false, slot: 'tarjetas' },
-            ]"
-            toggle-color="primary"
-            outline
-            dense
-            rounded
-          >
-            <template #tabla>
-              <q-icon name="table_rows" />
-              <q-tooltip>Vista tabla</q-tooltip>
-            </template>
-            <template #tarjetas>
-              <q-icon name="grid_view" />
-              <q-tooltip>Vista tarjetas</q-tooltip>
-            </template>
-          </q-btn-toggle>
-        </div>
-
-        <q-space />
-
-        <!-- Estadísticas rápidas -->
-        <div class="row q-gutter-md items-center">
-          <div class="text-center">
-            <div class="text-h6 text-weight-bold text-primary">
-              {{ catalogo.productosFiltrados.value.length }}
-            </div>
-            <div class="text-caption text-muted">Productos</div>
+    <q-card class="sgi-card q-mb-md catalogo-panel" flat>
+      <q-expansion-item
+        icon="tune"
+        label="Filtros y búsqueda"
+        caption="Sucursal, búsqueda y segmentación del catálogo"
+        expand-separator
+        :default-opened="!esMovil"
+        header-class="sgi-filter-toggle"
+      >
+        <q-card-section class="catalogo-toolbar sgi-filter-body">
+          <!-- Selector de sucursal (solo Admin/Supervisor) -->
+          <div class="catalogo-toolbar__field catalogo-toolbar__field--sucursal">
+            <q-select
+              v-model="sucursalSeleccionada"
+              :options="opcionesSucursal"
+              :label="authStore.isGlobal ? 'Sucursal' : 'Su sucursal'"
+              outlined
+              dense
+              emit-value
+              map-options
+              :disable="!authStore.isGlobal"
+              @update:model-value="onCambioSucursal"
+            >
+              <template #prepend><q-icon name="store" /></template>
+              <template #after>
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="refresh"
+                  color="primary"
+                  :loading="catalogo.loading.value"
+                  @click="recargar"
+                >
+                  <q-tooltip>Recargar catálogo</q-tooltip>
+                </q-btn>
+              </template>
+            </q-select>
           </div>
-          <q-separator vertical inset />
-          <div class="text-center">
-            <div class="text-h6 text-weight-bold text-negative">
-              {{ catalogo.conStockBajo.value.length }}
-            </div>
-            <div class="text-caption text-muted">Stock bajo</div>
-          </div>
-          <q-separator vertical inset />
-          <div class="text-center">
-            <div class="text-h6 text-weight-bold text-grey-6">
-              {{ productosAgotados }}
-            </div>
-            <div class="text-caption text-muted">Agotados</div>
-          </div>
-        </div>
-      </q-card-section>
 
-      <!-- Filtro rápido de stock -->
-      <q-card-section class="q-pt-none row q-gutter-sm">
-        <q-chip
-          v-model:selected="mostrarSoloStockBajo"
-          clickable
-          outline
-          color="warning"
-          icon="warning"
-          label="Ver solo stock bajo"
-          size="sm"
-        />
-        <q-chip
-          v-model:selected="mostrarSoloAgotados"
-          clickable
-          outline
-          color="grey"
-          icon="remove_circle_outline"
-          label="Ver solo agotados"
-          size="sm"
-        />
-      </q-card-section>
+          <!-- Búsqueda -->
+          <div class="catalogo-toolbar__field catalogo-toolbar__field--search">
+            <q-input
+              v-model="catalogo.busqueda.value"
+              placeholder="Buscar código, marca o descripción"
+              outlined
+              dense
+              clearable
+            >
+              <template #prepend><q-icon name="search" /></template>
+            </q-input>
+          </div>
+
+          <!-- Filtro categoría -->
+          <div class="catalogo-toolbar__field">
+            <q-select
+              v-model="catalogo.categoriaFiltro.value"
+              :options="[{ label: 'Todas las categorías', value: null }, ...categoriaStore.options]"
+              label="Categoría"
+              outlined
+              dense
+              emit-value
+              map-options
+            />
+          </div>
+          <div class="catalogo-toolbar__field">
+            <q-select
+              v-model="catalogo.marcaFiltro.value"
+              :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
+              label="Marca"
+              outlined
+              dense
+              emit-value
+              map-options
+            />
+          </div>
+
+          <!-- Toggle vista -->
+          <div v-if="puedeCambiarVista" class="catalogo-toolbar__toggle">
+            <q-btn-toggle
+              v-model="catalogo.vistaTabla.value"
+              :options="[
+                { value: true, slot: 'tabla' },
+                { value: false, slot: 'tarjetas' },
+              ]"
+              toggle-color="primary"
+              outline
+              dense
+              rounded
+            >
+              <template #tabla>
+                <q-icon name="table_rows" />
+                <q-tooltip>Vista tabla</q-tooltip>
+              </template>
+              <template #tarjetas>
+                <q-icon name="grid_view" />
+                <q-tooltip>Vista tarjetas</q-tooltip>
+              </template>
+            </q-btn-toggle>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="!esMovil && authStore.can('productos.editar')" class="q-pt-none">
+          <div class="catalogo-summary q-mb-md">
+            <div v-for="chip in chipsResumen" :key="chip.label" class="catalogo-summary__item">
+              <div class="catalogo-summary__icon">
+                <q-icon :name="chip.icon" :color="chip.tone" size="18px" />
+              </div>
+              <div>
+                <div class="catalogo-summary__value">{{ chip.value }}</div>
+                <div class="catalogo-summary__label">{{ chip.label }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtro rápido de stock -->
+          <div class="catalogo-quick-filters">
+            <q-chip
+              v-model:selected="mostrarSoloStockBajo"
+              clickable
+              outline
+              color="warning"
+              icon="warning"
+              label="Ver solo stock bajo"
+              size="sm"
+            />
+            <q-chip
+              v-model:selected="mostrarSoloAgotados"
+              clickable
+              outline
+              color="grey"
+              icon="remove_circle_outline"
+              label="Ver solo agotados"
+              size="sm"
+            />
+          </div>
+        </q-card-section>
+      </q-expansion-item>
     </q-card>
 
     <!-- ── Contenido principal ──────────────────────────────── -->
@@ -408,7 +438,7 @@ onMounted(async () => {
 
     <!-- Vista tabla -->
     <CatalogoTabla
-      v-else-if="catalogo.vistaTabla.value"
+      v-else-if="vistaActivaEsTabla"
       :productos="productosMostrados"
       :loading="catalogo.loading.value"
       @ver-qr="verQR"
@@ -477,8 +507,120 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-.catalogo-header-chip {
-  font-size: 1.1rem;
-  font-weight: 700;
+.catalogo-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.catalogo-hero__copy {
+  max-width: 760px;
+}
+
+.catalogo-hero__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.catalogo-panel {
+  overflow: hidden;
+}
+
+.catalogo-toolbar {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1.2fr) minmax(220px, 1fr) repeat(2, minmax(170px, 0.7fr))
+    auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.catalogo-toolbar__field,
+.catalogo-toolbar__toggle {
+  min-width: 0;
+}
+
+.catalogo-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.catalogo-summary__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--sgi-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--sgi-surface) 88%, transparent);
+}
+
+.catalogo-summary__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--sgi-primary) 12%, transparent);
+}
+
+.catalogo-summary__value {
+  color: var(--sgi-text);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.catalogo-summary__label {
+  color: var(--sgi-text-muted);
+  font-size: 0.8rem;
+}
+
+.catalogo-quick-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 1270px) {
+  .catalogo-toolbar {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .catalogo-toolbar__toggle {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 768px) {
+  .catalogo-hero {
+    flex-direction: column;
+  }
+
+  .catalogo-hero__actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .catalogo-hero__actions :deep(.q-btn) {
+    flex: 1 1 0;
+  }
+
+  .catalogo-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogo-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .catalogo-summary__item {
+    padding: 12px 14px;
+  }
 }
 </style>

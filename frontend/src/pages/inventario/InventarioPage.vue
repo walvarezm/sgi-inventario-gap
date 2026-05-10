@@ -37,7 +37,15 @@
 
     <!-- Selector de sucursal -->
     <q-card class="sgi-card q-mb-md" flat>
-      <q-card-section class="row items-center q-col-gutter-sm">
+      <q-expansion-item
+        icon="tune"
+        label="Filtros y búsqueda"
+        caption="Sucursal, búsqueda y resumen de inventario"
+        expand-separator
+        :default-opened="!esMovil"
+        header-class="sgi-filter-toggle"
+      >
+      <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
         <div class="col-12 col-sm-4">
           <q-select
             v-model="sucursalActiva"
@@ -90,6 +98,7 @@
           </div>
         </div>
       </q-card-section>
+      </q-expansion-item>
     </q-card>
 
     <!-- Alertas de stock bajo -->
@@ -192,7 +201,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import type { QTableColumn } from 'quasar'
+import { useQuasar, type QTableColumn } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
 import { inventarioService } from 'src/services/inventarioService'
@@ -216,6 +225,8 @@ type InventarioRow = InventarioItem & {
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
+const $q = useQuasar()
+const esMovil = computed(() => $q.screen.lt.md)
 
 // ── State ──────────────────────────────────────────────────────
 const sucursalActiva = ref(authStore.sucursalId ?? '')

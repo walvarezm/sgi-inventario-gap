@@ -10,7 +10,15 @@
 
     <!-- Filtros globales -->
     <q-card class="sgi-card q-mb-md" flat>
-      <q-card-section class="row items-center q-col-gutter-sm">
+      <q-expansion-item
+        icon="tune"
+        label="Filtros globales"
+        caption="Sucursal, fechas y agrupación del reporte"
+        expand-separator
+        :default-opened="!esMovil"
+        header-class="sgi-filter-toggle"
+      >
+      <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
         <div class="col-12 col-sm-3">
           <q-select
             v-model="filtros.sucursalId"
@@ -37,6 +45,7 @@
             :loading="cargando" @click="cargarReportes" />
         </div>
       </q-card-section>
+      </q-expansion-item>
     </q-card>
 
     <!-- Tabs de reportes -->
@@ -200,7 +209,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import type { QTableColumn } from 'quasar'
+import { useQuasar, type QTableColumn } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
 import { reporteService } from 'src/services/reporteService'
@@ -212,6 +221,8 @@ import TablaStock from 'src/components/reportes/TablaStock.vue'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
+const $q = useQuasar()
+const esMovil = computed(() => $q.screen.lt.md)
 
 // ── Filtros ────────────────────────────────────────────────
 const hoy = new Date()

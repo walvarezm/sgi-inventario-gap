@@ -2,9 +2,11 @@
   <q-page class="login-page flex flex-center">
     <div class="login-card">
       <div class="login-brand q-mb-lg text-center">
-        <q-icon name="inventory_2" size="56px" color="white" />
-        <div class="text-h4 text-white text-weight-bold q-mt-sm">SGI - MAXEL</div>
-        <div class="text-subtitle2 text-blue-2">Sistema de Gestión de Inventarios</div>
+        <div class="login-brand__icon">
+          <q-icon name="inventory_2" size="42px" />
+        </div>
+        <div class="text-h4 text-weight-bold q-mt-md">SGI - MAXEL</div>
+        <div class="text-subtitle2 text-muted">Sistema de Gestión de Inventarios</div>
       </div>
 
       <q-card class="login-form-card" flat>
@@ -54,7 +56,7 @@
         </q-card-section>
       </q-card>
 
-      <div class="text-caption text-blue-3 text-center q-mt-md">
+      <div class="text-caption text-center q-mt-md login-footer">
         SGI v{{ appVersion }} — {{ new Date().getFullYear() }}
       </div>
     </div>
@@ -83,10 +85,57 @@ async function handleLogin(): Promise<void> {
 
 <style scoped lang="scss">
 .login-page {
-  background: linear-gradient(135deg, #0f0c29 0%, #1565c0 55%, #0288d1 100%);
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.18), transparent 24%),
+    linear-gradient(180deg, color-mix(in srgb, var(--sgi-surface-alt) 82%, transparent), var(--sgi-surface-alt));
   min-height: 100vh;
 }
-.login-card { width: 100%; max-width: 420px; padding: 0 16px; }
-.login-form-card { border-radius: 20px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3); }
-.bg-negative-1 { background: rgba(198, 40, 40, 0.08); border: 1px solid rgba(198, 40, 40, 0.3); }
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px 16px;
+}
+
+.login-brand {
+  color: var(--sgi-text);
+}
+
+.login-brand__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  border-radius: 24px;
+  margin: 0 auto;
+  background: color-mix(in srgb, var(--sgi-surface) 88%, transparent);
+  border: 1px solid var(--sgi-border);
+  color: var(--sgi-primary);
+  box-shadow: var(--sgi-shadow);
+}
+
+.login-form-card {
+  border-radius: 24px;
+  box-shadow: var(--sgi-shadow-lg);
+}
+
+.login-footer {
+  color: var(--sgi-text-muted);
+}
+
+.bg-negative-1 {
+  background: rgba(198, 40, 40, 0.08);
+  border: 1px solid rgba(198, 40, 40, 0.3);
+}
+
+@media (max-width: 600px) {
+  .login-card {
+    max-width: 100%;
+    padding: 12px;
+  }
+
+  .login-form-card :deep(.q-card__section) {
+    padding: 20px 18px;
+  }
+}
 </style>

@@ -36,7 +36,15 @@
       <!-- ── Tab Proveedores ───────────────────────────── -->
       <q-tab-panel name="proveedores" class="q-pa-none">
         <!-- Filtros -->
-        <div class="q-pa-md row q-col-gutter-sm items-center">
+        <q-expansion-item
+          icon="tune"
+          label="Filtros y búsqueda"
+          caption="Busca proveedores rápidamente"
+          expand-separator
+          :default-opened="!esMovil"
+          header-class="sgi-filter-toggle"
+        >
+        <div class="q-pa-md row q-col-gutter-sm items-center sgi-filter-body">
           <div class="col-12 col-sm-4">
             <q-input v-model="busqueda" placeholder="Buscar por nombre, RUC o ciudad…"
               outlined dense clearable>
@@ -50,6 +58,7 @@
           <q-space />
           <div class="text-caption text-muted">{{ proveedoresFiltrados.length }} resultado(s)</div>
         </div>
+        </q-expansion-item>
 
         <q-table
           :rows="proveedoresFiltrados" :columns="columnasProveedor"
@@ -90,7 +99,15 @@
 
       <!-- ── Tab Órdenes ───────────────────────────────── -->
       <q-tab-panel name="ordenes" class="q-pa-none">
-        <div class="q-pa-md row q-col-gutter-sm items-center">
+        <q-expansion-item
+          icon="tune"
+          label="Filtros de órdenes"
+          caption="Refina por estado y vuelve a consultar"
+          expand-separator
+          :default-opened="!esMovil"
+          header-class="sgi-filter-toggle"
+        >
+        <div class="q-pa-md row q-col-gutter-sm items-center sgi-filter-body">
           <div class="col-12 col-sm-3">
             <q-select v-model="filtroEstadoOrden" :options="opcionesEstadoOrden"
               label="Estado" outlined dense emit-value map-options clearable />
@@ -102,6 +119,7 @@
           <q-space />
           <div class="text-caption text-muted">{{ ordenesFiltradas.length }} órdenes</div>
         </div>
+        </q-expansion-item>
 
         <q-table
           :rows="ordenesFiltradas" :columns="columnasOrden"
@@ -180,6 +198,7 @@ const productoStore = useProductoStore()
 const sucursalStore = useSucursalStore()
 const { notifySuccess, notifyError } = useNotify()
 const $q = useQuasar()
+const esMovil = computed(() => $q.screen.lt.md)
 
 const tabActivo = ref('proveedores')
 const busqueda = ref('')

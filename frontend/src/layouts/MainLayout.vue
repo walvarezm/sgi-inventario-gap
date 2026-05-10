@@ -15,20 +15,48 @@
           v-if="sucursalActiva"
           icon="store"
           :label="sucursalActiva.nombre"
-          color="blue-2"
-          text-color="blue-10"
           dense
-          class="q-mr-sm"
+          class="q-mr-sm sgi-store-chip"
         />
 
-        <q-btn flat round dense icon="notifications">
+<!--        <q-btn flat round dense icon="notifications">
           <q-badge color="negative" floating>0</q-badge>
           <q-tooltip>Alertas de stock</q-tooltip>
-        </q-btn>
+        </q-btn>-->
 
-        <q-btn flat round dense icon="brightness_6" class="q-ml-xs" @click="toggleDark">
-          <q-tooltip>Cambiar tema</q-tooltip>
-        </q-btn>
+        <div class="sgi-theme-toggle q-ml-sm">
+          <q-btn-toggle
+            v-model="selectedThemeModel"
+            unelevated
+            rounded
+            no-caps
+            spread
+            toggle-color="transparent"
+            color="transparent"
+            text-color="grey-7"
+            :options="themeToggleOptions"
+            @update:model-value="selectTheme"
+          >
+            <template #light>
+              <div class="sgi-theme-toggle__option">
+                <q-icon name="light_mode" size="16px" />
+                <span class="sgi-theme-toggle__label">Claro</span>
+              </div>
+            </template>
+            <template #medium>
+              <div class="sgi-theme-toggle__option">
+                <q-icon name="desktop_windows" size="16px" />
+                <span class="sgi-theme-toggle__label">Medio</span>
+              </div>
+            </template>
+            <template #dark>
+              <div class="sgi-theme-toggle__option">
+                <q-icon name="dark_mode" size="16px" />
+                <span class="sgi-theme-toggle__label">Oscuro</span>
+              </div>
+            </template>
+          </q-btn-toggle>
+        </div>
 
         <q-btn flat round class="q-ml-sm">
           <q-avatar size="32px" color="primary" text-color="white">{{ avatarLetra }}</q-avatar>
@@ -87,29 +115,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
+import { useThemeStore, type AppTheme } from 'src/stores/themeStore'
 import { ROL_LABELS } from 'src/types'
 import type { Rol } from 'src/types'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
+const themeStore = useThemeStore()
 const router = useRouter()
 const $q = useQuasar()
-const drawerOpen = ref(true)
+const drawerOpen = ref(!$q.screen.lt.md)
 
 const avatarLetra = computed(() =>
   authStore.nombreUsuario ? authStore.nombreUsuario[0].toUpperCase() : 'U',
 )
 const rolLabel = computed(() => (authStore.rol ? ROL_LABELS[authStore.rol as Rol] : ''))
 const appVersion = computed(() => import.meta.env.VITE_APP_VERSION)
+const selectedThemeModel = computed({
+  get: () => themeStore.selectedTheme,
+  set: (value: AppTheme) => themeStore.setTheme(value),
+})
 const sucursalActiva = computed(() => {
   if (!authStore.sucursalId || authStore.sucursalId === 'ALL') return null
   return sucursalStore.getById(authStore.sucursalId)
 })
+
+const themeToggleOptions = [
+  { value: 'light', slot: 'light' },
+  { value: 'medium', slot: 'medium' },
+  { value: 'dark', slot: 'dark' },
+]
 
 const navItems = [
   { name: 'dashboard', label: 'Dashboard', icon: 'dashboard', permission: 'dashboard.ver' },
@@ -143,13 +183,23 @@ function canSeeItem(item: { permission?: string; anyPermissions?: string[] }): b
 function toggleDrawer(): void {
   drawerOpen.value = !drawerOpen.value
 }
-function toggleDark(): void {
-  $q.dark.toggle()
+
+function selectTheme(theme: AppTheme): void {
+  themeStore.setTheme(theme)
 }
+
 async function logout(): Promise<void> {
   authStore.logout()
   await router.push({ name: 'login' })
 }
+
+watch(
+  () => themeStore.selectedTheme,
+  () => {
+    themeStore.applyTheme($q)
+  },
+  { immediate: true },
+)
 
 onMounted(async () => {
   if (sucursalStore.items.length === 0) await sucursalStore.fetchAll()
@@ -162,19 +212,24 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .sgi-header {
-  background: var(--sgi-dark);
+  background: var(--sgi-header-bg);
+  color: var(--sgi-text);
+  border-bottom: 1px solid var(--sgi-border);
+  backdrop-filter: blur(16px);
   height: var(--sgi-header-height);
 }
 .sgi-logo {
+  color: var(--sgi-text);
   font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 .sgi-logo-sub {
+  color: var(--sgi-text-muted);
   font-weight: 600;
   font-size: 0.95rem;
   margin-left: 4px;
-  opacity: 0.7;
+  opacity: 0.72;
 }
 .sgi-drawer {
   background: var(--sgi-surface);
@@ -194,12 +249,86 @@ onMounted(async () => {
   margin: 2px 8px;
   transition: background 0.15s;
 }
+.sgi-store-chip {
+  background: var(--sgi-chip-bg);
+  color: var(--sgi-chip-text);
+  border: 1px solid var(--sgi-border);
+}
+
+.sgi-header :deep(.q-btn) {
+  color: var(--sgi-text);
+}
+
+.sgi-header :deep(.q-icon) {
+  color: inherit;
+}
+
+.sgi-header :deep(.q-toolbar__title) {
+  color: var(--sgi-text);
+}
+.sgi-theme-toggle {
+  width: 240px;
+}
+
+.sgi-theme-toggle :deep(.q-btn-toggle) {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid var(--sgi-border);
+  background: color-mix(in srgb, var(--sgi-surface) 90%, transparent);
+  border-radius: 16px;
+}
+
+.sgi-theme-toggle :deep(.q-btn) {
+  min-height: 38px;
+  color: var(--sgi-text-muted) !important;
+  border-radius: 12px !important;
+}
+
+.sgi-theme-toggle :deep(.q-btn[aria-pressed='true']) {
+  background: color-mix(in srgb, var(--sgi-surface-alt) 86%, white) !important;
+  color: var(--sgi-text) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 40, 0.08);
+}
+
+.sgi-theme-toggle__option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.sgi-theme-toggle__label {
+  font-size: 0.84rem;
+  font-weight: 500;
+}
 :deep(.sgi-nav-active) {
-  background: rgba(21, 101, 192, 0.1) !important;
+  background: color-mix(in srgb, var(--sgi-primary) 18%, transparent) !important;
   color: var(--sgi-primary) !important;
   font-weight: 600;
   .q-icon {
     color: var(--sgi-primary) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .sgi-logo {
+    font-size: 1rem;
+  }
+
+  .sgi-logo-sub {
+    display: none;
+  }
+
+  .sgi-theme-toggle {
+    width: auto;
+  }
+
+  .sgi-theme-toggle :deep(.q-btn-toggle) {
+    min-width: 116px;
+  }
+
+  .sgi-theme-toggle__label {
+    display: none;
   }
 }
 </style>

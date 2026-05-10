@@ -23,7 +23,7 @@
           :imagen-url="modelValue"
           :width="180"
           :height="180"
-          :imagen-location="props.imagenLocation"
+          :imagen-location="imagenLocation"
         />
       </div>
 
@@ -88,6 +88,7 @@ const emit = defineEmits<{ 'update:modelValue': [url: string] }>()
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
 const errorMsg = ref('')
+const imagenLocation = ref(props.imagenLocation)
 
 function triggerFile(): void {
   fileInput.value?.click()
@@ -115,6 +116,7 @@ async function onFileChange(event: Event): Promise<void> {
       nombre: `producto_${props.productoId || Date.now()}.${file.type.split('/')[1]}`,
       productoId: props.productoId,
     })
+    imagenLocation.value = 'drive'
     emit('update:modelValue', url)
   } catch (e) {
     errorMsg.value = (e as Error).message
