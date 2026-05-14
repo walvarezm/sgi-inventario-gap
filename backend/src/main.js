@@ -63,6 +63,8 @@ function doPost(e) {
       'subirImagenProducto':     () => ProductoService.subirImagen(payload, session),
       'importarProductosMasivo': () => ProductoService.importarMasivo(payload, session),
       'importarStockInicial':    () => ProductoService.importarStockInicial(payload, session),
+      'previewMigracionProductosSpreadsheet': () => MigracionProductoService.previewDesdeSpreadsheet(payload, session),
+      'importarProductosSpreadsheet': () => MigracionProductoService.importarDesdeSpreadsheet(payload, session),
       // Inventario
       'getStockPorSucursal':     () => InventarioService.getStockPorSucursal(payload, session),
       'getStockProducto':        () => InventarioService.getStockProducto(payload),

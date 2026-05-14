@@ -33,7 +33,7 @@ const ProductoService = {
     const nuevo = this._construirProducto(payload)
 
     Sheets.insert('Productos', nuevo)
-    this._invalidarCachesCatalogo()
+    //this._invalidarCachesCatalogo()
     LogService.registrar(session.userId, 'CREATE', 'Productos', null,
       'Producto creado: ' + nuevo.nombre + ' [' + nuevo.sku + ']')
     return this._mapear(nuevo)
@@ -81,7 +81,10 @@ const ProductoService = {
     }
 
     const actualizado = Sheets.update('Productos', payload.id, cambios)
-    this._invalidarCachesCatalogo()
+    if (payload.imagenUrl !== undefined) {
+      this._eliminarImagenAnteriorSiCorresponde(existente.imagen_url, payload.imagenUrl)
+    }
+    //this._invalidarCachesCatalogo()
     LogService.registrar(session.userId, 'UPDATE', 'Productos', null, 'ID: ' + payload.id)
     return this._mapear(actualizado)
   },
@@ -231,7 +234,7 @@ const ProductoService = {
     }
 
     if (!dryRun && (nuevos.length || actualizados > 0)) {
-      this._invalidarCachesCatalogo()
+      //this._invalidarCachesCatalogo()
     }
 
     return {
@@ -341,7 +344,7 @@ const ProductoService = {
   remove(payload, session) {
     AccessService.assert(session, 'productos.desactivar', 'Sin permiso para desactivar productos')
     Sheets.update('Productos', payload.id, { activo: false })
-    this._invalidarCachesCatalogo()
+    //this._invalidarCachesCatalogo()
     LogService.registrar(session.userId, 'DELETE', 'Productos', null, 'ID: ' + payload.id)
     return true
   },
@@ -395,7 +398,13 @@ const ProductoService = {
     }
   },
 
+  _esReferenciaDrive(valor) {
+    return !!this._resolverDriveFileId(valor)
+  },
+
   _mapear(p) {
+    const imagenUrl = p.imagen_url || ''
+    const imagenLocation = p.imagen_url ? 'drive' : 'local'
     return {
       id: p.id,
       sku: p.sku,
@@ -409,12 +418,43 @@ const ProductoService = {
       precioOfrecido: Number(p.precio_ofrecido) || 0,
       precioFinal: Number(p.precio_final) || 0,
       stockMinimo: Number(p.stock_minimo) || 0,
-      imagenUrl: p.imagen_url || '',
+      imagenUrl: imagenUrl,
+      imagenLocation: imagenLocation,
       qrCode: p.qr_code || p.sku,
       activo: p.activo === true || p.activo === 'TRUE' || p.activo === 1,
       fechaCreacion: p.fecha_creacion || '',
     }
   },
+
+  _eliminarImagenAnteriorSiCorresponde(imagenAnterior, imagenNueva) {
+    const anterior = String(imagenAnterior || '').trim()
+    const nueva = String(imagenNueva || '').trim()
+    if (!anterior || anterior === nueva) return
+
+    const fileId = this._resolverDriveFileId(anterior)
+    if (!fileId) return
+
+    try {
+      DriveApp.getFileById(fileId).setTrashed(true)
+    } catch (e) {
+      Logger.log('No se pudo eliminar imagen anterior de producto: ' + e.message)
+    }
+  },
+
+  _resolverDriveFileId(valor) {
+    const ref = String(valor || '').trim()
+    if (!ref) return ''
+
+    const matchFile = ref.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+    if (matchFile && matchFile[1]) return matchFile[1]
+
+    const matchQuery = ref.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+    if (matchQuery && matchQuery[1]) return matchQuery[1]
+
+    if (/^[a-zA-Z0-9_-]{20,}$/.test(ref)) return ref
+    return ''
+  },
+
 
   _validarPermisoImportacion(session) {
     if (session.rol !== 'ADMINISTRADOR' && session.rol !== 'SUPERVISOR') {
@@ -452,11 +492,11 @@ const ProductoService = {
 
   _generarQrTexto(sku, marca, nombre, precioOfrecido, precioFinal) {
     return [
-      String(sku || '').trim().toUpperCase(),
-      String(marca || '').trim().toUpperCase(),
-      String(nombre || '').trim(),
-      String(Number(precioOfrecido) || 0),
-      String(Number(precioFinal) || 0),
+      'Código: ' + String(sku || '').trim().toUpperCase(),
+      'Marca: ' + String(marca || '').trim().toUpperCase(),
+      'Producto: ' + String(nombre || '').trim(),
+      'Precio Catalogo: ' + String(Number(precioOfrecido) || 0),
+      'Precio Venta: ' + String(Number(precioFinal) || 0),
     ].join(' | ')
   },
 

@@ -92,15 +92,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { QForm, useQuasar } from 'quasar'
+import { ref, watch } from 'vue'
+import { QForm } from 'quasar'
 import type { Producto, ProductoCatalogo } from 'src/types'
 import { useNotify } from 'src/composables/useNotify'
 import { minLength, nonNegativeNumber, positiveNumber, required } from 'src/utils/validators'
 import { useProductoStore } from 'src/stores/productoStore'
-const $q = useQuasar()
-
-const esMovil = computed(() => $q.screen.lt.md)
 
 interface Props {
   producto: ProductoCatalogo | null

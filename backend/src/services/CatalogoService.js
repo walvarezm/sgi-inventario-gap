@@ -12,10 +12,10 @@ const CatalogoService = {
     const puedeEditarProductos = AccessService.can(session, 'productos.editar')
 
     // Usar cache de 5 minutos para mejorar performance
-    const cacheKey = 'catalogo_' + sucursalId + '_' + (puedeEditarProductos ? 'edit' : 'view')
+/*    const cacheKey = 'catalogo_' + sucursalId + '_' + (puedeEditarProductos ? 'edit' : 'view')
     const cache = CacheService.getScriptCache()
     const cached = cache.get(cacheKey)
-    if (cached) return JSON.parse(cached)
+    if (cached) return JSON.parse(cached)*/
 
     const productos = Sheets.getAll('Productos').filter(p =>
       p.activo === true || p.activo === 'TRUE' || p.activo === 1
@@ -48,7 +48,7 @@ const CatalogoService = {
       stockMinimo: p.stock_minimo || 0
     }))
 
-    cache.put(cacheKey, JSON.stringify(resultado), 300) // 5 minutos
+    //cache.put(cacheKey, JSON.stringify(resultado), 600) // 5 minutos
     return resultado
   },
 

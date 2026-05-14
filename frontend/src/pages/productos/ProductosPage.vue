@@ -35,66 +35,66 @@
         :default-opened="!esMovil"
         header-class="sgi-filter-toggle"
       >
-      <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
-        <div class="col-12 col-sm-4">
-          <q-input
-            v-model="busqueda"
-            placeholder="Buscar SKU, nombre, marca…"
-            outlined
-            dense
-            clearable
-          >
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-        </div>
-        <div class="col-12 col-sm-2">
-          <q-select
-            v-model="filtroCategoria"
-            :options="[{ label: 'Todas las categorías', value: null }, ...categoriaStore.options]"
-            label="Categoría"
-            outlined
-            dense
-            emit-value
-            map-options
-          />
-        </div>
-        <div class="col-12 col-sm-2">
-          <q-select
-            v-model="filtroMarca"
-            :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
-            label="Marca"
-            outlined
-            dense
-            emit-value
-            map-options
-          />
-        </div>
-        <div class="col-12 col-sm-2">
-          <q-select
-            v-model="filtroActivo"
-            :options="opcionesEstado"
-            label="Estado"
-            outlined
-            dense
-            emit-value
-            map-options
-          />
-        </div>
-        <div class="col-auto">
-          <q-btn
-            flat
-            round
-            icon="refresh"
-            color="primary"
-            :loading="productoStore.loading"
-            @click="cargar"
-          >
-            <q-tooltip>Recargar</q-tooltip>
-          </q-btn>
-        </div>
-        <q-space />
-        <div class="text-caption text-muted">{{ productosFiltrados.length }} resultado(s)</div>
-      </q-card-section>
+        <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
+          <div class="col-12 col-sm-4">
+            <q-input
+              v-model="busqueda"
+              placeholder="Buscar SKU, nombre, marca…"
+              outlined
+              dense
+              clearable
+            >
+              <template #prepend><q-icon name="search" /></template>
+            </q-input>
+          </div>
+          <div class="col-12 col-sm-2">
+            <q-select
+              v-model="filtroCategoria"
+              :options="[{ label: 'Todas las categorías', value: null }, ...categoriaStore.options]"
+              label="Categoría"
+              outlined
+              dense
+              emit-value
+              map-options
+            />
+          </div>
+          <div class="col-12 col-sm-2">
+            <q-select
+              v-model="filtroMarca"
+              :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
+              label="Marca"
+              outlined
+              dense
+              emit-value
+              map-options
+            />
+          </div>
+          <div class="col-12 col-sm-2">
+            <q-select
+              v-model="filtroActivo"
+              :options="opcionesEstado"
+              label="Estado"
+              outlined
+              dense
+              emit-value
+              map-options
+            />
+          </div>
+          <div class="col-auto">
+            <q-btn
+              flat
+              round
+              icon="refresh"
+              color="primary"
+              :loading="productoStore.loading"
+              @click="recargar"
+            >
+              <q-tooltip>Recargar</q-tooltip>
+            </q-btn>
+          </div>
+          <q-space />
+          <div class="text-caption text-muted">{{ productosFiltrados.length }} resultado(s)</div>
+        </q-card-section>
       </q-expansion-item>
     </q-card>
 
@@ -294,9 +294,8 @@ const productosFiltrados = computed(() => {
   lista = lista.map((p) => ({
     ...p,
     imagenLocation: p.imagenUrl ? 'drive' : 'local',
-    imagenUrl: p.imagenUrl ? p.imagenUrl : '' , // p.sku,
+    imagenUrl: p.imagenUrl ? p.imagenUrl : '', // p.sku,
   }))
-
 
   return lista
 })
@@ -357,6 +356,14 @@ function confirmarEliminar(p: Producto): void {
       notifyError((e as Error).message)
     }
   })
+}
+
+async function recargar(): Promise<void> {
+  //productosFiltrados.value.map(()=> {})
+  productoStore.forceReload()
+  categoriaStore.forceReload()
+  marcaStore.forceReload()
+  await Promise.all([productoStore.fetchAll(), categoriaStore.fetchAll(), marcaStore.fetchAll()])
 }
 
 async function cargar(): Promise<void> {

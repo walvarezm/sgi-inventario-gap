@@ -16,9 +16,12 @@
             <div class="text-subtitle2 text-weight-bold q-mb-sm">Imagen</div>
             <ProductoImagen
               v-model="form.imagenUrl"
+              v-model:imagen-location="form.imagenLocation"
               :producto-id="editId"
-              :imagen-location="form.imagenLocation"
             />
+            <div v-if="isEdit && props.producto?.imagenUrl" class="text-caption text-muted q-mt-sm">
+              Si cambias o quitas la imagen y guardas, la imagen anterior dejará de usarse.
+            </div>
 
             <q-separator class="q-my-md" />
 
@@ -338,7 +341,7 @@ watch(
     form.value.precioOfrecido,
     form.value.precioFinal,
   ],
-  (p) => {
+  () => {
     form.value.qrCode = addContentBreak(formQrCode.value)
   },
 )

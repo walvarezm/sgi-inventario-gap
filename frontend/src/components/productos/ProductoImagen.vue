@@ -51,7 +51,7 @@
         icon="delete"
         label="Quitar"
         size="sm"
-        @click="emit('update:modelValue', '')"
+        @click="quitarImagen"
       />
     </div>
 
@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { fileToBase64, resizeImage, validateImageFile } from 'src/utils/qrUtils'
 import { productoService } from 'src/services/productoService'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
@@ -83,15 +83,31 @@ const props = withDefaults(defineProps<Props>(), {
   productoId: '',
   imagenLocation: 'local',
 })
-const emit = defineEmits<{ 'update:modelValue': [url: string] }>()
+const emit = defineEmits<{
+  'update:modelValue': [url: string]
+  'update:imagenLocation': [imagenLocation: string]
+}>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
 const errorMsg = ref('')
 const imagenLocation = ref(props.imagenLocation)
 
+watch(
+  () => props.imagenLocation,
+  (value) => {
+    imagenLocation.value = value || 'local'
+  },
+)
+
 function triggerFile(): void {
   fileInput.value?.click()
+}
+
+function quitarImagen(): void {
+  imagenLocation.value = 'local'
+  emit('update:modelValue', '')
+  emit('update:imagenLocation', 'local')
 }
 
 async function onFileChange(event: Event): Promise<void> {
@@ -118,6 +134,7 @@ async function onFileChange(event: Event): Promise<void> {
     })
     imagenLocation.value = 'drive'
     emit('update:modelValue', url)
+    emit('update:imagenLocation', 'drive')
   } catch (e) {
     errorMsg.value = (e as Error).message
   } finally {

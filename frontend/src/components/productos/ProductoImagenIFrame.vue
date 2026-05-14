@@ -58,7 +58,6 @@
 <script setup lang="ts">
 import { drivePreviewUrl } from 'src/utils/qrUtils.ts'
 
-const URL_BASE_DRIVE = 'https://drive.google.com/file/d/'
 const URL_BASE_LOCAL = 'images/products/'
 
 interface Props {

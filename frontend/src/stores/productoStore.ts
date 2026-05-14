@@ -85,8 +85,26 @@ export const useProductoStore = defineStore('producto', () => {
   function select(producto: Producto | null): void { selected.value = producto }
   function clearError(): void { error.value = null }
 
+  function forceReload(): void {
+    items.value = []
+  }
+
   return {
-    items, loading, saving, error, selected, activos, bySku,
-    fetchAll, create, update, remove, getById, findBySku, select, clearError,
+    items,
+    loading,
+    saving,
+    error,
+    selected,
+    activos,
+    bySku,
+    fetchAll,
+    create,
+    update,
+    remove,
+    getById,
+    findBySku,
+    select,
+    clearError,
+    forceReload,
   }
 })

@@ -8,10 +8,10 @@ const MarcaService = {
     const soloActivas = !payload || payload.todos !== true
 
     // Intentar desde cache primero
-    const cache = CacheService.getScriptCache()
+/*    const cache = CacheService.getScriptCache()
     const cacheKey = soloActivas ? 'marcas_activas' : 'marcas_todas'
     const cached = cache.get(cacheKey)
-    if (cached) return JSON.parse(cached)
+    if (cached) return JSON.parse(cached)*/
 
     let marcas = Sheets.getAll('Marcas')
     if (soloActivas) {
@@ -21,7 +21,7 @@ const MarcaService = {
     }
 
     const resultado = marcas.map(this._mapear)
-    cache.put(cacheKey, JSON.stringify(resultado), 600) // 10 minutos
+    //cache.put(cacheKey, JSON.stringify(resultado), 600) // 10 minutos
     return resultado
   },
 
@@ -54,7 +54,7 @@ const MarcaService = {
     }
 
     Sheets.insert('Marcas', nueva)
-    this._invalidarCache()
+    //this._invalidarCache()
     LogService.registrar(session.userId, 'CREATE', 'Marcas', null,
       'Marca creada: ' + nueva.nombre)
 
@@ -101,7 +101,7 @@ const MarcaService = {
     if (payload.activo !== undefined)      cambios.activo = payload.activo
 
     const actualizada = Sheets.update('Marcas', payload.id, cambios)
-    this._invalidarCache()
+    //this._invalidarCache()
     LogService.registrar(session.userId, 'UPDATE', 'Marcas', null,
       'Marca actualizada: ' + payload.id)
 
@@ -117,7 +117,7 @@ const MarcaService = {
 
     // Soft-delete: marcar como inactiva
     Sheets.update('Marcas', payload.id, { activo: false })
-    this._invalidarCache()
+    //this._invalidarCache()
     LogService.registrar(session.userId, 'DELETE', 'Marcas', null,
       'Marca eliminada: ' + existente.nombre)
 

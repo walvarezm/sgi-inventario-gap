@@ -5,10 +5,12 @@ import { ref, computed } from 'vue'
 import { useFacturaStore } from 'src/stores/facturaStore'
 import type { ItemCarrito, ProductoCatalogo } from 'src/types'
 import { useCataloStore } from 'src/stores/cataloStore.ts'
+import { useNotify } from 'src/composables/useNotify.ts'
 
 export function usePOS() {
   const facturaStore = useFacturaStore()
   const cataloStore = useCataloStore()
+  const { notifyWarning } = useNotify()
 
   const busqueda = ref('')
   const cliente = ref('Sin nombre')
@@ -39,7 +41,14 @@ export function usePOS() {
     precioFinal: number
     stock: number
   }): void {
-    if (producto.stock <= 0) return
+    if (producto.stock <= 0) {
+      notifyWarning('Sin Stock')
+      return
+    }
+    if (producto.precioFinal <= 0) {
+      notifyWarning('Sin precio')
+      return
+    }
 
     const item: ItemCarrito = {
       productoId: producto.id,

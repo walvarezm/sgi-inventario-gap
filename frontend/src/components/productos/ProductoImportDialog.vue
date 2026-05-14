@@ -8,14 +8,29 @@
 
     <q-card-section class="q-gutter-md">
       <q-banner rounded class="bg-blue-1 text-blue-10">
-        El archivo puede incluir las hojas <strong>PRODUCTOS</strong> y
-        <strong>STOCK_INICIAL</strong>. Si no existe la marca o la categoría, se crearán
-        automáticamente. El `qr_code` se genera como:
-        <code>sku | marca | nombre | precio_ofrecido | precio_final</code>.
+        El archivo puede incluir las hojas
+        <strong>PRODUCTOS</strong>
+        y
+        <strong>STOCK_INICIAL</strong>
+        . Si no existe la marca o la categoría, se crearán automáticamente. El `qr_code` se genera
+        como:
+        <code>sku | marca | nombre | precio_ofrecido | precio_final</code>
+        .
       </q-banner>
-
-      <div class="row q-col-gutter-md items-start">
-        <div class="col-12 col-md-8">
+      <q-separator />
+      <div class="row q-col-gutter-md items-start q-ma-xs">
+        <div class="col-12 col-md-3">
+          <q-select
+            v-model="filtroMarca"
+            :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
+            label="Marca"
+            outlined
+            dense
+            emit-value
+            map-options
+          />
+        </div>
+        <div class="col-12 col-md-6">
           <q-file
             v-model="archivo"
             label="Archivo Excel"
@@ -28,7 +43,7 @@
             <template #prepend><q-icon name="upload_file" /></template>
           </q-file>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
           <q-btn
             label="Descargar plantilla"
             icon="download"
@@ -71,8 +86,7 @@
           row-key="__rowNumber"
           flat
           dense
-          hide-pagination
-          :rows-per-page-options="[0]"
+          :hide-pagination="false"
         />
       </div>
 
@@ -84,31 +98,23 @@
           row-key="__rowNumber"
           flat
           dense
-          hide-pagination
-          :rows-per-page-options="[0]"
+          :hide-pagination="false"
+          :rows-per-page-options="[5, 10, 25]"
         />
       </div>
 
       <div v-if="resultadoProductos || resultadoStock" class="q-gutter-md q-mt-md">
-        <q-banner
-          v-if="resultadoProductos"
-          rounded
-          class="bg-green-1 text-green-10"
-        >
+        <q-banner v-if="resultadoProductos" rounded class="bg-green-1 text-green-10">
           Productos: {{ resultadoProductos.summary.created }} creados,
           {{ resultadoProductos.summary.updated }} actualizados,
           {{ resultadoProductos.summary.skipped }} omitidos,
           {{ resultadoProductos.summary.errors }} con error.
         </q-banner>
 
-        <q-banner
-          v-if="resultadoStock"
-          rounded
-          class="bg-orange-1 text-orange-10"
-        >
+        <q-banner v-if="resultadoStock" rounded class="bg-orange-1 text-orange-10">
           Stock inicial: {{ resultadoStock.summary.imported }} importados,
-          {{ resultadoStock.summary.skipped }} omitidos,
-          {{ resultadoStock.summary.errors }} con error.
+          {{ resultadoStock.summary.skipped }} omitidos, {{ resultadoStock.summary.errors }} con
+          error.
         </q-banner>
 
         <q-table
@@ -139,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { QTableColumn } from 'quasar'
 import { read, utils, writeFileXLSX } from 'xlsx'
 import { productoService } from 'src/services/productoService'
@@ -170,6 +176,7 @@ const productosRows = ref<ImportProductoRow[]>([])
 const stockRows = ref<ImportStockRow[]>([])
 const resultadoProductos = ref<ImportProductosResponse | null>(null)
 const resultadoStock = ref<ImportStockResponse | null>(null)
+const filtroMarca = ref<string | null>(null)
 
 const productoColumns: QTableColumn[] = [
   { name: '__rowNumber', label: '#', field: '__rowNumber', align: 'left' },
@@ -177,6 +184,8 @@ const productoColumns: QTableColumn[] = [
   { name: 'marca', label: 'Marca', field: 'marca', align: 'left' },
   { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left' },
   { name: 'categoria', label: 'Categoría', field: 'categoria', align: 'left' },
+  { name: 'precioCompra', label: 'P. Compra', field: 'precioCompra', align: 'right' },
+  { name: 'precioOfrecido', label: 'P. Venta', field: 'precioOfrecido', align: 'right' },
   { name: 'precioFinal', label: 'P. Final', field: 'precioFinal', align: 'right' },
 ]
 
@@ -195,8 +204,9 @@ const resultColumns: QTableColumn[] = [
   { name: 'message', label: 'Detalle', field: 'message', align: 'left' },
 ]
 
-const productosPreview = computed(() => productosRows.value.slice(0, 8))
-const stockPreview = computed(() => stockRows.value.slice(0, 8))
+//const productosPreview = computed(() => productosRows.value.slice(0, 8))
+const productosPreview = computed(() => productosRows.value)
+const stockPreview = computed(() => stockRows.value)
 const resultados = computed(() => {
   const productos = (resultadoProductos.value?.results || []).map((item, index) => ({
     ...item,
@@ -230,8 +240,12 @@ function toBoolean(value: unknown): boolean | undefined {
 function mapProductoRow(row: Record<string, unknown>, index: number): ImportProductoRow {
   return {
     __rowNumber: index + 2,
-    sku: String(row.sku || '').trim().toUpperCase(),
-    marca: String(row.marca || '').trim().toUpperCase(),
+    sku: String(row.sku || '')
+      .trim()
+      .toUpperCase(),
+    marca: String(row.marca || '')
+      .trim()
+      .toUpperCase(),
     nombre: String(row.nombre || '').trim(),
     descripcion: String(row.descripcion || '').trim(),
     categoria: String(row.categoria || '').trim(),
@@ -248,7 +262,9 @@ function mapProductoRow(row: Record<string, unknown>, index: number): ImportProd
 function mapStockRow(row: Record<string, unknown>, index: number): ImportStockRow {
   return {
     __rowNumber: index + 2,
-    sku: String(row.sku || '').trim().toUpperCase(),
+    sku: String(row.sku || '')
+      .trim()
+      .toUpperCase(),
     sucursal: String(row.sucursal || row.sucursal_id || '').trim(),
     stockInicial: Number(row.stock_inicial || row.stock || 0),
     referencia: String(row.referencia || '').trim(),
@@ -256,7 +272,10 @@ function mapStockRow(row: Record<string, unknown>, index: number): ImportStockRo
   }
 }
 
-function sheetToNormalizedObjects(sheetName: string, workbook: ReturnType<typeof read>): Record<string, unknown>[] {
+function sheetToNormalizedObjects(
+  sheetName: string,
+  workbook: ReturnType<typeof read>,
+): Record<string, unknown>[] {
   const sheet = workbook.Sheets[sheetName]
   if (!sheet) return []
   const rows = utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
@@ -276,6 +295,7 @@ async function onArchivoSeleccionado(file: File | readonly File[] | null): Promi
   archivoResumen.value = false
   productosRows.value = []
   stockRows.value = []
+  archivo.value = Array.isArray(file) ? file[0] : file
 
   const selected = Array.isArray(file) ? file[0] : file
   if (!selected) return
@@ -287,12 +307,16 @@ async function onArchivoSeleccionado(file: File | readonly File[] | null): Promi
     const productosRaw = sheetToNormalizedObjects('PRODUCTOS', workbook)
     const stockRaw = sheetToNormalizedObjects('STOCK_INICIAL', workbook)
 
+    //if (filtroMarca.value) productosRaw = productosRaw.filter((p) => p.marca === filtroMarca.value)
     productosRows.value = productosRaw
       .map(mapProductoRow)
-      .filter((row) => row.sku || row.nombre || row.marca)
-    stockRows.value = stockRaw
-      .map(mapStockRow)
-      .filter((row) => row.sku || row.sucursal)
+      .filter((row) => (row.sku || row.nombre || row.marca) && row.marca === filtroMarca.value)
+
+    //stockRows.value = stockRaw.map(mapStockRow).filter((row) => row.sku || row.sucursal)
+    stockRows.value = stockRaw.map(mapStockRow).filter((row) => {
+      const exist = productosRows.value.find((p) => p.sku === row.sku)
+      return (row.sku || row.sucursal) && exist
+    })
 
     if (!productosRows.value.length && !stockRows.value.length) {
       throw new Error('No se encontraron filas útiles en PRODUCTOS o STOCK_INICIAL')
@@ -348,7 +372,11 @@ async function ejecutarImportacion(): Promise<void> {
 
   try {
     if (productosRows.value.length) {
-      resultadoProductos.value = await productoService.importarProductos(productosRows.value, false, 'upsert')
+      resultadoProductos.value = await productoService.importarProductos(
+        productosRows.value,
+        false,
+        'upsert',
+      )
     }
     if (stockRows.value.length) {
       resultadoStock.value = await productoService.importarStockInicial(stockRows.value, false)
@@ -356,11 +384,7 @@ async function ejecutarImportacion(): Promise<void> {
 
     categoriaStore.forceReload()
     marcaStore.forceReload()
-    await Promise.all([
-      productoStore.fetchAll(),
-      categoriaStore.fetchAll(),
-      marcaStore.fetchAll(),
-    ])
+    await Promise.all([productoStore.fetchAll(), categoriaStore.fetchAll(), marcaStore.fetchAll()])
 
     notifySuccess('Importación completada')
     emit('imported')
@@ -371,4 +395,13 @@ async function ejecutarImportacion(): Promise<void> {
     importando.value = false
   }
 }
+
+watch(
+  () => filtroMarca.value,
+  () => {
+    if (filtroMarca.value) {
+      onArchivoSeleccionado(archivo.value)
+    }
+  },
+)
 </script>

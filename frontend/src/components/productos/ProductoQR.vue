@@ -47,7 +47,7 @@ interface Props {
 }
 const props = withDefaults(defineProps<Props>(), { qrCode: '' })
 
-const { generarDataUrl, buildQrContent, descargarQR, addContentBreak } = useQR()
+const { generarDataUrl, buildQrContent, descargarQR } = useQR()
 const qrDataUrl = ref('')
 const qrContent = ref('')
 const loading = ref(false)

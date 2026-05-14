@@ -5,15 +5,15 @@
 const CategoriaService = {
 
   getAll() {
-    const cache = CacheService.getScriptCache()
+    /*const cache = CacheService.getScriptCache()
     const cached = cache.get('categorias_all')
-    if (cached) return JSON.parse(cached)
+    if (cached) return JSON.parse(cached)*/
 
     const data = Sheets.getAll('Categorias')
       .filter(c => c.activo === true || c.activo === 'TRUE' || c.activo === 1)
       .map(this._mapear)
 
-    cache.put('categorias_all', JSON.stringify(data), 600) // 10 min
+    //cache.put('categorias_all', JSON.stringify(data), 600) // 10 min
     return data
   },
 
@@ -38,7 +38,7 @@ const CategoriaService = {
     }
 
     Sheets.insert('Categorias', nueva)
-    CacheService.getScriptCache().remove('categorias_all')
+    //CacheService.getScriptCache().remove('categorias_all')
     LogService.registrar(session.userId, 'CREATE', 'Categorias', null, 'Categoría: ' + nueva.nombre)
     return this._mapear(nueva)
   },
@@ -69,7 +69,7 @@ const CategoriaService = {
     if (payload.activo !== undefined)      cambios.activo = payload.activo
 
     const actualizada = Sheets.update('Categorias', payload.id, cambios)
-    CacheService.getScriptCache().remove('categorias_all')
+    //CacheService.getScriptCache().remove('categorias_all')
     LogService.registrar(session.userId, 'UPDATE', 'Categorias', null, 'ID: ' + payload.id)
     return this._mapear(actualizada)
   },

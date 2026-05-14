@@ -20,7 +20,7 @@ const emit = defineEmits<{
 const authStore = useAuthStore()
 const canEdit = computed(() => authStore.can('productos.editar'))
 const canViewPurchasePrice = computed(() => authStore.can('productos.editar'))
-const paginacion = { rowsPerPage: 12 }
+const paginacion = { rowsPerPage: 10 }
 
 const columnas = computed<QTableColumn[]>(() => {
   const cols: QTableColumn[] = [

@@ -53,7 +53,7 @@
                   flat
                   bordered
                   :class="{ agotado: p.stock <= 0 }"
-                  @click="pos.agregarDesdeCatalogo(p)"
+                  @click="agregarDesdeResultado(p)"
                 >
                   <ProductoImagenIFrame
                     v-if="p.imagenUrl"
@@ -219,6 +219,7 @@ import type { ProductoCatalogo } from 'src/types'
 import ProductoBuscador from 'src/components/pos/ProductoBuscador.vue'
 import CarritoItem from 'src/components/pos/CarritoItem.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
+import { useNotify } from 'src/composables/useNotify.ts'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
@@ -226,6 +227,7 @@ const cataloStore = useCataloStore()
 const facturaStore = useFacturaStore()
 const $q = useQuasar()
 const pos = usePOS()
+const { notifyWarning } = useNotify()
 
 const sucursalActiva = ref(authStore.sucursalId ?? '')
 const productosCatalogo = ref<ProductoCatalogo[]>([])
@@ -239,6 +241,7 @@ const opcionesSucursal = computed(() =>
 
 function agregarDesdeResultado(p: ProductoCatalogo): void {
   pos.agregarDesdeCatalogo(p)
+  //notifyWarning('Sin Stock o sin precio')
 }
 
 function activarEscaner(): void {
