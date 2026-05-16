@@ -7,7 +7,7 @@
         <div class="text-muted text-body2 q-mt-xs">Control de stock por sucursal</div>
       </div>
       <q-space />
-      <div class="row q-gutter-sm">
+      <div class="row q-gutter-xs q-mx-sm">
         <q-btn
           outline
           color="positive"
@@ -32,11 +32,29 @@
         >
           <q-tooltip v-if="!authStore.isGlobal">Solo Admin/Supervisor</q-tooltip>
         </q-btn>
+
+        <!--        <div class="col-12 col-md-3">-->
+        <q-select
+          v-model="sucursalActiva"
+          :options="opcionesSucursal"
+          label="Sucursal"
+          outlined
+          dense
+          emit-value
+          map-options
+          style="width: 250px"
+          :disable="!authStore.isGlobal"
+          @update:model-value="cargarDatos"
+          :loading="sucursalStore.loading"
+        >
+          <template #prepend><q-icon name="store" /></template>
+        </q-select>
+        <!--        </div>-->
       </div>
     </div>
 
     <!-- Selector de sucursal -->
-    <q-card class="sgi-card q-mb-md" flat>
+    <q-card v-if="false" class="sgi-card q-mb-md" flat>
       <q-expansion-item
         icon="tune"
         label="Filtros y búsqueda"
@@ -45,77 +63,102 @@
         :default-opened="!esMovil"
         header-class="sgi-filter-toggle"
       >
-      <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
-        <div class="col-12 col-sm-4">
-          <q-select
-            v-model="sucursalActiva"
-            :options="opcionesSucursal"
-            label="Sucursal"
-            outlined
-            dense
-            emit-value
-            map-options
-            :disable="!authStore.isGlobal"
-            @update:model-value="cargarDatos"
-          >
-            <template #prepend><q-icon name="store" /></template>
-          </q-select>
-        </div>
-        <div class="col-12 col-sm-4">
-          <q-input v-model="busqueda" placeholder="Buscar producto…" outlined dense clearable>
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-        </div>
-        <div class="col-auto">
-          <q-btn
-            flat
-            round
-            icon="refresh"
-            color="primary"
-            :loading="loadingStock"
-            @click="cargarDatos"
-          >
-            <q-tooltip>Recargar</q-tooltip>
-          </q-btn>
-        </div>
-        <q-space />
+        <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
+          <div class="col-12 col-sm-2">
+            <q-select
+              v-model="sucursalActiva"
+              :options="opcionesSucursal"
+              label="Sucursal"
+              outlined
+              dense
+              emit-value
+              map-options
+              :disable="!authStore.isGlobal"
+              @update:model-value="cargarDatos"
+            >
+              <template #prepend><q-icon name="store" /></template>
+            </q-select>
+          </div>
+          <div class="col-12 col-sm-3">
+            <q-input v-model="busqueda" placeholder="Buscar producto…" outlined dense clearable>
+              <template #prepend><q-icon name="search" /></template>
+            </q-input>
+          </div>
 
-        <!-- KPIs rápidos -->
-        <div class="row q-gutter-md">
-          <div class="text-center">
-            <div class="text-h6 text-weight-bold text-primary">{{ stockFiltrado.length }}</div>
-            <div class="text-caption text-muted">Productos</div>
+          <div class="col-12 col-sm-2">
+            <q-select
+              v-model="categoriaFiltro"
+              :options="[{ label: 'Todas las categorías', value: null }, ...categoriaStore.options]"
+              label="Categoría"
+              outlined
+              dense
+              emit-value
+              map-options
+            />
           </div>
-          <q-separator vertical />
-          <div class="text-center">
-            <div class="text-h6 text-weight-bold text-negative">{{ alertas.length }}</div>
-            <div class="text-caption text-muted">Alertas</div>
+          <div class="col-12 col-sm-2">
+            <q-select
+              v-model="marcaFiltro"
+              :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
+              label="Marca"
+              outlined
+              dense
+              emit-value
+              map-options
+            />
           </div>
-          <q-separator vertical />
-          <div class="text-center">
-            <div class="text-h6 text-weight-bold text-positive">{{ totalUnidades }}</div>
-            <div class="text-caption text-muted">Unidades</div>
+
+          <div class="col-auto">
+            <q-btn
+              flat
+              round
+              icon="refresh"
+              color="primary"
+              :loading="loadingStock"
+              @click="cargarDatos"
+            >
+              <q-tooltip>Recargar</q-tooltip>
+            </q-btn>
           </div>
-        </div>
-      </q-card-section>
+          <q-space />
+
+          <!-- KPIs rápidos -->
+          <div class="row q-gutter-md">
+            <div class="text-center">
+              <div class="text-h6 text-weight-bold text-primary">{{ stockFiltrado.length }}</div>
+              <div class="text-caption text-muted">Productos</div>
+            </div>
+            <q-separator vertical />
+            <div class="text-center">
+              <div class="text-h6 text-weight-bold text-negative">{{ alertas.length }}</div>
+              <div class="text-caption text-muted">Alertas</div>
+            </div>
+            <q-separator vertical />
+            <div class="text-center">
+              <div class="text-h6 text-weight-bold text-positive">{{ totalUnidades }}</div>
+              <div class="text-caption text-muted">Unidades</div>
+            </div>
+          </div>
+        </q-card-section>
       </q-expansion-item>
     </q-card>
 
     <!-- Alertas de stock bajo -->
     <q-banner
       v-if="alertas.length > 0"
-      class="bg-orange-1 rounded-borders q-mb-md"
+      class="bg-orange-1 text-orange-10 rounded-borders q-mb-md"
       dense
     >
       <template #avatar><q-icon name="warning" color="warning" /></template>
-      <span class="text-warning-c">
-      <strong >{{ alertas.length }} producto(s) con stock bajo.</strong>
-        {{ alertas.map((a) => a.sku).join(', ') }} </span>
+      <span class="">
+        <strong>{{ alertas.length }} producto(s) con stock bajo.</strong>
+        {{ alertas.map((a) => a.sku).join(', ') }}
+      </span>
     </q-banner>
 
     <!-- Tabs: Stock | Movimientos -->
     <q-card class="sgi-card" flat>
-      <q-tabs v-model="tabActivo" dense align="left" class="q-px-md q-pt-sm">
+      <q-tabs v-model="tabActivo" dense align="left" class="q-px-md q-py-xs">
         <q-tab name="stock" icon="warehouse" label="Stock actual" />
         <q-tab name="movimientos" icon="history" label="Movimientos" />
       </q-tabs>
@@ -124,14 +167,64 @@
       <q-tab-panels v-model="tabActivo" animated>
         <!-- Tab: Stock -->
         <q-tab-panel name="stock" class="q-pa-none">
+          <q-card-section class="row q-col-gutter-sm items-center q-pb-sm">
+            <div class="text-subtitle1 text-weight-bold">Stock Actual</div>
+            <q-space />
+            <!-- Filtros inline -->
+            <div class="col-12 col-sm-3">
+              <q-input v-model="busqueda" placeholder="Buscar producto…" outlined dense clearable>
+                <template #prepend><q-icon name="search" /></template>
+              </q-input>
+            </div>
+            <div class="col-12 col-sm-2">
+              <q-select
+                v-model="categoriaFiltro"
+                :options="categoriaStore.options"
+                label="Categoría"
+                outlined
+                dense
+                emit-value
+                map-options
+                clearable
+                :loading="categoriaStore.loading"
+              />
+            </div>
+            <div class="col-12 col-sm-2">
+              <q-select
+                v-model="marcaFiltro"
+                :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
+                label="Marca"
+                outlined
+                dense
+                emit-value
+                map-options
+                clearable
+                :loading="marcaStore.loading"
+              />
+            </div>
+
+            <div class="col-auto">
+              <q-btn
+                flat
+                round
+                icon="refresh"
+                color="primary"
+                :loading="loadingStock"
+                @click="cargarDatos"
+              >
+                <q-tooltip>Recargar</q-tooltip>
+              </q-btn>
+            </div>
+          </q-card-section>
+
           <q-table
             :rows="stockFiltrado"
             :columns="columnasStock"
             :loading="loadingStock"
             row-key="id"
-            flat
+            dense
             class="sgi-table"
-            :pagination="{ rowsPerPage: 20 }"
+            :pagination="{ rowsPerPage: 10 }"
             no-data-label="No hay registros de stock para esta sucursal"
           >
             <!-- Imagen -->
@@ -151,18 +244,58 @@
               </q-td>
             </template>
 
+            <template #body-cell-nombre="{ value }">
+              <q-td>
+                <div class="text-weight-medium">{{ truncate(value) }}</div>
+                <q-tooltip v-if="value.length > 50">
+                  {{ value }}
+                </q-tooltip>
+              </q-td>
+            </template>
+
+            <template #body-cell-categoriaId="{ value }">
+              <q-td>
+                <!--                <q-chip
+                  v-if="categoriaStore.getById(value)"
+                  dense
+                  outline
+                  size="sm"
+                  color="blue-12"
+                  text-color="white"
+                  class="q-pa-md"
+                >
+                  {{ categoriaStore.getById(value)?.nombre }}
+                </q-chip>-->
+                <span v-if="categoriaStore.getById(value)">
+                  {{ categoriaStore.getById(value)?.nombre }}
+                </span>
+                <span v-else class="text-muted">—</span>
+              </q-td>
+            </template>
+
             <!-- Stock con indicador -->
             <template #body-cell-stockActual="{ row }">
               <q-td class="text-center">
                 <q-chip
                   dense
+                  outline
                   :color="row.stockBajo ? 'negative' : 'positive'"
-                  text-color="white"
+                  text-color=""
                   :icon="row.stockBajo ? 'warning' : 'check'"
                 >
-                  {{ row.stockActual }} {{ row.unidad }}
+                  {{ row.stockActual }} {{ row.stockActual > 1 ? row.unidad + 'es' : row.unidad }}
                 </q-chip>
-                <div class="text-caption text-muted">Mín: {{ row.stockMinimo }}</div>
+                <q-chip
+                  v-if="row.stockBajo"
+                  dense
+                  outline
+                  :color="'info'"
+                  text-color=""
+                  :icon="'info'"
+                  size="sm"
+                >
+                  Minimo: {{ row.stockMinimo }}
+                </q-chip>
               </q-td>
             </template>
 
@@ -188,7 +321,11 @@
 
     <!-- Dialogs -->
     <q-dialog v-model="dialogEntrada" persistent>
-      <EntradaForm @saved="onMovimientoGuardado" @cancelled="dialogEntrada = false" />
+      <EntradaForm
+        @saved="onMovimientoGuardado"
+        @cancelled="dialogEntrada = false"
+        :stock-inventario="stock"
+      />
     </q-dialog>
     <q-dialog v-model="dialogSalida" persistent>
       <SalidaForm @saved="onMovimientoGuardado" @cancelled="dialogSalida = false" />
@@ -205,12 +342,16 @@ import { useQuasar, type QTableColumn } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
 import { inventarioService } from 'src/services/inventarioService'
+import { useCategoriaStore } from 'src/stores/categoriaStore.ts'
+import { useMarcaStore } from 'src/stores/marcaStore.ts'
+import { truncate } from 'src/utils/formatters.ts'
 import type { InventarioItem } from 'src/types'
+import MovimientosTable from 'src/components/inventario/MovimientosTable.vue'
 import EntradaForm from 'src/components/inventario/EntradaForm.vue'
 import SalidaForm from 'src/components/inventario/SalidaForm.vue'
 import TransferenciaForm from 'src/components/inventario/TransferenciaForm.vue'
-import MovimientosTable from 'src/components/inventario/MovimientosTable.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
+import { useProductoStore } from 'src/stores/productoStore.ts'
 
 type InventarioRow = InventarioItem & {
   stockMinimo: number
@@ -218,6 +359,8 @@ type InventarioRow = InventarioItem & {
   sku: string
   nombre: string
   marca: string
+  marcaId: string
+  categoriaId: string
   unidad: string
   imagenUrl: string
   imagenLocation: string
@@ -225,12 +368,17 @@ type InventarioRow = InventarioItem & {
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
+const categoriaStore = useCategoriaStore()
+const marcaStore = useMarcaStore()
+const productoStore = useProductoStore()
 const $q = useQuasar()
 const esMovil = computed(() => $q.screen.lt.md)
 
 // ── State ──────────────────────────────────────────────────────
-const sucursalActiva = ref(authStore.sucursalId ?? '')
+const sucursalActiva = ref(authStore.isGlobal ? '' : (authStore.sucursalId ?? ''))
 const busqueda = ref('')
+const categoriaFiltro = ref(null)
+const marcaFiltro = ref('')
 const tabActivo = ref('stock')
 const stock = ref<InventarioRow[]>([])
 const movimientos = ref([])
@@ -252,25 +400,31 @@ const opcionesSucursal = computed(() =>
 
 const stockFiltrado = computed(() => {
   let products = stock.value
-  if (!busqueda.value) return stock.value
-  const q = busqueda.value.toLowerCase()
-  products = stock.value.filter(
-    (s) =>
-      String(s.sku ?? '')
-        .toLowerCase()
-        .includes(q) ||
-      String(s.nombre ?? '')
-        .toLowerCase()
-        .includes(q) ||
-      String(s.marca ?? '')
-        .toLowerCase()
-        .includes(q),
-  )
-  /*  products = products.map((p) => ({
-    ...p,
-    imagenLocation: p.imagenUrl ? 'drive' : 'local',
-    imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
-  }))*/
+  if (busqueda.value) {
+    const q = busqueda.value.toLowerCase()
+    products = products.filter(
+      (s) =>
+        String(s.sku ?? '')
+          .toLowerCase()
+          .includes(q) ||
+        String(s.nombre ?? '')
+          .toLowerCase()
+          .includes(q) ||
+        String(s.marca ?? '')
+          .toLowerCase()
+          .includes(q),
+    )
+  }
+
+  if (categoriaFiltro.value) {
+    products = products.filter((p) => p.categoriaId === categoriaFiltro.value)
+  }
+
+  if (marcaFiltro.value) {
+    products = products.filter(
+      (p) => p.marca === marcaFiltro.value || p.marcaId === marcaFiltro.value,
+    )
+  }
 
   return products
 })
@@ -281,6 +435,7 @@ const columnasStock: QTableColumn[] = [
   { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:52px' },
   { name: 'sku', label: 'SKU', field: 'sku', align: 'left', sortable: true },
   { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
+  { name: 'categoriaId', label: 'Categoria', field: 'categoriaId', align: 'left', sortable: true },
   { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
   { name: 'stockActual', label: 'Stock', field: 'stockActual', align: 'center', sortable: true },
   { name: 'fechaActualizacion', label: 'Actualizado', field: 'fechaActualizacion', align: 'left' },
@@ -301,15 +456,13 @@ async function cargarStock(): Promise<void> {
       sucursalActiva.value,
     )) as InventarioRow[]
 
-    stock.value = stock.value.map((p) => ({
-      ...p,
-      imagenLocation: p.imagenUrl ? 'drive' : 'local',
-      imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
-    }))
+    console.log('stock.value', stock.value)
 
-    alertas.value = (await inventarioService.getAlertasStock(
+    /*alertas.value = (await inventarioService.getAlertasStock(
       sucursalActiva.value,
-    )) as InventarioRow[]
+    )) as InventarioRow[]*/
+
+    alertas.value = stock.value.filter((s) => s.stockBajo)
   } catch (e) {
     console.error(e)
   } finally {
@@ -322,6 +475,7 @@ async function cargarMovimientos(): Promise<void> {
   loadingMovimientos.value = true
   try {
     movimientos.value = (await inventarioService.getMovimientos(sucursalActiva.value)) as never[]
+    console.log('movimientos.value', movimientos.value)
   } catch (e) {
     console.error(e)
   } finally {
@@ -342,9 +496,13 @@ function onMovimientoGuardado(): void {
 
 onMounted(async () => {
   if (sucursalStore.items.length === 0) await sucursalStore.fetchAll()
+  if (categoriaStore.items.length === 0 || marcaStore.items.length === 0)
+    await Promise.all([categoriaStore.fetchAll(), marcaStore.fetchAll()])
   if (!sucursalActiva.value && sucursalStore.activas.length > 0) {
     sucursalActiva.value = sucursalStore.activas[0].id
+    await cargarDatos()
   }
-  await cargarDatos()
+  productoStore.forceReload()
+  await productoStore.fetchAll()
 })
 </script>

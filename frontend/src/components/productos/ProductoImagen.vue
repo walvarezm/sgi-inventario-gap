@@ -69,18 +69,25 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { fileToBase64, resizeImage, validateImageFile } from 'src/utils/qrUtils'
+import {
+  fileToBase64,
+  normalizeStrictImageName,
+  resizeImage,
+  validateImageFile,
+} from 'src/utils/qrUtils'
 import { productoService } from 'src/services/productoService'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
 
 interface Props {
   modelValue: string
   productoId?: string
+  productoSku?: string
   imagenLocation?: string
 }
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   productoId: '',
+  productoSku: '',
   imagenLocation: 'local',
 })
 const emit = defineEmits<{
@@ -126,10 +133,11 @@ async function onFileChange(event: Event): Promise<void> {
     const resized = await resizeImage(file, 800)
     const resizedFile = new File([resized], file.name, { type: file.type })
     const base64 = await fileToBase64(resizedFile)
+    const nameImage = normalizeStrictImageName(props.productoSku)
     const url = await productoService.subirImagen({
       base64,
       mimeType: file.type,
-      nombre: `producto_${props.productoId || Date.now()}.${file.type.split('/')[1]}`,
+      nombre: nameImage || `producto_${props.productoId || Date.now()}.${file.type.split('/')[1]}`,
       productoId: props.productoId,
     })
     imagenLocation.value = 'drive'

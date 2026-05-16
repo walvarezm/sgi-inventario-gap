@@ -1,5 +1,5 @@
 <template>
-  <q-card class="sgi-card" style="min-width:520px; max-width:580px">
+  <q-card class="sgi-card" style="min-width: 580px; max-width: 700px">
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6 text-weight-bold">
         <q-icon name="swap_horiz" color="primary" class="q-mr-sm" />
@@ -11,12 +11,17 @@
 
     <q-card-section>
       <q-form ref="formRef" @submit.prevent="handleSubmit" class="q-gutter-sm">
-
         <q-select
           v-model="productoSeleccionado"
-          :options="opcionesProducto" label="Producto *"
-          outlined dense use-input input-debounce="300"
-          emit-value map-options :rules="[required]"
+          :options="opcionesProducto"
+          label="Producto *"
+          outlined
+          dense
+          use-input
+          input-debounce="300"
+          emit-value
+          map-options
+          :rules="[required]"
           @filter="filtrarProductos"
         >
           <template #prepend><q-icon name="inventory_2" /></template>
@@ -26,8 +31,13 @@
           <div class="col-5">
             <q-select
               v-model="form.sucursalOrigen"
-              :options="opcionesSucursal" label="Sucursal Origen *"
-              outlined dense emit-value map-options :rules="[required]"
+              :options="opcionesSucursal"
+              label="Sucursal Origen *"
+              outlined
+              dense
+              emit-value
+              map-options
+              :rules="[required]"
             >
               <template #prepend><q-icon name="store" color="negative" /></template>
             </q-select>
@@ -40,8 +50,13 @@
           <div class="col-5">
             <q-select
               v-model="form.sucursalDestino"
-              :options="opcionesDestinoFiltradas" label="Sucursal Destino *"
-              outlined dense emit-value map-options :rules="[required]"
+              :options="opcionesDestinoFiltradas"
+              label="Sucursal Destino *"
+              outlined
+              dense
+              emit-value
+              map-options
+              :rules="[required]"
             >
               <template #prepend><q-icon name="store" color="positive" /></template>
             </q-select>
@@ -51,32 +66,56 @@
         <div class="row q-col-gutter-sm">
           <div class="col-6">
             <q-input
-              v-model.number="form.cantidad" label="Cantidad *"
-              outlined dense type="number"
+              v-model.number="form.cantidad"
+              label="Cantidad *"
+              outlined
+              dense
+              type="number"
               :rules="[required, positiveNumber, validarStock]"
               :suffix="unidadProducto"
             />
           </div>
           <div class="col-6">
-            <q-banner v-if="stockOrigen !== null" class="rounded-borders" :class="stockOrigen > 0 ? 'bg-blue-1' : 'bg-red-1'" dense>
+            <q-banner
+              v-if="stockOrigen !== null"
+              class="rounded-borders"
+              :class="stockOrigen > 0 ? 'bg-blue-1 text-blue-10' : 'bg-red-1 text-red-10'"
+              dense
+            >
               <template #avatar>
-                <q-icon :name="stockOrigen > 0 ? 'info' : 'warning'"
-                  :color="stockOrigen > 0 ? 'info' : 'negative'" />
+                <q-icon
+                  :name="stockOrigen > 0 ? 'info' : 'warning'"
+                  :color="stockOrigen > 0 ? 'info' : 'negative'"
+                />
               </template>
-              Disponible en origen: <strong>{{ stockOrigen }}</strong>
+              Disponible en origen:
+              <strong>{{ stockOrigen }}</strong>
             </q-banner>
           </div>
         </div>
 
-        <q-input v-model="form.notas" label="Notas" outlined dense type="textarea" rows="2" autogrow />
+        <q-input
+          v-model="form.notas"
+          label="Notas"
+          outlined
+          dense
+          type="textarea"
+          rows="2"
+          autogrow
+        />
       </q-form>
     </q-card-section>
 
     <q-card-actions align="right" class="q-px-md q-pb-md">
       <q-btn label="Cancelar" flat color="grey" v-close-popup />
       <q-btn
-        label="Transferir" color="primary" unelevated icon="swap_horiz"
-        :loading="loading" @click="handleSubmit"
+        label="Transferir"
+        color="primary"
+        unelevated
+        icon="swap_horiz"
+        :loading="loading"
+        :disable="form.cantidad <= 0 || stockOrigen !== null  && form.cantidad > stockOrigen"
+        @click="handleSubmit"
       />
     </q-card-actions>
   </q-card>
@@ -121,7 +160,9 @@ const opcionesProducto = ref(
   productoStore.activos.map((p) => ({ label: `[${p.sku}] ${p.nombre}`, value: p.id })),
 )
 
-const unidadProducto = computed(() => productoStore.getById(productoSeleccionado.value ?? '')?.unidad ?? '')
+const unidadProducto = computed(
+  () => productoStore.getById(productoSeleccionado.value ?? '')?.unidad ?? '',
+)
 
 const validarStock = (val: number): boolean | string => {
   if (stockOrigen.value === null) return true
@@ -140,9 +181,17 @@ function filtrarProductos(val: string, update: (fn: () => void) => void) {
 watch([productoSeleccionado, () => form.value.sucursalOrigen], async () => {
   if (productoSeleccionado.value && form.value.sucursalOrigen) {
     try {
-      const s = await inventarioService.getStockProducto(productoSeleccionado.value, form.value.sucursalOrigen)
+      loading.value = true
+      const s = await inventarioService.getStockProducto(
+        productoSeleccionado.value,
+        form.value.sucursalOrigen,
+      )
       stockOrigen.value = s.stockActual
-    } catch { stockOrigen.value = 0 }
+    } catch {
+      stockOrigen.value = 0
+    } finally {
+      loading.value = false
+    }
   } else {
     stockOrigen.value = null
   }

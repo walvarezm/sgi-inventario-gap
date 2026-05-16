@@ -22,7 +22,11 @@
         <div class="col-12 col-md-3">
           <q-select
             v-model="filtroMarca"
-            :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
+            :options="[
+              { label: 'Todas las marcas', value: null },
+              { label: 'ZAFIRO', value: 'ZAFIRO' },
+              ...marcaStore.optionsName,
+            ]"
             label="Marca"
             outlined
             dense
@@ -310,7 +314,12 @@ async function onArchivoSeleccionado(file: File | readonly File[] | null): Promi
     //if (filtroMarca.value) productosRaw = productosRaw.filter((p) => p.marca === filtroMarca.value)
     productosRows.value = productosRaw
       .map(mapProductoRow)
-      .filter((row) => (row.sku || row.nombre || row.marca) && row.marca === filtroMarca.value)
+      .filter(
+        (row) =>
+          (row.sku || row.nombre || row.marca) &&
+          row.marca === filtroMarca.value &&
+          row.activo === true,
+      )
 
     //stockRows.value = stockRaw.map(mapStockRow).filter((row) => row.sku || row.sucursal)
     stockRows.value = stockRaw.map(mapStockRow).filter((row) => {

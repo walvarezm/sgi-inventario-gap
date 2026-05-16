@@ -49,3 +49,17 @@ export function drivePreviewUrl(fileId: string): string {
   //return `https://drive.google.com/uc?export=view&id=${fileId}`
   //return `https://drive.google.com/file/d/${fileId}/preview`
 }
+
+export function normalizeStrictImageName(sku: string): string {
+  if (!sku) return ''
+
+  return sku
+    .toString()
+    .normalize('NFD') // Separa la letra base de los acentos (é -> e + ´)
+    .replace(/[\u0300-\u036f]/g, '') // Elimina los marcas de acento
+    .toUpperCase() // Convierte a mayúsculas
+    .replace(/[^A-Z0-9]/g, '_') // Reemplaza no alfanuméricos por '_'
+    .replace(/_+/g, '_') // Limpia guiones bajos repetidos
+    .replace(/^_|_$/g, '') // (Opcional) Elimina guiones bajos al inicio o final
+}
+

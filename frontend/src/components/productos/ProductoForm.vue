@@ -18,6 +18,7 @@
               v-model="form.imagenUrl"
               v-model:imagen-location="form.imagenLocation"
               :producto-id="editId"
+              :producto-sku="form.sku"
             />
             <div v-if="isEdit && props.producto?.imagenUrl" class="text-caption text-muted q-mt-sm">
               Si cambias o quitas la imagen y guardas, la imagen anterior dejará de usarse.

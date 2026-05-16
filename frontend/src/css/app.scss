@@ -57,7 +57,8 @@ body.sgi-theme-light {
   --sgi-border: rgba(120, 130, 145, 0.22);
   --sgi-text: #1f2937;
   --sgi-text-muted: #6b7280;
-  --sgi-header-table: #f5f6f8;
+  --sgi-header-table-old: #f5f6f8;
+  --sgi-header-table: #dbdde0;
   --sgi-page-gradient: radial-gradient(circle at top left, rgba(209, 213, 219, 0.3), transparent 28%);
   --sgi-header-bg: linear-gradient(135deg, #fafafa 0%, #f0f2f5 100%);
   --sgi-chip-bg: rgba(75, 85, 99, 0.08);
@@ -78,7 +79,8 @@ body.body--dark.sgi-theme-medium {
   --sgi-border: rgba(222, 226, 232, 0.14);
   --sgi-text: #f7f7f8;
   --sgi-text-muted: #d1d5db;
-  --sgi-header-table: rgba(79, 85, 95, 0.95);
+  --sgi-header-table-old: rgba(79, 85, 95, 0.95);
+  --sgi-header-table: #3F3F40;
   --sgi-page-gradient: radial-gradient(circle at top left, rgba(229, 231, 235, 0.1), transparent 30%);
   --sgi-header-bg: linear-gradient(135deg, #555d68 0%, #454c56 100%);
   --sgi-chip-bg: rgba(243, 244, 246, 0.12);
@@ -99,7 +101,8 @@ body.body--dark.sgi-theme-dark {
   --sgi-border: rgba(255, 255, 255, 0.08);
   --sgi-text: #f8fafc;
   --sgi-text-muted: #a1a1aa;
-  --sgi-header-table: rgba(26, 28, 31, 0.95);
+  --sgi-header-table: #434343;
+  --sgi-header-tabled: rgba(26, 28, 31, 0.95);
   --sgi-page-gradient: radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 26%);
   --sgi-header-bg: linear-gradient(135deg, #131416 0%, #1c1e21 100%);
   --sgi-chip-bg: rgba(255, 255, 255, 0.08);
@@ -192,6 +195,8 @@ body.body--dark.sgi-theme-dark {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
+    padding: 12px 8px !important;
+
   }
 
   tbody tr {

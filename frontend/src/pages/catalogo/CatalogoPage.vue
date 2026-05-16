@@ -70,11 +70,11 @@ const productosMostrados = computed(() => {
   if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
   if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
 
-  lista = lista.map((p) => ({
+/*  lista = lista.map((p) => ({
     ...p,
     imagenLocation: p.imagenUrl ? 'drive' : 'local',
     imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
-  }))
+  }))*/
 
   return lista
 })

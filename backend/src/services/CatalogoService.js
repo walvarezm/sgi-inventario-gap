@@ -43,6 +43,7 @@ const CatalogoService = {
       precioFinal: Number(p.precio_final) || 0,
       stock: stockMap[p.id] !== undefined ? stockMap[p.id] : 0,
       imagenUrl: p.imagen_url || '',
+      imagenLocation: p.imagen_url ? 'drive' : 'local',
       qrCode: p.qr_code || p.sku,
       stockBajo: (stockMap[p.id] || 0) <= Number(p.stock_minimo || 0),
       stockMinimo: p.stock_minimo || 0

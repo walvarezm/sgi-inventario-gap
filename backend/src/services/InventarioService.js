@@ -26,6 +26,8 @@ const InventarioService = {
 
     return inventario.map(i => {
       const p = productosMap[i.producto_id] || {}
+      const imagenUrl = p.imagen_url || ''
+      const imagenLocation = p.imagen_url ? 'drive' : 'local'
       return {
         id: i.id,
         productoId: i.producto_id,
@@ -38,8 +40,11 @@ const InventarioService = {
         sku: p.sku || '',
         nombre: p.nombre || '',
         marca: p.marca || '',
+        marcaId: p.marca_id || '',
+        categoriaId: p.categoria_id || '',
         unidad: p.unidad || '',
-        imagenUrl: p.imagen_url || '',
+        imagenUrl: imagenUrl,
+        imagenLocation: imagenLocation,
       }
     })
   },

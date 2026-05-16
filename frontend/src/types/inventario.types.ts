@@ -19,6 +19,19 @@ export interface InventarioItem {
   fechaActualizacion: string
 }
 
+export interface InventarioRow extends InventarioItem  {
+  stockMinimo: number
+  stockBajo: boolean
+  sku: string
+  nombre: string
+  marca: string
+  marcaId: string
+  categoriaId: string
+  unidad: string
+  imagenUrl: string
+  imagenLocation: string
+}
+
 export interface Movimiento {
   id: string
   tipo: TipoMovimiento

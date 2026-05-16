@@ -1,5 +1,5 @@
 <template>
-  <q-card class="sgi-card" style="min-width:480px; max-width:540px">
+  <q-card class="sgi-card" style="min-width: 580px; max-width: 640px">
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6 text-weight-bold">
         <q-icon name="add_circle" color="positive" class="q-mr-sm" />
@@ -11,18 +11,24 @@
 
     <q-card-section>
       <q-form ref="formRef" @submit.prevent="handleSubmit" class="q-gutter-sm">
-
         <!-- Búsqueda de producto -->
         <q-select
           v-model="productoSeleccionado"
           :options="opcionesProducto"
           label="Producto *"
-          outlined dense use-input input-debounce="300"
-          option-label="label" option-value="value"
-          emit-value map-options
+          outlined
+          dense
+          use-input
+          input-debounce="300"
+          option-label="label"
+          option-value="value"
+          emit-value
+          map-options
+          clearable
           :rules="[required]"
           @filter="filtrarProductos"
         >
+          <q-tooltip v-if="productoSeleccionado">{{ unidadProducto?.nombre }}</q-tooltip>
           <template #prepend><q-icon name="inventory_2" /></template>
           <template #no-option>
             <q-item><q-item-section class="text-muted">Sin resultados</q-item-section></q-item>
@@ -34,7 +40,10 @@
           v-model="form.sucursalId"
           :options="opcionesSucursal"
           label="Sucursal destino *"
-          outlined dense emit-value map-options
+          outlined
+          dense
+          emit-value
+          map-options
           :rules="[required]"
           :disable="!authStore.isGlobal"
         >
@@ -46,16 +55,21 @@
           <div class="col-6">
             <q-input
               v-model.number="form.cantidad"
-              label="Cantidad *" outlined dense type="number"
+              label="Cantidad *"
+              outlined
+              dense
+              type="number"
               :rules="[required, positiveNumber]"
-              :suffix="unidadProducto"
+              :suffix="unidadProducto?.unidad"
             />
           </div>
           <!-- Referencia -->
           <div class="col-6">
             <q-input
               v-model="form.referencia"
-              label="Referencia / N° Orden" outlined dense
+              label="Referencia / N° Orden"
+              outlined
+              dense
               hint="Nro. factura compra, remito, etc."
             />
           </div>
@@ -64,15 +78,25 @@
         <!-- Notas -->
         <q-input
           v-model="form.notas"
-          label="Notas" outlined dense type="textarea"
-          rows="2" autogrow
+          label="Notas"
+          outlined
+          dense
+          type="textarea"
+          rows="2"
+          autogrow
         />
 
         <!-- Stock actual informativo -->
-        <q-banner v-if="stockActual !== null" class="bg-blue-1 rounded-borders" dense>
+        <q-banner
+          v-if="!loading && stockActual !== null"
+          class="bg-blue-1 text-blue-10 rounded-borders"
+          dense
+        >
           <template #avatar><q-icon name="info" color="info" /></template>
-          Stock actual en esta sucursal: <strong>{{ stockActual }}</strong> {{ unidadProducto }}
-          → Después de la entrada: <strong>{{ stockActual + (form.cantidad || 0) }}</strong>
+          Stock actual en esta sucursal:
+          <strong>{{ stockActual }}</strong>
+          {{ unidadProducto?.unidad }} → Después de la entrada:
+          <strong>{{ stockActual + (form.cantidad || 0) }}</strong>
         </q-banner>
       </q-form>
     </q-card-section>
@@ -80,8 +104,12 @@
     <q-card-actions align="right" class="q-px-md q-pb-md">
       <q-btn label="Cancelar" flat color="grey" v-close-popup />
       <q-btn
-        label="Registrar entrada" color="positive" unelevated icon="add"
-        :loading="loading" @click="handleSubmit"
+        label="Registrar entrada"
+        color="positive"
+        unelevated
+        icon="add"
+        :loading="loading"
+        @click="handleSubmit"
       />
     </q-card-actions>
   </q-card>
@@ -96,7 +124,14 @@ import { useSucursalStore } from 'src/stores/sucursalStore'
 import { inventarioService } from 'src/services/inventarioService'
 import { required, positiveNumber } from 'src/utils/validators'
 import { useNotify } from 'src/composables/useNotify'
-import type { EntradaPayload } from 'src/types'
+import { truncate } from 'src/utils/formatters.ts'
+import type { EntradaPayload, InventarioRow } from 'src/types'
+
+interface Props {
+  stockInventario: InventarioRow[]
+  loadings?: boolean
+}
+const props = withDefaults(defineProps<Props>(), { loadings: false })
 
 const emit = defineEmits<{ saved: []; cancelled: [] }>()
 
@@ -125,45 +160,66 @@ const opcionesSucursal = computed(() =>
 )
 
 const opcionesProducto = ref(
-  productoStore.activos.map((p) => ({
-    label: `[${p.sku}] ${p.nombre} — ${p.marca}`,
-    value: p.id,
-    unidad: p.unidad,
-  })),
+  //props.stockInventario.slice(0,5)
+  productoStore.items
+    .map((p) => ({
+      label: truncate(`[${p.marca} | ${p.sku}] ${p.nombre}`),
+      value: p.id,
+      unidad: p.unidad,
+    }))
+    .slice(0, 5),
 )
+
+//const productosPreview = computed(() => productosRows.value.slice(0, 8))
 
 const unidadProducto = computed(() => {
   const p = productoStore.getById(productoSeleccionado.value ?? '')
-  return p?.unidad ?? ''
+  //return p?.unidad ?? ''
+  return p
 })
+//const unidadProducto = ref('')
 
 function filtrarProductos(val: string, update: (fn: () => void) => void) {
   update(() => {
     const q = val.toLowerCase()
-    opcionesProducto.value = productoStore.activos
-      .filter((p) =>
-        p.sku.toLowerCase().includes(q) ||
-        p.nombre.toLowerCase().includes(q) ||
-        p.marca.toLowerCase().includes(q),
+    opcionesProducto.value = productoStore.items //props.stockInventario
+      .filter(
+        (p) =>
+          p.sku.toLowerCase().includes(q) ||
+          p.nombre.toLowerCase().includes(q) ||
+          p.marca.toLowerCase().includes(q),
       )
-      .map((p) => ({ label: `[${p.sku}] ${p.nombre} — ${p.marca}`, value: p.id, unidad: p.unidad }))
+      .map((p) => ({
+        label: truncate(`[${p.marca} | ${p.sku}] ${p.nombre}`),
+        //label: `[${p.marca} | ${p.sku}] ${truncate(p.nombre, 20)} — (Stock: ${p.stockActual})`,
+        value: p.id,
+        unidad: p.unidad,
+      }))
   })
 }
 
-watch([productoSeleccionado, () => form.value.sucursalId], async () => {
-  if (productoSeleccionado.value && form.value.sucursalId) {
-    try {
-      const s = await inventarioService.getStockProducto(
-        productoSeleccionado.value, form.value.sucursalId,
-      )
-      stockActual.value = s.stockActual
-    } catch {
-      stockActual.value = 0
+watch(
+  [productoSeleccionado, () => form.value.sucursalId],
+  async () => {
+    if (productoSeleccionado.value && form.value.sucursalId) {
+      try {
+        loading.value = true
+        const s = await inventarioService.getStockProducto(
+          productoSeleccionado.value,
+          form.value.sucursalId,
+        )
+        stockActual.value = s.stockActual
+      } catch {
+        stockActual.value = 0
+      } finally {
+        loading.value = false
+      }
+    } else {
+      stockActual.value = null
     }
-  } else {
-    stockActual.value = null
-  }
-})
+  },
+  { immediate: true },
+)
 
 async function handleSubmit(): Promise<void> {
   const valid = await formRef.value?.validate()

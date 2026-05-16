@@ -1,5 +1,5 @@
 <template>
-  <q-card class="sgi-card" style="min-width:480px; max-width:540px">
+  <q-card class="sgi-card" style="min-width: 480px; max-width: 540px">
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6 text-weight-bold">
         <q-icon name="remove_circle" color="negative" class="q-mr-sm" />
@@ -11,13 +11,17 @@
 
     <q-card-section>
       <q-form ref="formRef" @submit.prevent="handleSubmit" class="q-gutter-sm">
-
         <q-select
           v-model="productoSeleccionado"
           :options="opcionesProducto"
           label="Producto *"
-          outlined dense use-input input-debounce="300"
-          emit-value map-options
+          outlined
+          dense
+          use-input
+          input-debounce="300"
+          emit-value
+          map-options
+          clearable
           :rules="[required]"
           @filter="filtrarProductos"
         >
@@ -28,7 +32,10 @@
           v-model="form.sucursalId"
           :options="opcionesSucursal"
           label="Sucursal origen *"
-          outlined dense emit-value map-options
+          outlined
+          dense
+          emit-value
+          map-options
           :rules="[required]"
           :disable="!authStore.isGlobal"
         >
@@ -39,7 +46,10 @@
           <div class="col-6">
             <q-input
               v-model.number="form.cantidad"
-              label="Cantidad *" outlined dense type="number"
+              label="Cantidad *"
+              outlined
+              dense
+              type="number"
               :rules="[required, positiveNumber, validarStock]"
               :suffix="unidadProducto"
             />
@@ -49,16 +59,33 @@
           </div>
         </div>
 
-        <q-input v-model="form.notas" label="Notas" outlined dense type="textarea" rows="2" autogrow />
+        <q-input
+          v-model="form.notas"
+          label="Notas"
+          outlined
+          dense
+          type="textarea"
+          rows="2"
+          autogrow
+        />
 
         <!-- Alerta de stock -->
-        <q-banner v-if="stockActual !== null" :class="stockSuficiente ? 'bg-green-1' : 'bg-red-1'" dense class="rounded-borders">
+        <q-banner
+          v-if="stockActual !== null"
+          :class="stockSuficiente ? 'bg-green-1 text-green-10' : 'bg-red-1 text-red-10'"
+          dense
+          class="rounded-borders"
+        >
           <template #avatar>
-            <q-icon :name="stockSuficiente ? 'check_circle' : 'warning'"
-              :color="stockSuficiente ? 'positive' : 'negative'" />
+            <q-icon
+              :name="stockSuficiente ? 'check_circle' : 'warning'"
+              :color="stockSuficiente ? 'positive' : 'negative'"
+            />
           </template>
-          Stock disponible: <strong>{{ stockActual }}</strong> {{ unidadProducto }}
-          <span v-if="!stockSuficiente" class="text-negative"> — Stock insuficiente</span>
+          Stock disponible:
+          <strong>{{ stockActual }}</strong>
+          {{ unidadProducto }}
+          <span v-if="!stockSuficiente" class="text-negative">— Stock insuficiente</span>
         </q-banner>
       </q-form>
     </q-card-section>
@@ -66,8 +93,12 @@
     <q-card-actions align="right" class="q-px-md q-pb-md">
       <q-btn label="Cancelar" flat color="grey" v-close-popup />
       <q-btn
-        label="Registrar salida" color="negative" unelevated icon="remove"
-        :loading="loading" :disable="!stockSuficiente && stockActual !== null"
+        label="Registrar salida"
+        color="negative"
+        unelevated
+        icon="remove"
+        :loading="loading"
+        :disable="!stockSuficiente && stockActual !== null"
         @click="handleSubmit"
       />
     </q-card-actions>
@@ -104,8 +135,10 @@ const form = ref<Omit<SalidaPayload, 'productoId'>>({
   notas: '',
 })
 
-const stockSuficiente = computed(() =>
-  stockActual.value === null || (form.value.cantidad > 0 && form.value.cantidad <= stockActual.value),
+const stockSuficiente = computed(
+  () =>
+    stockActual.value === null ||
+    (form.value.cantidad > 0 && form.value.cantidad <= stockActual.value),
 )
 
 const opcionesSucursal = computed(() =>
@@ -118,11 +151,14 @@ const opcionesSucursal = computed(() =>
 
 const opcionesProducto = ref(
   productoStore.activos.map((p) => ({
-    label: `[${p.sku}] ${p.nombre} — ${p.marca}`, value: p.id,
+    label: `[${p.sku}] ${p.nombre} — ${p.marca}`,
+    value: p.id,
   })),
 )
 
-const unidadProducto = computed(() => productoStore.getById(productoSeleccionado.value ?? '')?.unidad ?? '')
+const unidadProducto = computed(
+  () => productoStore.getById(productoSeleccionado.value ?? '')?.unidad ?? '',
+)
 
 const validarStock = (val: number): boolean | string => {
   if (stockActual.value === null) return true
@@ -141,9 +177,17 @@ function filtrarProductos(val: string, update: (fn: () => void) => void) {
 watch([productoSeleccionado, () => form.value.sucursalId], async () => {
   if (productoSeleccionado.value && form.value.sucursalId) {
     try {
-      const s = await inventarioService.getStockProducto(productoSeleccionado.value, form.value.sucursalId)
+      loading.value = true
+      const s = await inventarioService.getStockProducto(
+        productoSeleccionado.value,
+        form.value.sucursalId,
+      )
       stockActual.value = s.stockActual
-    } catch { stockActual.value = 0 }
+    } catch {
+      stockActual.value = 0
+    } finally {
+      loading.value = false
+    }
   } else {
     stockActual.value = null
   }
