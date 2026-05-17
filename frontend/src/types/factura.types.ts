@@ -1,74 +1,32 @@
 // =============================================================
-// factura.types.ts — Facturas, POS y detalles
+// factura.types.ts — Compatibilidad histórica con documentos de venta
 // =============================================================
 
-export type TipoFactura = 'FACTURA' | 'NOTA_CREDITO' | 'RECIBO'
-export type EstadoFactura = 'EMITIDA' | 'ANULADA' | 'PENDIENTE'
+export * from './documento-venta.types'
 
-export const TIPO_FACTURA_LABELS: Record<TipoFactura, string> = {
-  FACTURA:      'Factura',
-  NOTA_CREDITO: 'Nota de Crédito',
-  RECIBO:       'Recibo',
-}
+import type {
+  DetalleDocumentoVenta,
+  DocumentoVenta,
+  DocumentoVentaForm,
+  EstadoDocumentoVenta,
+  ItemCarrito as ItemCarritoDocumento,
+  TipoDocumentoVenta,
+} from './documento-venta.types'
+import {
+  ESTADO_DOCUMENTO_VENTA_COLOR,
+  TIPO_DOCUMENTO_VENTA_LABELS,
+} from './documento-venta.types'
 
-export const ESTADO_FACTURA_COLOR: Record<EstadoFactura, string> = {
-  EMITIDA:  'positive',
-  ANULADA:  'negative',
-  PENDIENTE:'warning',
-}
+export type TipoFactura = TipoDocumentoVenta
+export type EstadoFactura = EstadoDocumentoVenta
+export type Factura = DocumentoVenta
+export type FacturaForm = DocumentoVentaForm
+export type DetalleFactura = DetalleDocumentoVenta
+export type DetalleFacturaForm = Omit<
+  DetalleFactura,
+  'id' | 'documentoId' | 'productoNombre' | 'productoSku'
+>
+export type ItemCarrito = ItemCarritoDocumento
 
-export interface DetalleFactura {
-  id: string
-  facturaId: string
-  productoId: string
-  productoNombre: string
-  productoSku: string
-  cantidad: number
-  precioUnitario: number
-  subtotal: number
-}
-
-export type DetalleFacturaForm = Omit<DetalleFactura, 'id' | 'facturaId' | 'productoNombre' | 'productoSku'>
-
-export interface Factura {
-  id: string
-  numero: string
-  tipo: TipoFactura
-  cliente: string
-  sucursalId: string
-  fecha: string
-  subtotal: number
-  impuesto: number
-  total: number
-  estado: EstadoFactura
-  usuarioId: string
-  notas: string
-  detalles?: DetalleFactura[]
-}
-
-export type FacturaForm = {
-  cliente: string
-  sucursalId: string
-  tipo?: TipoFactura
-  notas?: string
-  items: {
-    productoId: string
-    cantidad: number
-    precioUnitario: number
-  }[]
-}
-
-// ── POS ────────────────────────────────────────────────────────
-
-export interface ItemCarrito {
-  productoId: string
-  sku: string
-  nombre: string
-  marca: string
-  imagenUrl: string
-  imagenLocation: string
-  precioUnitario: number
-  cantidad: number
-  subtotal: number
-  stockDisponible: number
-}
+export const TIPO_FACTURA_LABELS: Record<TipoFactura, string> = TIPO_DOCUMENTO_VENTA_LABELS
+export const ESTADO_FACTURA_COLOR: Record<EstadoFactura, string> = ESTADO_DOCUMENTO_VENTA_COLOR

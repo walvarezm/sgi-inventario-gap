@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { ProductoCatalogo } from 'src/types'
 import { cataloService } from 'src/services/cataloService'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
 
@@ -25,6 +26,7 @@ export const useCataloStore = defineStore('catalo', () => {
     if (!forceRefresh && cached && now - cached.ts < CACHE_TTL) {
       return cached.data
     }
+    useLoading(true)
     loading.value = true
     error.value = null
     sucursalIdCurrent.value = sucursalId
@@ -37,6 +39,7 @@ export const useCataloStore = defineStore('catalo', () => {
       throw e
     } finally {
       loading.value = false
+      useLoading(false)
     }
   }
 

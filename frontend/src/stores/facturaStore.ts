@@ -1,50 +1,90 @@
 // =============================================================
-// facturaStore.ts — Estado global de facturas y POS
+// facturaStore.ts — Estado global de documentos de venta y POS
 // =============================================================
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Factura, FacturaForm, ItemCarrito } from 'src/types'
+import type {
+  DocumentoVenta,
+  DocumentoVentaForm,
+  ItemCarrito,
+  MetodoPago,
+  TipoDescuento,
+} from 'src/types'
 import { facturaService } from 'src/services/facturaService'
 
+function round2(value: number): number {
+  return Math.round((Number(value) || 0) * 100) / 100
+}
+
+function calcularDescuentoLinea(
+  precioUnitario: number,
+  cantidad: number,
+  descuentoTipo: TipoDescuento,
+  descuentoValor: number,
+): number {
+  const base = round2(precioUnitario * cantidad)
+  if (descuentoTipo === 'PORCENTAJE') return round2(base * ((descuentoValor || 0) / 100))
+  if (descuentoTipo === 'MONTO') return round2(descuentoValor || 0)
+  return 0
+}
+
+function recalcularItem(item: ItemCarrito): ItemCarrito {
+  const descuentoMonto = calcularDescuentoLinea(
+    item.precioUnitario,
+    item.cantidad,
+    item.descuentoTipo,
+    item.descuentoValor,
+  )
+  return {
+    ...item,
+    descuentoMonto,
+    subtotal: round2((item.precioUnitario * item.cantidad) - descuentoMonto),
+  }
+}
+
 export const useFacturaStore = defineStore('factura', () => {
-  // ── State ────────────────────────────────────────────────
-  const items = ref<Factura[]>([])
+  const items = ref<DocumentoVenta[]>([])
   const carrito = ref<ItemCarrito[]>([])
   const loading = ref(false)
   const saving = ref(false)
   const error = ref<string | null>(null)
 
-  // ── Getters ──────────────────────────────────────────────
-  const emitidas = computed(() => items.value.filter((f) => f.estado === 'EMITIDA'))
-
-  const totalCarrito = computed(() =>
-    carrito.value.reduce((sum, item) => sum + item.subtotal, 0),
+  const emitidas = computed(() => items.value.filter((doc) => doc.estado === 'EMITIDA'))
+  const subtotalCarrito = computed(() => round2(carrito.value.reduce((sum, item) => sum + item.subtotal, 0)))
+  const descuentoTotalCarrito = computed(() =>
+    round2(carrito.value.reduce((sum, item) => sum + item.descuentoMonto, 0)),
   )
-
+  const totalCarrito = computed(() => subtotalCarrito.value)
   const cantidadItemsCarrito = computed(() =>
     carrito.value.reduce((sum, item) => sum + item.cantidad, 0),
   )
 
-  // ── Actions — Facturas ────────────────────────────────────
-  async function fetchAll(filtros?: { sucursalId?: string; estado?: string }): Promise<void> {
+  async function fetchAll(filtros?: {
+    sucursalId?: string
+    estado?: string
+    tipo?: string
+    desde?: string
+    hasta?: string
+  }): Promise<void> {
     loading.value = true
     error.value = null
     try {
       items.value = await facturaService.getAll(filtros)
     } catch (e) {
       error.value = (e as Error).message
+      throw e
     } finally {
       loading.value = false
     }
   }
 
-  async function create(form: FacturaForm): Promise<Factura> {
+  async function create(form: DocumentoVentaForm): Promise<DocumentoVenta> {
     saving.value = true
     error.value = null
     try {
-      const nueva = await facturaService.create(form)
-      items.value.unshift(nueva)
-      return nueva
+      const nuevo = await facturaService.create(form)
+      items.value.unshift(nuevo)
+      return nuevo
     } catch (e) {
       error.value = (e as Error).message
       throw e
@@ -57,8 +97,35 @@ export const useFacturaStore = defineStore('factura', () => {
     saving.value = true
     try {
       await facturaService.anular(id)
-      const idx = items.value.findIndex((f) => f.id === id)
-      if (idx !== -1) items.value[idx] = { ...items.value[idx], estado: 'ANULADA' }
+      const index = items.value.findIndex((doc) => doc.id === id)
+      if (index !== -1) items.value[index] = { ...items.value[index], estado: 'ANULADA' }
+    } catch (e) {
+      error.value = (e as Error).message
+      throw e
+    } finally {
+      saving.value = false
+    }
+  }
+
+  async function convertir(payload: {
+    documentoOrigenId: string
+    tipoDestino: 'FACTURA' | 'VENTA_SIN_FACTURA'
+    pagos?: Array<{
+      metodoPago: MetodoPago
+      monto: number
+      referencia?: string
+      moneda?: string
+      detalle?: string
+    }>
+  }): Promise<DocumentoVenta> {
+    saving.value = true
+    error.value = null
+    try {
+      const convertido = await facturaService.convertir(payload)
+      items.value.unshift(convertido)
+      const origen = items.value.find((doc) => doc.id === payload.documentoOrigenId)
+      if (origen) origen.estado = 'CONVERTIDA'
+      return convertido
     } catch (e) {
       error.value = (e as Error).message
       throw e
@@ -73,25 +140,24 @@ export const useFacturaStore = defineStore('factura', () => {
     if (ventana) {
       ventana.document.write(html)
       ventana.document.close()
-      setTimeout(() => ventana.print(), 500)
+      setTimeout(() => ventana.print(), 400)
     }
   }
 
-  // ── Actions — Carrito POS ─────────────────────────────────
   function agregarAlCarrito(item: ItemCarrito): void {
-    const existe = carrito.value.find((i) => i.productoId === item.productoId)
-    if (existe) {
-      const nuevaCantidad = existe.cantidad + item.cantidad
-      if (nuevaCantidad > existe.stockDisponible) return
-      existe.cantidad = nuevaCantidad
-      existe.subtotal = nuevaCantidad * existe.precioUnitario
-    } else {
-      carrito.value.push({ ...item })
+    const existente = carrito.value.find((entry) => entry.productoId === item.productoId)
+    if (existente) {
+      const nuevaCantidad = existente.cantidad + item.cantidad
+      if (nuevaCantidad > existente.stockDisponible) return
+      existente.cantidad = nuevaCantidad
+      Object.assign(existente, recalcularItem(existente))
+      return
     }
+    carrito.value.push(recalcularItem({ ...item }))
   }
 
   function actualizarCantidad(productoId: string, cantidad: number): void {
-    const item = carrito.value.find((i) => i.productoId === productoId)
+    const item = carrito.value.find((entry) => entry.productoId === productoId)
     if (!item) return
     if (cantidad <= 0) {
       quitarDelCarrito(productoId)
@@ -99,23 +165,65 @@ export const useFacturaStore = defineStore('factura', () => {
     }
     if (cantidad > item.stockDisponible) return
     item.cantidad = cantidad
-    item.subtotal = cantidad * item.precioUnitario
+    Object.assign(item, recalcularItem(item))
+  }
+
+  function actualizarPrecioUnitario(productoId: string, precioUnitario: number): void {
+    const item = carrito.value.find((entry) => entry.productoId === productoId)
+    if (!item) return
+    item.precioUnitario = Math.max(0, round2(precioUnitario))
+    Object.assign(item, recalcularItem(item))
+  }
+
+  function actualizarDescuento(productoId: string, descuentoTipo: TipoDescuento, descuentoValor: number): void {
+    const item = carrito.value.find((entry) => entry.productoId === productoId)
+    if (!item) return
+    item.descuentoTipo = descuentoTipo
+    item.descuentoValor = Math.max(0, round2(descuentoValor))
+    Object.assign(item, recalcularItem(item))
+  }
+
+  function actualizarNotas(productoId: string, notas: string): void {
+    const item = carrito.value.find((entry) => entry.productoId === productoId)
+    if (!item) return
+    item.notas = notas
   }
 
   function quitarDelCarrito(productoId: string): void {
-    carrito.value = carrito.value.filter((i) => i.productoId !== productoId)
+    carrito.value = carrito.value.filter((entry) => entry.productoId !== productoId)
   }
 
   function limpiarCarrito(): void {
     carrito.value = []
   }
 
-  function clearError(): void { error.value = null }
+  function clearError(): void {
+    error.value = null
+  }
 
   return {
-    items, carrito, loading, saving, error,
-    emitidas, totalCarrito, cantidadItemsCarrito,
-    fetchAll, create, anular, imprimirFactura,
-    agregarAlCarrito, actualizarCantidad, quitarDelCarrito, limpiarCarrito, clearError,
+    items,
+    carrito,
+    loading,
+    saving,
+    error,
+    emitidas,
+    subtotalCarrito,
+    descuentoTotalCarrito,
+    totalCarrito,
+    cantidadItemsCarrito,
+    fetchAll,
+    create,
+    anular,
+    convertir,
+    imprimirFactura,
+    agregarAlCarrito,
+    actualizarCantidad,
+    actualizarPrecioUnitario,
+    actualizarDescuento,
+    actualizarNotas,
+    quitarDelCarrito,
+    limpiarCarrito,
+    clearError,
   }
 })

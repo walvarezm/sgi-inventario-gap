@@ -3,6 +3,11 @@
 // =============================================================
 
 const ReporteService = {
+  _esVentaReal(factura) {
+    const tipo = String(factura.tipo || 'FACTURA').trim().toUpperCase()
+    return (tipo === 'FACTURA' || tipo === 'VENTA_SIN_FACTURA') &&
+      String(factura.estado || 'EMITIDA').trim().toUpperCase() === 'EMITIDA'
+  },
 
   /**
    * KPIs del Dashboard para una sucursal o todas.
@@ -28,7 +33,7 @@ const ReporteService = {
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString()
 
     // ── Facturas ──────────────────────────────────────────
-    let facturas = Sheets.getAll('Facturas').filter(f => f.estado === 'EMITIDA')
+    let facturas = Sheets.getAll('Facturas').filter(f => this._esVentaReal(f))
     if (filtroSucursal) {
       facturas = facturas.filter(f => String(f.sucursal_id) === String(filtroSucursal))
     }
@@ -102,7 +107,7 @@ const ReporteService = {
         ? session.sucursalId : null
     )
 
-    let facturas = Sheets.getAll('Facturas').filter(f => f.estado === 'EMITIDA')
+    let facturas = Sheets.getAll('Facturas').filter(f => this._esVentaReal(f))
     if (filtroSucursal) {
       facturas = facturas.filter(f => String(f.sucursal_id) === String(filtroSucursal))
     }
@@ -147,7 +152,7 @@ const ReporteService = {
         ? session.sucursalId : null
     )
 
-    let facturas = Sheets.getAll('Facturas').filter(f => f.estado === 'EMITIDA')
+    let facturas = Sheets.getAll('Facturas').filter(f => this._esVentaReal(f))
     if (filtroSucursal) {
       facturas = facturas.filter(f => String(f.sucursal_id) === String(filtroSucursal))
     }

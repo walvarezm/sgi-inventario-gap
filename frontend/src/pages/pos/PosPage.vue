@@ -1,29 +1,29 @@
 <template>
   <q-page class="sgi-page">
-    <div class="row items-center q-mb-md">
-      <div class="sgi-page-title">Punto de Venta</div>
-      <q-space />
-      <!-- Selector de sucursal -->
-      <q-select
-        v-model="sucursalActiva"
-        :options="opcionesSucursal"
-        outlined
-        dense
-        emit-value
-        map-options
-        style="min-width: 220px"
-        :disable="!authStore.isGlobal"
-        @update:model-value="cargarCatalogo"
-      >
-        <template #prepend><q-icon name="store" /></template>
-      </q-select>
+    <div class="row items-center q-col-gutter-sm q-mb-md">
+      <div class="col-12 col-md">
+        <div class="sgi-page-title">Punto de Venta</div>
+        <div class="text-muted text-body2">Ventas, proformas y cotizaciones desde un solo flujo</div>
+      </div>
+      <div class="col-12 col-md-auto">
+        <q-select
+          v-model="sucursalActiva"
+          :options="opcionesSucursal"
+          outlined
+          dense
+          emit-value
+          map-options
+          style="min-width: 240px"
+          :disable="!authStore.isGlobal"
+          @update:model-value="cargarCatalogo"
+        >
+          <template #prepend><q-icon name="store" /></template>
+        </q-select>
+      </div>
     </div>
 
     <div class="row q-col-gutter-md">
-      <!-- ── Columna izquierda: búsqueda + catálogo ──────── -->
-      <div class="col-12 col-md-7">
-        <!-- Buscador -->
-
+      <div class="col-12 col-lg-7">
         <div class="q-mb-md" style="position: relative">
           <ProductoBuscador
             v-model="pos.busqueda.value"
@@ -33,7 +33,6 @@
           />
         </div>
 
-        <!-- Grid de productos del catálogo (acceso rápido) -->
         <q-card class="sgi-card" flat>
           <q-card-section class="q-pb-sm">
             <div class="text-subtitle2 text-weight-bold">Acceso rápido</div>
@@ -44,48 +43,48 @@
             </div>
             <div v-else class="row q-col-gutter-sm">
               <div
-                v-for="p in productosCatalogo.slice(0, 20)"
-                :key="p.id"
+                v-for="producto in productosCatalogo.slice(0, 20)"
+                :key="producto.id"
                 class="col-6 col-sm-4 col-md-3"
               >
                 <q-card
                   class="producto-rapido-card cursor-pointer"
                   flat
                   bordered
-                  :class="{ agotado: p.stock <= 0 }"
-                  @click="agregarDesdeResultado(p)"
+                  :class="{ agotado: producto.stock <= 0 }"
+                  @click="agregarDesdeResultado(producto)"
                 >
                   <ProductoImagenIFrame
-                    v-if="p.imagenUrl"
-                    :imagen-url="p.imagenUrl"
+                    v-if="producto.imagenUrl"
+                    :imagen-url="producto.imagenUrl"
                     :width="70"
                     :height="70"
-                    :imagen-location="p.imagenLocation"
+                    :imagen-location="producto.imagenLocation"
                   />
 
                   <div class="q-pa-xs">
                     <div class="text-caption ellipsis text-weight-medium">
-                      {{ p.sku }} | {{ p.marca }}
+                      {{ producto.sku }} | {{ producto.marca }}
                     </div>
                     <div class="text-caption ellipsis text-weight-medium">
-                      {{ p.nombre }}
-                      <q-tooltip>{{ p.nombre }}</q-tooltip>
+                      {{ producto.nombre }}
+                      <q-tooltip>{{ producto.nombre }}</q-tooltip>
                     </div>
-                    <div class="text-caption- text-subtitle2 text-positive text-weight-bold">
-                      {{ formatCurrency(p.precioFinal) }}
+                    <div class="text-subtitle2 text-positive text-weight-bold">
+                      {{ formatCurrency(producto.precioFinal) }}
                     </div>
                     <div class="text-right">
                       <q-chip
                         dense
                         size="sm"
-                        :color="p.stock <= 0 ? 'grey' : p.stockBajo ? 'orange' : 'positive'"
+                        :color="producto.stock <= 0 ? 'grey' : producto.stockBajo ? 'orange' : 'positive'"
                         text-color="white"
                       >
-                        Stock: {{ p.stock }}
+                        Stock: {{ producto.stock }}
                       </q-chip>
                     </div>
                   </div>
-                  <q-badge v-if="p.stock <= 0" floating color="grey" label="Agotado" />
+                  <q-badge v-if="producto.stock <= 0" floating color="grey" label="Agotado" />
                 </q-card>
               </div>
             </div>
@@ -93,10 +92,8 @@
         </q-card>
       </div>
 
-      <!-- ── Columna derecha: carrito + checkout ─────────── -->
-      <div class="col-12 col-md-5">
+      <div class="col-12 col-lg-5">
         <q-card class="sgi-card carrito-card" flat>
-          <!-- Header carrito -->
           <q-card-section class="row items-center q-pb-sm">
             <div class="text-subtitle1 text-weight-bold">
               <q-icon name="shopping_cart" class="q-mr-xs" />
@@ -120,8 +117,44 @@
 
           <q-separator />
 
-          <!-- Items del carrito -->
-          <q-scroll-area style="height: 340px" class="q-pa-sm">
+          <q-card-section class="q-gutter-sm">
+            <q-select
+              :model-value="pos.tipoDocumento.value"
+              :options="tiposDocumentoDisponibles"
+              label="Tipo de documento"
+              outlined
+              dense
+              emit-value
+              map-options
+              @update:model-value="pos.setTipoDocumento"
+            >
+              <template #prepend><q-icon name="receipt_long" /></template>
+            </q-select>
+
+            <div class="row q-col-gutter-sm">
+              <div class="col-12 col-sm-8">
+                <q-input v-model="pos.cliente.value.nombre" label="Cliente" outlined dense>
+                  <template #prepend><q-icon name="person" /></template>
+                </q-input>
+              </div>
+              <div class="col-12 col-sm-4">
+                <q-input v-model="pos.cliente.value.nitCi" label="NIT/CI" outlined dense />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-input v-model="pos.cliente.value.telefono" label="Teléfono" outlined dense />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-input v-model="pos.cliente.value.email" label="Email" outlined dense />
+              </div>
+              <div v-if="pos.esDocumentoComercial.value" class="col-12 col-sm-6">
+                <q-input v-model="pos.vigenciaHasta.value" label="Vigencia" outlined dense type="date" />
+              </div>
+            </div>
+          </q-card-section>
+
+          <q-separator />
+
+          <q-scroll-area style="height: 320px" class="q-pa-sm">
             <div
               v-if="!pos.carrito.value.length"
               class="full-width column flex-center q-pa-xl text-muted"
@@ -135,71 +168,172 @@
               v-for="item in pos.carrito.value"
               :key="item.productoId"
               :item="item"
-              @quitar="pos.quitarItem"
+              @quitar="quitarItem"
               @cambiar-cantidad="pos.actualizarCantidad"
+              @cambiar-precio="pos.actualizarPrecio"
+              @cambiar-descuento="pos.actualizarDescuento"
             />
           </q-scroll-area>
 
           <q-separator />
 
-          <!-- Totales -->
-          <q-card-section class="q-py-sm">
-            <div class="row items-center q-mb-xs">
-              <span class="text-muted">Subtotal:</span>
-              <q-space />
-              <span>{{ formatCurrency(pos.totalCarrito.value) }}</span>
+          <q-card-section class="q-gutter-sm">
+            <div v-if="pos.requierePago.value" class="q-gutter-sm">
+              <div class="text-subtitle2 text-weight-medium">Pago</div>
+              <div class="row q-col-gutter-sm">
+                <div class="col-12 col-sm-6">
+                  <q-select
+                    :model-value="metodoPagoActual"
+                    :options="opcionesPago"
+                    label="Modalidad de pago"
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                    @update:model-value="onMetodoPago"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <q-btn
+                    v-if="metodoPagoActual === 'MIXTO'"
+                    flat
+                    dense
+                    color="primary"
+                    icon="add"
+                    label="Agregar pago"
+                    @click="pos.agregarPagoMixto"
+                  />
+                </div>
+              </div>
+
+              <div
+                v-for="(pago, index) in pos.pagos.value"
+                :key="`${pago.metodoPago}-${index}`"
+                class="row q-col-gutter-sm items-center"
+              >
+                <div class="col-12 col-sm-4">
+                  <q-select
+                    :model-value="pago.metodoPago"
+                    :options="opcionesPagoItem"
+                    label="Método"
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                    @update:model-value="pos.actualizarPago(index, { metodoPago: $event })"
+                  />
+                </div>
+                <div class="col-12 col-sm-3">
+                  <q-input
+                    :model-value="pago.monto"
+                    label="Monto"
+                    type="number"
+                    outlined
+                    dense
+                    step="0.01"
+                    @update:model-value="pos.actualizarPago(index, { monto: Number($event) || 0 })"
+                  />
+                </div>
+                <div class="col-12 col-sm-4">
+                  <q-input
+                    :model-value="pago.referencia"
+                    label="Referencia"
+                    outlined
+                    dense
+                    @update:model-value="pos.actualizarPago(index, { referencia: String($event || '') })"
+                  />
+                </div>
+                <div class="col-12 col-sm-1 text-right">
+                  <q-btn
+                    v-if="pos.pagos.value.length > 1"
+                    flat
+                    round
+                    dense
+                    color="negative"
+                    icon="close"
+                    @click="pos.quitarPagoMixto(index)"
+                  />
+                </div>
+              </div>
             </div>
-            <div class="row items-center text-h6 text-weight-bold">
-              <span>TOTAL:</span>
-              <q-space />
-              <span class="text-positive">{{ formatCurrency(pos.totalCarrito.value) }}</span>
+
+            <div class="row q-col-gutter-sm">
+              <div class="col-12">
+                <q-input v-model="pos.notas.value" label="Notas" outlined dense type="textarea" autogrow />
+              </div>
+              <div class="col-12">
+                <q-input
+                  v-model="pos.observaciones.value"
+                  label="Observaciones"
+                  outlined
+                  dense
+                  type="textarea"
+                  autogrow
+                />
+              </div>
             </div>
           </q-card-section>
 
           <q-separator />
 
-          <!-- Cliente y cobrar -->
-          <q-card-section class="q-gutter-sm">
-            <q-input v-model="pos.cliente.value" label="Nombre del cliente" outlined dense>
-              <template #prepend><q-icon name="person" /></template>
-            </q-input>
+          <q-card-section class="q-py-sm">
+            <div class="row items-center q-mb-xs">
+              <span class="text-muted">Subtotal:</span>
+              <q-space />
+              <span>{{ formatCurrency(pos.subtotal.value) }}</span>
+            </div>
+            <div class="row items-center q-mb-xs">
+              <span class="text-muted">Descuento:</span>
+              <q-space />
+              <span>{{ formatCurrency(pos.descuentoTotal.value) }}</span>
+            </div>
+            <div class="row items-center q-mb-xs">
+              <span class="text-muted">Impuesto:</span>
+              <q-space />
+              <span>{{ formatCurrency(pos.impuesto.value) }}</span>
+            </div>
+            <div class="row items-center text-h6 text-weight-bold">
+              <span>Total:</span>
+              <q-space />
+              <span class="text-positive">{{ formatCurrency(pos.totalDocumento.value) }}</span>
+            </div>
+          </q-card-section>
 
+          <q-separator />
+
+          <q-card-section>
             <q-btn
-              label="COBRAR Y EMITIR FACTURA"
+              :label="accionPrincipal.label"
+              :icon="accionPrincipal.icon"
               color="primary"
               unelevated
               size="md"
               class="full-width"
-              icon="receipt_long"
               :loading="pos.procesando.value"
               :disable="!pos.carrito.value.length || !sucursalActiva"
-              @click="cobrar"
+              @click="procesar"
             />
           </q-card-section>
         </q-card>
       </div>
     </div>
 
-    <!-- Dialog: Factura emitida -->
-    <q-dialog v-model="dialogFacturaEmitida">
+    <q-dialog v-model="dialogDocumentoEmitido">
       <q-card class="sgi-card q-pa-lg text-center" style="min-width: 320px">
         <q-icon name="check_circle" color="positive" size="64px" />
-        <div class="text-h6 text-weight-bold q-mt-sm">¡Venta completada!</div>
-        <div class="text-muted q-mb-lg">Factura emitida correctamente</div>
+        <div class="text-h6 text-weight-bold q-mt-sm">¡Operación completada!</div>
+        <div class="text-muted q-mb-lg">
+          {{ mensajeExito }}
+        </div>
         <div class="row q-gutter-sm justify-center">
           <q-btn
             outline
             color="primary"
             icon="print"
             label="Imprimir"
-            @click="imprimirUltimaFactura"
+            @click="imprimirUltimoDocumento"
           />
-          <q-btn
-            color="primary"
-            unelevated
-            label="Nueva venta"
-            @click="dialogFacturaEmitida = false"
-          />
+          <q-btn color="primary" unelevated label="Nueva operación" @click="dialogDocumentoEmitido = false" />
         </div>
       </q-card>
     </q-dialog>
@@ -215,11 +349,11 @@ import { useCataloStore } from 'src/stores/cataloStore'
 import { useFacturaStore } from 'src/stores/facturaStore'
 import { usePOS } from 'src/composables/usePOS'
 import { formatCurrency } from 'src/utils/formatters'
-import type { ProductoCatalogo } from 'src/types'
+import type { MetodoPago, ProductoCatalogo, TipoDocumentoVenta } from 'src/types'
+import { TIPO_DOCUMENTO_LABELS } from 'src/types'
 import ProductoBuscador from 'src/components/pos/ProductoBuscador.vue'
 import CarritoItem from 'src/components/pos/CarritoItem.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
-import { useNotify } from 'src/composables/useNotify.ts'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
@@ -227,21 +361,78 @@ const cataloStore = useCataloStore()
 const facturaStore = useFacturaStore()
 const $q = useQuasar()
 const pos = usePOS()
-const { notifyWarning } = useNotify()
 
 const sucursalActiva = ref(authStore.sucursalId ?? '')
 const productosCatalogo = ref<ProductoCatalogo[]>([])
 const cargandoCatalogo = ref(false)
-const dialogFacturaEmitida = ref(false)
-const ultimaFacturaId = ref('')
+const dialogDocumentoEmitido = ref(false)
+const ultimoDocumentoId = ref('')
+const ultimoDocumentoNumero = ref('')
+const ultimoDocumentoTipo = ref<TipoDocumentoVenta>('FACTURA')
 
 const opcionesSucursal = computed(() =>
-  sucursalStore.activas.map((s) => ({ label: `${s.nombre} — ${s.ciudad}`, value: s.id })),
+  sucursalStore.activas.map((sucursal) => ({ label: `${sucursal.nombre} — ${sucursal.ciudad}`, value: sucursal.id })),
 )
 
-function agregarDesdeResultado(p: ProductoCatalogo): void {
-  pos.agregarDesdeCatalogo(p)
-  //notifyWarning('Sin Stock o sin precio')
+const tiposDocumentoDisponibles = computed(() => {
+  const options: Array<{ label: string; value: TipoDocumentoVenta }> = []
+  if (authStore.can('pos.vender_factura') || authStore.can('facturas.emitir')) {
+    options.push({ label: TIPO_DOCUMENTO_LABELS.FACTURA, value: 'FACTURA' })
+  }
+  if (authStore.can('pos.vender_sin_factura')) {
+    options.push({ label: TIPO_DOCUMENTO_LABELS.VENTA_SIN_FACTURA, value: 'VENTA_SIN_FACTURA' })
+  }
+  if (authStore.can('pos.crear_proforma')) {
+    options.push({ label: TIPO_DOCUMENTO_LABELS.PROFORMA, value: 'PROFORMA' })
+  }
+  if (authStore.can('pos.crear_cotizacion')) {
+    options.push({ label: TIPO_DOCUMENTO_LABELS.COTIZACION, value: 'COTIZACION' })
+  }
+  return options
+})
+
+const opcionesPago = [
+  { label: 'Efectivo', value: 'EFECTIVO' },
+  { label: 'QR', value: 'QR' },
+  { label: 'Transferencia', value: 'TRANSFERENCIA' },
+  { label: 'Tarjeta', value: 'TARJETA' },
+  { label: 'Crédito', value: 'CREDITO' },
+  { label: 'Mixto', value: 'MIXTO' },
+]
+
+const opcionesPagoItem = [
+  { label: 'Efectivo', value: 'EFECTIVO' },
+  { label: 'QR', value: 'QR' },
+  { label: 'Transferencia', value: 'TRANSFERENCIA' },
+  { label: 'Tarjeta', value: 'TARJETA' },
+  { label: 'Crédito', value: 'CREDITO' },
+]
+
+const metodoPagoActual = computed<MetodoPago>(() => {
+  if (pos.pagos.value.length > 1) return 'MIXTO'
+  return pos.pagos.value[0]?.metodoPago ?? 'EFECTIVO'
+})
+
+const accionPrincipal = computed(() => {
+  switch (pos.tipoDocumento.value) {
+    case 'VENTA_SIN_FACTURA':
+      return { label: 'Registrar venta', icon: 'point_of_sale' }
+    case 'PROFORMA':
+      return { label: 'Generar proforma', icon: 'description' }
+    case 'COTIZACION':
+      return { label: 'Generar cotización', icon: 'request_quote' }
+    default:
+      return { label: 'Emitir factura', icon: 'receipt_long' }
+  }
+})
+
+const mensajeExito = computed(() => {
+  const tipo = TIPO_DOCUMENTO_LABELS[ultimoDocumentoTipo.value] || ultimoDocumentoTipo.value
+  return `${tipo} ${ultimoDocumentoNumero.value} generada correctamente`
+})
+
+function agregarDesdeResultado(producto: ProductoCatalogo): void {
+  pos.agregarDesdeCatalogo(producto)
 }
 
 function activarEscaner(): void {
@@ -254,15 +445,28 @@ function confirmarVaciar(): void {
     message: '¿Deseas eliminar todos los productos del carrito?',
     cancel: { label: 'Cancelar', flat: true },
     ok: { label: 'Vaciar', color: 'negative', unelevated: true },
-  }).onOk(() => pos.limpiarCarrito())
+  }).onOk(() => pos.limpiarOperacion())
 }
 
-async function cobrar(): Promise<void> {
+function onMetodoPago(value: MetodoPago): void {
+  pos.setMetodoPago(value)
+}
+
+function quitarItem(productoId: string): void {
+  pos.quitarItem(productoId)
+  if (pos.pagos.value.length === 1 && pos.requierePago.value) {
+    pos.actualizarPago(0, { monto: pos.totalDocumento.value })
+  }
+}
+
+async function procesar(): Promise<void> {
   if (!sucursalActiva.value) return
   try {
-    ultimaFacturaId.value = await pos.procesarVenta(sucursalActiva.value)
-    dialogFacturaEmitida.value = true
-    // Recargar catálogo para reflejar nuevo stock
+    const resultado = await pos.procesarVenta(sucursalActiva.value)
+    ultimoDocumentoId.value = resultado.id
+    ultimoDocumentoNumero.value = resultado.numero
+    ultimoDocumentoTipo.value = resultado.tipo
+    dialogDocumentoEmitido.value = true
     cataloStore.invalidateCache(sucursalActiva.value)
     await cargarCatalogo()
   } catch (e) {
@@ -270,8 +474,8 @@ async function cobrar(): Promise<void> {
   }
 }
 
-async function imprimirUltimaFactura(): Promise<void> {
-  if (ultimaFacturaId.value) await facturaStore.imprimirFactura(ultimaFacturaId.value)
+async function imprimirUltimoDocumento(): Promise<void> {
+  if (ultimoDocumentoId.value) await facturaStore.imprimirFactura(ultimoDocumentoId.value)
 }
 
 async function cargarCatalogo(): Promise<void> {
@@ -279,11 +483,10 @@ async function cargarCatalogo(): Promise<void> {
   cargandoCatalogo.value = true
   try {
     productosCatalogo.value = await cataloStore.getCatalogo(sucursalActiva.value, true)
-
-    productosCatalogo.value = productosCatalogo.value.map((p) => ({
-      ...p,
-      imagenLocation: p.imagenUrl ? 'drive' : 'local',
-      imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
+    productosCatalogo.value = productosCatalogo.value.map((producto) => ({
+      ...producto,
+      imagenLocation: producto.imagenLocation || (producto.imagenUrl ? 'drive' : 'local'),
+      imagenUrl: producto.imagenUrl ? producto.imagenUrl : producto.sku,
     }))
   } finally {
     cargandoCatalogo.value = false
@@ -295,6 +498,8 @@ onMounted(async () => {
   if (!sucursalActiva.value && sucursalStore.activas.length > 0) {
     sucursalActiva.value = sucursalStore.activas[0].id
   }
+  const firstOption = tiposDocumentoDisponibles.value[0]
+  if (firstOption) pos.setTipoDocumento(firstOption.value)
   await cargarCatalogo()
 })
 </script>
@@ -304,22 +509,23 @@ onMounted(async () => {
   position: sticky;
   top: 80px;
 }
+
 .producto-rapido-card {
   border-radius: var(--sgi-radius);
   background: var(--sgi-surface-alt);
   transition:
     box-shadow 0.15s,
     transform 0.1s;
+
   &:hover:not(.agotado) {
     box-shadow: var(--sgi-shadow);
     transform: translateY(-1px);
+    background: rgba(21, 101, 192, 0.09);
   }
+
   &.agotado {
     opacity: 0.5;
     cursor: not-allowed;
-  }
-  &:hover {
-    background: rgba(21, 101, 192, 0.09);
   }
 }
 </style>

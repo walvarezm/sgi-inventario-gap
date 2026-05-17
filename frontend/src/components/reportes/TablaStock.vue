@@ -36,7 +36,7 @@
       :loading="loading"
       row-key="productoId"
       flat class="sgi-table"
-      :pagination="{ rowsPerPage: 20 }"
+      :pagination="{ rowsPerPage: 5 }"
       no-data-label="Sin datos de stock"
     >
       <!-- Stock con indicador -->

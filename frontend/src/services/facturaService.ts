@@ -1,58 +1,19 @@
 // =============================================================
-// facturaService.ts — Facturación contra GAS
+// facturaService.ts — Wrapper legacy sobre documentoVentaService
 // =============================================================
-import { api } from './api'
-import type { ApiResponse, Factura, FacturaForm } from 'src/types'
+import type { DocumentoVenta, DocumentoVentaForm } from 'src/types'
+import { documentoVentaService } from './documentoVentaService'
 
 export const facturaService = {
-  async getAll(filtros?: {
-    sucursalId?: string
-    estado?: string
-    tipo?: string
-    desde?: string
-    hasta?: string
-  }): Promise<Factura[]> {
-    const { data } = await api.post<ApiResponse<Factura[]>>('', {
-      action: 'getFacturas',
-      payload: filtros ?? {},
+  getAll: documentoVentaService.getAll,
+  getById: documentoVentaService.getById,
+  create(form: DocumentoVentaForm): Promise<DocumentoVenta> {
+    return documentoVentaService.create({
+      ...form,
+      tipo: form.tipo || 'FACTURA',
     })
-    if (!data.success) throw new Error(data.message)
-    return data.result
   },
-
-  async getById(id: string): Promise<Factura> {
-    const { data } = await api.post<ApiResponse<Factura>>('', {
-      action: 'getFacturaById',
-      payload: { id },
-    })
-    if (!data.success) throw new Error(data.message)
-    return data.result
-  },
-
-  async create(form: FacturaForm): Promise<Factura> {
-    const { data } = await api.post<ApiResponse<Factura>>('', {
-      action: 'createFactura',
-      payload: form,
-    })
-    if (!data.success) throw new Error(data.message)
-    return data.result
-  },
-
-  async anular(id: string): Promise<boolean> {
-    const { data } = await api.post<ApiResponse<boolean>>('', {
-      action: 'anularFactura',
-      payload: { id },
-    })
-    if (!data.success) throw new Error(data.message)
-    return data.result
-  },
-
-  async generarHtml(id: string): Promise<string> {
-    const { data } = await api.post<ApiResponse<string>>('', {
-      action: 'generarHtmlFactura',
-      payload: { id },
-    })
-    if (!data.success) throw new Error(data.message)
-    return data.result
-  },
+  anular: documentoVentaService.anular,
+  generarHtml: documentoVentaService.generarHtml,
+  convertir: documentoVentaService.convertir,
 }

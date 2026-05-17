@@ -89,10 +89,17 @@ function doPost(e) {
       'cancelarOrdenCompra':     () => OrdenCompraService.cancelar(payload, session),
       // Facturación
       'getFacturas':             () => FacturaService.getAll(payload, session),
-      'getFacturaById':          () => FacturaService.getById(payload),
+      'getFacturaById':          () => FacturaService.getById(payload, session),
       'createFactura':           () => FacturaService.create(payload, session),
       'anularFactura':           () => FacturaService.anular(payload, session),
-      'generarHtmlFactura':      () => FacturaService.generarHtml(payload),
+      'generarHtmlFactura':      () => FacturaService.generarHtml(payload, session),
+      // Documentos de venta
+      'getDocumentosVenta':      () => DocumentoVentaService.getAll(payload, session),
+      'getDocumentoVentaById':   () => DocumentoVentaService.getById(payload, session),
+      'createDocumentoVenta':    () => DocumentoVentaService.create(payload, session),
+      'anularDocumentoVenta':    () => DocumentoVentaService.anular(payload, session),
+      'convertirDocumentoVenta': () => DocumentoVentaService.convertir(payload, session),
+      'generarHtmlDocumentoVenta': () => DocumentoVentaService.generarHtml(payload, session),
       // ── FASE 7 — Reportes ──────────────────────────────
       'getKPIs':                 () => ReporteService.getKPIs(payload, session),
       'getReporteVentas':        () => ReporteService.getReporteVentas(payload, session),

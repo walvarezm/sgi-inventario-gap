@@ -18,6 +18,8 @@ function seedDatosIniciales() {
     seedCategoriasInicial()
     seedMarcasInicial()
     Logger.log('✅ Categorias y Marcas creados')
+    ensureDocumentoVentaSchema()
+    Logger.log('✅ Esquema documental verificado')
     seedSeguridadBase()
     Logger.log('✅ Seguridad base verificada')
     seedRelacionesSeguridad()
@@ -81,7 +83,7 @@ function seedAdminInicial(sucursalId) {
 function verificarEstructura() {
   const hojasRequeridas = [
     'Productos', 'Sucursales', 'Marcas', 'Inventario', 'Movimientos',
-    'Proveedores', 'Facturas', 'DetalleFactura', 'Usuarios', 'Config', 'LogAcciones',
+    'Proveedores', 'Facturas', 'DetalleFactura', 'PagosDocumento', 'Usuarios', 'Config', 'LogAcciones',
   ]
   const ss = Sheets.getSpreadsheet() //SpreadsheetApp.getActiveSpreadsheet()
   const faltantes = hojasRequeridas.filter(n => !ss.getSheetByName(n))
@@ -149,34 +151,40 @@ function seedSeguridadBase() {
 
   const now = new Date().toISOString()
   const rolesSheet = ss.getSheetByName('Roles')
-  if (rolesSheet.getLastRow() <= 1) {
-    const roles = [
-      ['ADMINISTRADOR', 'Administrador', 'Acceso total al sistema'],
-      ['SUPERVISOR', 'Supervisor', 'Gestión operativa multi-sucursal'],
-      ['VENDEDOR', 'Vendedor', 'POS y facturación de su sucursal'],
-      ['CONSULTA_CATALOGO', 'Consulta catálogo', 'Consulta del catálogo por sucursal'],
-      ['BODEGUERO', 'Bodeguero', 'Gestión operativa de inventario'],
-      ['CONTADOR', 'Contador', 'Consulta de facturas y reportes'],
-      ['COMPRAS', 'Compras', 'Proveedores y órdenes de compra'],
-      ['AUDITOR', 'Auditor', 'Consulta y auditoría sin edición'],
-    ]
-    roles.forEach(role => rolesSheet.appendRow([Utilities.getUuid(), role[0], role[1], role[2], true, true, now]))
-  }
+  const roles = [
+    ['ADMINISTRADOR', 'Administrador', 'Acceso total al sistema'],
+    ['SUPERVISOR', 'Supervisor', 'Gestión operativa multi-sucursal'],
+    ['VENDEDOR', 'Vendedor', 'POS y facturación de su sucursal'],
+    ['CONSULTA_CATALOGO', 'Consulta catálogo', 'Consulta del catálogo por sucursal'],
+    ['BODEGUERO', 'Bodeguero', 'Gestión operativa de inventario'],
+    ['CONTADOR', 'Contador', 'Consulta de facturas y reportes'],
+    ['COMPRAS', 'Compras', 'Proveedores y órdenes de compra'],
+    ['AUDITOR', 'Auditor', 'Consulta y auditoría sin edición'],
+  ]
+  const existingRoles = Sheets.getAll('Roles')
+  const roleCodes = {}
+  existingRoles.forEach(role => { roleCodes[String(role.codigo || '').trim().toUpperCase()] = true })
+  roles.forEach(role => {
+    if (roleCodes[role[0]]) return
+    rolesSheet.appendRow([Utilities.getUuid(), role[0], role[1], role[2], true, true, now])
+  })
 
   const permisosSheet = ss.getSheetByName('Permisos')
-  if (permisosSheet.getLastRow() <= 1) {
-    AccessService.getAllPermissions().forEach(permiso => {
-      permisosSheet.appendRow([
-        Utilities.getUuid(),
-        permiso.codigo,
-        permiso.modulo,
-        permiso.accion,
-        permiso.descripcion,
-        true,
-        now,
-      ])
-    })
-  }
+  const existingPermisos = Sheets.getAll('Permisos')
+  const permisoCodes = {}
+  existingPermisos.forEach(permiso => { permisoCodes[String(permiso.codigo || '').trim()] = true })
+  AccessService._legacyPermissionsAsList().forEach(permiso => {
+    if (permisoCodes[permiso.codigo]) return
+    permisosSheet.appendRow([
+      Utilities.getUuid(),
+      permiso.codigo,
+      permiso.modulo,
+      permiso.accion,
+      permiso.descripcion,
+      true,
+      now,
+    ])
+  })
 }
 
 function seedRelacionesSeguridad() {
@@ -329,4 +337,41 @@ function _resolveUserScopeValue(usuario, scopeType) {
   const defaultSucursal = String(usuario.sucursal_default || usuario.sucursal_id || '').trim()
   if (String(scopeType || '').trim().toUpperCase() === 'GLOBAL') return 'ALL'
   return defaultSucursal || 'ALL'
+}
+
+function ensureDocumentoVentaSchema() {
+  const ss = Sheets.getSpreadsheet()
+  _ensureSheetHeaders(ss, 'Facturas', [
+    'id', 'numero', 'tipo', 'cliente', 'sucursal_id', 'fecha', 'subtotal', 'impuesto', 'total',
+    'estado', 'usuario_id', 'notas', 'cliente_nit_ci', 'cliente_telefono', 'cliente_email',
+    'vigencia_hasta', 'moneda', 'descuento_global_monto', 'descuento_global_porcentaje',
+    'descuento_total', 'saldo_pendiente', 'observaciones', 'documento_origen_id',
+    'requiere_pago', 'afecta_stock', 'es_fiscal',
+  ])
+  _ensureSheetHeaders(ss, 'DetalleFactura', [
+    'id', 'factura_id', 'producto_id', 'cantidad', 'precio_unitario', 'subtotal',
+    'precio_lista', 'descuento_tipo', 'descuento_valor', 'descuento_monto', 'notas',
+  ])
+  _ensureSheetHeaders(ss, 'PagosDocumento', [
+    'id', 'documento_id', 'metodo_pago', 'monto', 'referencia', 'moneda', 'detalle', 'fecha', 'usuario_id',
+  ])
+}
+
+function _ensureSheetHeaders(ss, nombre, headers) {
+  let sheet = ss.getSheetByName(nombre)
+  if (!sheet) {
+    sheet = ss.insertSheet(nombre)
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers])
+    return
+  }
+
+  const currentHeaders = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0]
+    .map(header => String(header || '').trim())
+    .filter(Boolean)
+
+  const missing = headers.filter(header => currentHeaders.indexOf(header) === -1)
+  missing.forEach(header => {
+    sheet.insertColumnAfter(sheet.getLastColumn())
+    sheet.getRange(1, sheet.getLastColumn()).setValue(header)
+  })
 }

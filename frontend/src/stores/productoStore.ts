@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Producto, ProductoForm } from 'src/types'
 import { productoService } from 'src/services/productoService'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 export const useProductoStore = defineStore('producto', () => {
   const items = ref<Producto[]>([])
@@ -23,12 +24,14 @@ export const useProductoStore = defineStore('producto', () => {
   async function fetchAll(): Promise<void> {
     loading.value = true
     error.value = null
+    useLoading(true)
     try {
       items.value = await productoService.getAll()
     } catch (e) {
       error.value = (e as Error).message
     } finally {
       loading.value = false
+      useLoading(false)
     }
   }
 

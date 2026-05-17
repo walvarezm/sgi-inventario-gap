@@ -131,7 +131,7 @@ interface Props {
   stockInventario: InventarioRow[]
   loadings?: boolean
 }
-const props = withDefaults(defineProps<Props>(), { loadings: false })
+withDefaults(defineProps<Props>(), { loadings: false })
 
 const emit = defineEmits<{ saved: []; cancelled: [] }>()
 

@@ -13,6 +13,7 @@ import CatalogoTabla from 'src/components/catalogo/CatalogoTabla.vue'
 import CatalogoTarjeta from 'src/components/catalogo/CatalogoTarjeta.vue'
 import ProductoQR from 'src/components/productos/ProductoQR.vue'
 import { useMarcaStore } from 'src/stores/marcaStore.ts'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 // ── Stores ─────────────────────────────────────────────────────
 const authStore = useAuthStore()
@@ -70,7 +71,7 @@ const productosMostrados = computed(() => {
   if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
   if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
 
-/*  lista = lista.map((p) => ({
+  /*  lista = lista.map((p) => ({
     ...p,
     imagenLocation: p.imagenUrl ? 'drive' : 'local',
     imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
@@ -221,12 +222,14 @@ function exportarExcel(): void {
 // ── Lifecycle ──────────────────────────────────────────────────
 onMounted(async () => {
   cataloStore.loading = true
+  useLoading(true)
   await Promise.all([
     sucursalStore.items.length === 0 ? sucursalStore.fetchAll() : Promise.resolve(),
     categoriaStore.fetchAll(),
     marcaStore.fetchAll(),
   ])
   cataloStore.loading = false
+  useLoading(false)
 
   // Si no es global, fijar sucursal y cargar
   if (!authStore.isGlobal && authStore.sucursalId) {

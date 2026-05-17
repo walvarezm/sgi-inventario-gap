@@ -58,6 +58,7 @@
       </q-tabs>
       <q-separator />
 
+      <q-tab-panels v-model="tabActivo" animated>
       <!-- ── Tab Ventas ─────────────────────────────────── -->
       <q-tab-panel name="ventas" class="q-pa-md">
         <GraficoVentas
@@ -119,7 +120,7 @@
             :columns="columnasTop"
             row-key="productoId"
             flat class="sgi-table"
-            :pagination="{ rowsPerPage: 10 }"
+            :pagination="{ rowsPerPage: 5 }"
             hide-bottom
           >
             <template #body-cell-ranking="{ rowIndex }">
@@ -163,7 +164,7 @@
           :columns="columnasMovimientos"
           :loading="cargandoMovimientos"
           row-key="id" flat class="sgi-table"
-          :pagination="{ rowsPerPage: 20 }"
+          :pagination="{ rowsPerPage: 5 }"
           no-data-label="Sin movimientos para los filtros seleccionados"
         >
           <template #body-cell-tipo="{ value }">
@@ -203,6 +204,8 @@
             size="sm" @click="exportarMovimientosCSV" />
         </div>
       </q-tab-panel>
+
+      </q-tab-panels>
     </q-card>
   </q-page>
 </template>

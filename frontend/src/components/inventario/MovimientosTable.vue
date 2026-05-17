@@ -204,12 +204,10 @@ function labelTipo(tipo: TipoMovimiento): string {
 }
 
 function colOrigenDestino(movimiento: Movimiento): string {
-  ;'ENTRADA' | 'SALIDA' | 'TRANSFERENCIA' | 'AJUSTE'
-
   const tipo = movimiento.tipo
-  const notas = movimiento.notas
-  const sucursalOrigen = getNombre(movimiento.sucursalOrigen)
-  const sucursalDestino = getNombre(movimiento.sucursalDestino)
+  const notas = movimiento.notas || ''
+  const sucursalOrigen = movimiento.sucursalOrigen ? getNombre(movimiento.sucursalOrigen) : ''
+  const sucursalDestino = movimiento.sucursalDestino ? getNombre(movimiento.sucursalDestino) : ''
 
   let origen = ''
   let destino = ''
