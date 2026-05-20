@@ -80,17 +80,17 @@ const columnas = computed<QTableColumn[]>(() => {
     <!-- Imagen thumbnail -->
     <template #body-cell-imagenUrl="{ row }">
       <q-td>
-        <q-avatar size="40px" square rounded>
-          <!--          <img v-if="value" :src="value" loading="lazy" />-->
-          <ProductoImagenIFrame
-            v-if="row.imagenUrl"
-            :imagen-url="row.imagenUrl"
-            :width="40"
-            :height="40"
-            :imagen-location="row.imagenLocation"
-          />
-          <q-icon v-else name="image" color="grey-4" size="32px" />
-        </q-avatar>
+        <!--        <q-avatar size="40px" square rounded>-->
+        <!--          <img v-if="value" :src="value" loading="lazy" />-->
+        <ProductoImagenIFrame
+          v-if="true"
+          :imagen-url="row.imagenUrl"
+          :imagen-location="row.imagenLocation"
+          :width="30"
+          :height="30"
+        />
+        <q-icon v-else name="image" color="grey-4" size="40px" />
+        <!--        </q-avatar>-->
       </q-td>
     </template>
 
@@ -122,7 +122,9 @@ const columnas = computed<QTableColumn[]>(() => {
     </template>
     <template #body-cell-nombre="{ row }">
       <q-td>
-        <div class="text-weight-medium">{{ row.nombre }}</div>
+        <div class="text-weight-medium product-name-with-ellipsis">
+          {{ row.nombre }}
+        </div>
         <!--        <div class="text-caption text-muted">{{ row.marca }}</div>-->
         <!--        <div
           v-if="row.descripcion"

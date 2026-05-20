@@ -6,7 +6,6 @@
 // =============================================================
 
 function seedDatosIniciales() {
-  //const ui = SpreadsheetApp.getUi()
   try {
     Logger.log('=== SGI: Iniciando seed de datos ===')
     seedConfig()
@@ -18,6 +17,8 @@ function seedDatosIniciales() {
     seedCategoriasInicial()
     seedMarcasInicial()
     Logger.log('✅ Categorias y Marcas creados')
+    ensureMovimientoSchema()
+    Logger.log('✅ Esquema de movimientos verificado')
     ensureDocumentoVentaSchema()
     Logger.log('✅ Esquema documental verificado')
     seedSeguridadBase()
@@ -25,15 +26,13 @@ function seedDatosIniciales() {
     seedRelacionesSeguridad()
     Logger.log('✅ Relaciones de seguridad verificadas')
     Logger.log('=== SGI: Seed completado ===')
-    //ui.alert('✅ Datos iniciales cargados correctamente.\n\nRevisa el log de Apps Script para detalles.')
   } catch (e) {
     Logger.log('❌ Error en seed: ' + e.message)
-    //ui.alert('❌ Error al cargar datos iniciales:\n\n' + e.message)
   }
 }
 
 function seedConfig() {
-  const ss = Sheets.getSpreadsheet() //SpreadsheetApp.getActiveSpreadsheet()
+  const ss = Sheets.getSpreadsheet()
   const sheet = ss.getSheetByName('Config')
   if (!sheet) throw new Error('Hoja Config no encontrada')
   if (sheet.getLastRow() > 1) { Logger.log('Config ya tiene datos, se omite el seed'); return }
@@ -48,7 +47,7 @@ function seedConfig() {
 }
 
 function seedSucursalInicial() {
-  const ss = Sheets.getSpreadsheet() //SpreadsheetApp.getActiveSpreadsheet()
+  const ss = Sheets.getSpreadsheet()
   const sheet = ss.getSheetByName('Sucursales')
   if (!sheet) throw new Error('Hoja Sucursales no encontrada')
   if (sheet.getLastRow() > 1) {
@@ -62,7 +61,7 @@ function seedSucursalInicial() {
 }
 
 function seedAdminInicial(sucursalId) {
-  const ss = Sheets.getSpreadsheet() //SpreadsheetApp.getActiveSpreadsheet()
+  const ss = Sheets.getSpreadsheet()
   const sheet = ss.getSheetByName('Usuarios')
   if (!sheet) throw new Error('Hoja Usuarios no encontrada')
   if (sheet.getLastRow() > 1) {
@@ -82,7 +81,7 @@ function seedAdminInicial(sucursalId) {
 
 function verificarEstructura() {
   const hojasRequeridas = [
-    'Productos', 'Sucursales', 'Marcas', 'Inventario', 'Movimientos',
+    'Productos', 'Sucursales', 'Marcas', 'Inventario', 'Movimientos', 'MovimientoCabecera',
     'Proveedores', 'Facturas', 'DetalleFactura', 'PagosDocumento', 'Usuarios', 'Config', 'LogAcciones',
   ]
   const ss = Sheets.getSpreadsheet() //SpreadsheetApp.getActiveSpreadsheet()
@@ -354,6 +353,20 @@ function ensureDocumentoVentaSchema() {
   ])
   _ensureSheetHeaders(ss, 'PagosDocumento', [
     'id', 'documento_id', 'metodo_pago', 'monto', 'referencia', 'moneda', 'detalle', 'fecha', 'usuario_id',
+  ])
+}
+
+function ensureMovimientoSchema() {
+  const ss = Sheets.getSpreadsheet()
+  _ensureSheetHeaders(ss, 'MovimientoCabecera', [
+    'id', 'tipo', 'modo', 'sucursal_origen', 'sucursal_destino', 'fecha_registro',
+    'referencia_tipo', 'referencia_texto', 'notas', 'usuario_id', 'estado',
+    'fecha_creacion', 'fecha_actualizacion',
+  ])
+  _ensureSheetHeaders(ss, 'Movimientos', [
+    'id', 'cabecera_id', 'tipo', 'producto_id', 'sucursal_origen', 'sucursal_destino', 'cantidad',
+    'referencia', 'referencia_tipo', 'referencia_texto', 'usuario_id', 'fecha', 'fecha_registro',
+    'precio_ofrecido', 'precio_final', 'detalle_accion', 'editable', 'movimiento_origen_id', 'notas',
   ])
 }
 

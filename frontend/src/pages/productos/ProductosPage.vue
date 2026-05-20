@@ -106,23 +106,19 @@
         :loading="productoStore.loading"
         row-key="id"
         flat
+        dense
         class="sgi-table"
         :pagination="{ rowsPerPage: 10 }"
         no-data-label="No hay productos registrados"
       >
         <template #body-cell-imagenUrl="{ row }">
           <q-td>
-            <q-avatar size="40px" square rounded>
-              <!-- <img v-else-if="value" :src="value" loading="lazy" />-->
               <ProductoImagenIFrame
-                v-if="row.imagenUrl"
                 :imagen-url="row.imagenUrl"
                 :width="40"
                 :height="40"
                 :imagen-location="row.imagenLocation"
               />
-              <q-icon v-else name="image" color="grey-4" size="30px" />
-            </q-avatar>
           </q-td>
         </template>
 

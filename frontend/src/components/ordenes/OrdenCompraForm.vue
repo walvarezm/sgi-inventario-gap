@@ -1,5 +1,5 @@
 <template>
-  <q-card class="sgi-card" style="width:760px; max-width:96vw">
+  <q-card class="sgi-card" style="width: 980px; max-width: 96vw">
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6 text-weight-bold">Nueva Orden de Compra</div>
       <q-space />
@@ -14,7 +14,11 @@
             <q-select
               v-model="form.proveedorId"
               :options="proveedorStore.options"
-              label="Proveedor *" outlined dense emit-value map-options
+              label="Proveedor *"
+              outlined
+              dense
+              emit-value
+              map-options
               :rules="[required]"
             >
               <template #prepend><q-icon name="local_shipping" /></template>
@@ -24,7 +28,11 @@
             <q-select
               v-model="form.sucursalId"
               :options="opcionesSucursal"
-              label="Sucursal destino *" outlined dense emit-value map-options
+              label="Sucursal destino *"
+              outlined
+              dense
+              emit-value
+              map-options
               :rules="[required]"
             >
               <template #prepend><q-icon name="store" /></template>
@@ -33,7 +41,10 @@
           <div class="col-12 col-sm-6">
             <q-input
               v-model="form.fechaEstimada"
-              label="Fecha estimada de llegada" outlined dense type="date"
+              label="Fecha estimada de llegada"
+              outlined
+              dense
+              type="date"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -46,24 +57,40 @@
 
         <!-- Agregar producto -->
         <div class="row q-col-gutter-sm items-end q-mb-sm">
-          <div class="col-5">
+          <div class="col-8">
             <q-select
               v-model="nuevoDetalle.productoId"
               :options="opcionesProducto"
-              label="Producto" outlined dense use-input input-debounce="200"
-              emit-value map-options @filter="filtrarProductos"
+              label="Producto"
+              outlined
+              dense
+              use-input
+              input-debounce="200"
+              emit-value
+              map-options
+              clearable
+              @filter="filtrarProductos"
+              @update:model-value="onProductoChange(nuevoDetalle)"
             />
           </div>
-          <div class="col-3">
+          <div class="col-1">
             <q-input
               v-model.number="nuevoDetalle.cantidadPedida"
-              label="Cantidad" outlined dense type="number" min="1"
+              label="Cantidad"
+              outlined
+              dense
+              type="number"
+              min="1"
             />
           </div>
-          <div class="col-3">
+          <div class="col-2">
             <q-input
               v-model.number="nuevoDetalle.precioUnitario"
-              label="Precio unit. (Bs.)" outlined dense type="number" prefix="Bs."
+              label="Precio unit. (Bs.)"
+              outlined
+              dense
+              type="number"
+              prefix="Bs."
             />
           </div>
           <div class="col-1">
@@ -75,8 +102,13 @@
 
         <!-- Tabla de detalles -->
         <q-table
-          :rows="form.detalles" :columns="columnasDetalle" row-key="productoId"
-          flat dense class="sgi-table" hide-bottom
+          :rows="form.detalles"
+          :columns="columnasDetalle"
+          row-key="productoId"
+          flat
+          dense
+          class="sgi-table"
+          hide-bottom
           no-data-label="Agrega productos a la orden"
         >
           <template #body-cell-subtotal="{ row }">
@@ -86,8 +118,15 @@
           </template>
           <template #body-cell-acciones="{ row }">
             <q-td class="text-center">
-              <q-btn flat round dense size="xs" icon="delete" color="negative"
-                @click="quitarDetalle(row.productoId)">
+              <q-btn
+                flat
+                round
+                dense
+                size="xs"
+                icon="delete"
+                color="negative"
+                @click="quitarDetalle(row.productoId)"
+              >
                 <q-tooltip>Quitar</q-tooltip>
               </q-btn>
             </q-td>
@@ -96,9 +135,7 @@
 
         <!-- Total -->
         <div class="row justify-end q-mt-sm">
-          <div class="text-subtitle1 text-weight-bold">
-            Total: {{ formatCurrency(totalOrden) }}
-          </div>
+          <div class="text-subtitle1 text-weight-bold">Total: {{ formatCurrency(totalOrden) }}</div>
         </div>
       </q-form>
     </q-card-section>
@@ -106,8 +143,12 @@
     <q-card-actions align="right" class="q-px-md q-pb-md">
       <q-btn label="Cancelar" flat color="grey" v-close-popup />
       <q-btn
-        label="Crear orden de compra" color="primary" unelevated icon="shopping_cart"
-        :loading="proveedorStore.saving" @click="handleSubmit"
+        label="Crear orden de compra"
+        color="primary"
+        unelevated
+        icon="shopping_cart"
+        :loading="proveedorStore.saving"
+        @click="handleSubmit"
       />
     </q-card-actions>
   </q-card>
@@ -122,7 +163,7 @@ import { useSucursalStore } from 'src/stores/sucursalStore'
 import { useAuthStore } from 'src/stores/authStore'
 import type { OrdenCompra, OrdenCompraForm, DetalleOrdenForm } from 'src/types'
 import { required } from 'src/utils/validators'
-import { formatCurrency } from 'src/utils/formatters'
+import { formatCurrency, truncate } from 'src/utils/formatters'
 import { useNotify } from 'src/composables/useNotify'
 
 const emit = defineEmits<{ saved: [orden: OrdenCompra] }>()
@@ -144,7 +185,9 @@ const form = ref<OrdenCompraForm>({
 })
 
 const nuevoDetalle = ref<DetalleOrdenForm>({
-  productoId: '', cantidadPedida: 1, precioUnitario: 0,
+  productoId: '',
+  cantidadPedida: 1,
+  precioUnitario: 0,
 })
 
 const opcionesSucursal = computed(() =>
@@ -153,7 +196,7 @@ const opcionesSucursal = computed(() =>
 
 const opcionesProducto = ref(
   productoStore.activos.map((p) => ({
-    label: `[${p.sku}] ${p.nombre} — ${p.marca}`,
+    label: `[${p.marca}] [${p.sku}] — ${p.nombre}`,
     value: p.id,
     precioCompra: p.precioCompra,
   })),
@@ -164,15 +207,24 @@ const totalOrden = computed(() =>
 )
 
 const columnasDetalle: QTableColumn[] = [
-  { name: 'productoId', label: 'Producto', field: 'productoId',   align: 'left',
+  {
+    name: 'productoId',
+    label: 'Producto',
+    field: 'productoId',
+    align: 'left',
     format: (val) => {
       const p = productoStore.getById(val)
       return p ? `[${p.sku}] ${p.nombre}` : val
     },
   },
-  { name: 'cantidadPedida',  label: 'Cantidad', field: 'cantidadPedida',  align: 'center' },
-  { name: 'precioUnitario',  label: 'P. Unit.',  field: 'precioUnitario',
-    align: 'right', format: (v) => formatCurrency(v) },
+  { name: 'cantidadPedida', label: 'Cantidad', field: 'cantidadPedida', align: 'center' },
+  {
+    name: 'precioUnitario',
+    label: 'P. Unit.',
+    field: 'precioUnitario',
+    align: 'right',
+    format: (v) => formatCurrency(v),
+  },
   { name: 'subtotal', label: 'Subtotal', field: 'cantidadPedida', align: 'right' },
   { name: 'acciones', label: '', field: 'productoId', align: 'center' },
 ]
@@ -182,8 +234,19 @@ function filtrarProductos(val: string, update: (fn: () => void) => void) {
     const q = val.toLowerCase()
     opcionesProducto.value = productoStore.activos
       .filter((p) => p.sku.toLowerCase().includes(q) || p.nombre.toLowerCase().includes(q))
-      .map((p) => ({ label: `[${p.sku}] ${p.nombre}`, value: p.id, precioCompra: p.precioCompra }))
+      .map((p) => ({
+        label: truncate(`[${p.marca}] [${p.sku}] - ${p.nombre.trim()}`.trim(), 60),
+        value: p.id,
+        precioCompra: p.precioCompra,
+      }))
   })
+}
+
+function onProductoChange(item: DetalleOrdenForm): void {
+  const producto = productoStore.getById(item.productoId)
+  if (!producto) return
+  item.cantidadPedida = Number(1) || 0
+  item.precioUnitario = Number(producto.precioCompra) || 0
 }
 
 function agregarDetalle(): void {
@@ -217,6 +280,8 @@ async function handleSubmit(): Promise<void> {
     const orden = await proveedorStore.createOrden(form.value)
     notifySuccess(`Orden de compra ${orden.numero} creada`)
     emit('saved', orden)
-  } catch (e) { notifyError((e as Error).message) }
+  } catch (e) {
+    notifyError((e as Error).message)
+  }
 }
 </script>

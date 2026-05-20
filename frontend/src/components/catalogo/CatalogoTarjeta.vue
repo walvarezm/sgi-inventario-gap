@@ -34,11 +34,12 @@
           <!-- Imagen -->
           <div class="card-image-wrapper">
             <ProductoImagenIFrame
-              v-if="producto.imagenUrl && !esMovil"
+              v-if="!esMovil"
               :imagen-url="producto.imagenUrl"
-              :width="160"
-              :height="160"
+              :width="40"
+              :height="40"
               :imagen-location="producto.imagenLocation"
+              :type="'card'"
             ></ProductoImagenIFrame>
 
 <!--            <div v-if="producto.imagenUrl && esMovil" class="placeholder-img"></div>-->

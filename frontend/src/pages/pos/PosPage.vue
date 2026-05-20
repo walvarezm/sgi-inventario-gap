@@ -3,7 +3,9 @@
     <div class="row items-center q-col-gutter-sm q-mb-md">
       <div class="col-12 col-md">
         <div class="sgi-page-title">Punto de Venta</div>
-        <div class="text-muted text-body2">Ventas, proformas y cotizaciones desde un solo flujo</div>
+        <div class="text-muted text-body2">
+          Ventas, proformas y cotizaciones desde un solo flujo
+        </div>
       </div>
       <div class="col-12 col-md-auto">
         <q-select
@@ -41,26 +43,43 @@
             <div v-if="cargandoCatalogo" class="flex flex-center q-pa-xl">
               <q-spinner color="primary" size="40px" />
             </div>
-            <div v-else class="row q-col-gutter-sm">
+            <div v-else class="row q-col-gutter-md">
+              <!-- Vista tarjetas -->
+              <!--              <CatalogoTarjeta
+                :productos="productosCatalogo.slice(0, 20)"
+                :loading="pos.procesando.value"
+                @ver-qr="agregarDesdeResultado"
+                @editar="agregarDesdeResultado"
+              />-->
+
               <div
-                v-for="producto in productosCatalogo.slice(0, 20)"
+                v-for="producto in productosCatalogo.slice(0, 9)"
                 :key="producto.id"
-                class="col-6 col-sm-4 col-md-3"
+                class="col-6 col-sm-4 col-md-4"
               >
                 <q-card
-                  class="producto-rapido-card cursor-pointer"
+                  class="producto-rapido-card cursor-pointer sgi-card catalogo-card"
                   flat
                   bordered
                   :class="{ agotado: producto.stock <= 0 }"
                   @click="agregarDesdeResultado(producto)"
                 >
-                  <ProductoImagenIFrame
-                    v-if="producto.imagenUrl"
-                    :imagen-url="producto.imagenUrl"
-                    :width="70"
-                    :height="70"
-                    :imagen-location="producto.imagenLocation"
-                  />
+                  <div class="card-image-wrapper">
+                    <ProductoImagenIFrame
+                      :imagen-url="producto.imagenUrl"
+                      :width="40"
+                      :height="40"
+                      :imagen-location="producto.imagenLocation"
+                      :type="'card'"
+                    />
+                    <q-badge
+                      v-if="producto.stock <= 0"
+                      floating
+                      color="grey"
+                      label="Agotado"
+                      class="edit-fab"
+                    />
+                  </div>
 
                   <div class="q-pa-xs">
                     <div class="text-caption ellipsis text-weight-medium">
@@ -77,14 +96,15 @@
                       <q-chip
                         dense
                         size="sm"
-                        :color="producto.stock <= 0 ? 'grey' : producto.stockBajo ? 'orange' : 'positive'"
+                        :color="
+                          producto.stock <= 0 ? 'grey' : producto.stockBajo ? 'orange' : 'positive'
+                        "
                         text-color="white"
                       >
                         Stock: {{ producto.stock }}
                       </q-chip>
                     </div>
                   </div>
-                  <q-badge v-if="producto.stock <= 0" floating color="grey" label="Agotado" />
                 </q-card>
               </div>
             </div>
@@ -147,7 +167,13 @@
                 <q-input v-model="pos.cliente.value.email" label="Email" outlined dense />
               </div>
               <div v-if="pos.esDocumentoComercial.value" class="col-12 col-sm-6">
-                <q-input v-model="pos.vigenciaHasta.value" label="Vigencia" outlined dense type="date" />
+                <q-input
+                  v-model="pos.vigenciaHasta.value"
+                  label="Vigencia"
+                  outlined
+                  dense
+                  type="date"
+                />
               </div>
             </div>
           </q-card-section>
@@ -240,7 +266,9 @@
                     label="Referencia"
                     outlined
                     dense
-                    @update:model-value="pos.actualizarPago(index, { referencia: String($event || '') })"
+                    @update:model-value="
+                      pos.actualizarPago(index, { referencia: String($event || '') })
+                    "
                   />
                 </div>
                 <div class="col-12 col-sm-1 text-right">
@@ -259,7 +287,14 @@
 
             <div class="row q-col-gutter-sm">
               <div class="col-12">
-                <q-input v-model="pos.notas.value" label="Notas" outlined dense type="textarea" autogrow />
+                <q-input
+                  v-model="pos.notas.value"
+                  label="Notas"
+                  outlined
+                  dense
+                  type="textarea"
+                  autogrow
+                />
               </div>
               <div class="col-12">
                 <q-input
@@ -333,7 +368,12 @@
             label="Imprimir"
             @click="imprimirUltimoDocumento"
           />
-          <q-btn color="primary" unelevated label="Nueva operación" @click="dialogDocumentoEmitido = false" />
+          <q-btn
+            color="primary"
+            unelevated
+            label="Nueva operación"
+            @click="dialogDocumentoEmitido = false"
+          />
         </div>
       </q-card>
     </q-dialog>
@@ -371,7 +411,10 @@ const ultimoDocumentoNumero = ref('')
 const ultimoDocumentoTipo = ref<TipoDocumentoVenta>('FACTURA')
 
 const opcionesSucursal = computed(() =>
-  sucursalStore.activas.map((sucursal) => ({ label: `${sucursal.nombre} — ${sucursal.ciudad}`, value: sucursal.id })),
+  sucursalStore.activas.map((sucursal) => ({
+    label: `${sucursal.nombre} — ${sucursal.ciudad}`,
+    value: sucursal.id,
+  })),
 )
 
 const tiposDocumentoDisponibles = computed(() => {
@@ -511,7 +554,7 @@ onMounted(async () => {
 }
 
 .producto-rapido-card {
-  border-radius: var(--sgi-radius);
+  border-radius: 5px;  /*var(--sgi-radius);*/
   background: var(--sgi-surface-alt);
   transition:
     box-shadow 0.15s,
@@ -526,6 +569,46 @@ onMounted(async () => {
   &.agotado {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+}
+
+.catalogo-card {
+  transition:
+    box-shadow 0.2s,
+    transform 0.15s;
+  cursor: default;
+  height: 100%;
+
+  &:hover {
+    box-shadow: var(--sgi-shadow-lg);
+    transform: translateY(-6px);
+  }
+
+  .card-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--sgi-radius-lg) var(--sgi-radius-lg) 0 0;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--sgi-primary) 10%, transparent), transparent),
+      var(--sgi-surface-alt);
+  }
+
+  .catalogo-img {
+    background: var(--sgi-surface-alt);
+  }
+
+  .qr-fab {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  .edit-fab {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    height: 20px;
   }
 }
 </style>

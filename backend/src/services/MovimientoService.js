@@ -1,226 +1,646 @@
 // =============================================================
-// MovimientoService.gs — Entradas, salidas y transferencias
+// MovimientoService.gs — Comprobantes de inventario editables y masivos
 // =============================================================
 
 const MovimientoService = {
+  SHEET_CABECERA: 'MovimientoCabecera',
+  SHEET_MOVIMIENTOS: 'Movimientos',
+  STATUS_ACTIVE: 'ACTIVO',
+  STATUS_EDITED: 'EDITADO',
+  REFERENCE_TEMPLATES: [
+    {
+      tipo: 'INICIO_INVENTARIO',
+      textoBase: 'inicio de inventario, responsable de recepción: ',
+      detalleLabel: 'Detalle de inicio de inventario',
+    },
+    {
+      tipo: 'CIERRE_INVENTARIO',
+      textoBase: 'cierre de inventario, responsable de entrega: ',
+      detalleLabel: 'Detalle de cierre de inventario',
+    },
+    {
+      tipo: 'REPOSICION_PRODUCTO',
+      textoBase: 'reposición de producto, responsable de recepción: ',
+      detalleLabel: 'Detalle de reposición',
+    },
+    {
+      tipo: 'BAJA_PRODUCTO',
+      textoBase: 'baja de producto, responsable de baja: ',
+      detalleLabel: 'Detalle de baja de producto',
+    },
+    {
+      tipo: 'OTRO',
+      textoBase: '',
+      detalleLabel: 'Detalle libre',
+    },
+  ],
 
-  /**
-   * Retorna el historial de movimientos de una sucursal con filtros opcionales.
-   */
+  getMovimientoPlantillasReferencia() {
+    return this.REFERENCE_TEMPLATES
+  },
+
   getMovimientos(payload, session) {
-    const { sucursalId, desde, hasta, tipo } = payload
+    this._ensureSchema()
+    const { sucursalId, desde, hasta, tipo } = payload || {}
     if (!sucursalId) throw new Error('sucursalId es requerido')
+    this._assertSucursalAccess(sucursalId, session, 'inventario.ver')
 
-    if (session.rol !== 'ADMINISTRADOR' && session.rol !== 'SUPERVISOR') {
-      if (session.sucursalId !== sucursalId) {
-        throw new Error('Acceso no autorizado a la sucursal: ' + sucursalId)
-      }
-    }
-
-    let movimientos = Sheets.getAll('Movimientos').filter(m =>
+    let movimientos = Sheets.getAll(this.SHEET_MOVIMIENTOS)
+    movimientos = movimientos.filter(m =>
       String(m.sucursal_origen) === String(sucursalId) ||
       String(m.sucursal_destino) === String(sucursalId)
     )
+    if (tipo) movimientos = movimientos.filter(m => String(m.tipo || '').toUpperCase() === String(tipo).toUpperCase())
+    if (desde) movimientos = movimientos.filter(m => String(m.fecha_registro || m.fecha || '') >= String(desde))
+    if (hasta) movimientos = movimientos.filter(m => String(m.fecha_registro || m.fecha || '') <= String(hasta))
 
-    if (tipo) movimientos = movimientos.filter(m => m.tipo === tipo)
-    if (desde) movimientos = movimientos.filter(m => m.fecha >= desde)
-    if (hasta) movimientos = movimientos.filter(m => m.fecha <= hasta)
-
-    // Enriquecer con nombre de producto
-    const productosMap = {}
-    Sheets.getAll('Productos').forEach(p => { productosMap[p.id] = p })
+    const cabecerasById = this._cabecerasById()
+    const productosById = this._productosById()
 
     return movimientos
-      .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))
-      .map(m => ({
-        id: m.id,
-        tipo: m.tipo,
-        productoId: m.producto_id,
-        productoNombre: (productosMap[m.producto_id] || {}).nombre || m.producto_id,
-        productoSku: (productosMap[m.producto_id] || {}).sku || '',
-        sucursalOrigen: m.sucursal_origen || null,
-        sucursalDestino: m.sucursal_destino || null,
-        cantidad: Number(m.cantidad) || 0,
-        referencia: m.referencia || '',
-        usuarioId: m.usuario_id,
-        fecha: m.fecha,
-        notas: m.notas || '',
-      }))
+      .sort((a, b) => String(b.fecha_registro || b.fecha || '').localeCompare(String(a.fecha_registro || a.fecha || '')))
+      .map(movimiento => {
+        const cabecera = cabecerasById[movimiento.cabecera_id] || {}
+        const producto = productosById[movimiento.producto_id] || {}
+        return {
+          id: movimiento.id,
+          cabeceraId: movimiento.cabecera_id || '',
+          tipo: movimiento.tipo,
+          modo: cabecera.modo || 'UNITARIO',
+          productoId: movimiento.producto_id,
+          productoNombre: producto.nombre || movimiento.producto_id,
+          productoSku: producto.sku || '',
+          sucursalOrigen: movimiento.sucursal_origen || null,
+          sucursalDestino: movimiento.sucursal_destino || null,
+          cantidad: Number(movimiento.cantidad) || 0,
+          referencia: movimiento.referencia || cabecera.referencia_texto || '',
+          referenciaTipo: movimiento.referencia_tipo || cabecera.referencia_tipo || 'OTRO',
+          referenciaTexto: movimiento.referencia_texto || cabecera.referencia_texto || '',
+          fechaRegistro: movimiento.fecha_registro || cabecera.fecha_registro || movimiento.fecha || '',
+          precioOfrecido: Number(movimiento.precio_ofrecido) || 0,
+          precioFinal: Number(movimiento.precio_final) || 0,
+          detalleAccion: movimiento.detalle_accion || '',
+          editable: this._toBool(movimiento.editable, true),
+          usuarioId: movimiento.usuario_id || cabecera.usuario_id || '',
+          fecha: movimiento.fecha || '',
+          notas: movimiento.notas || cabecera.notas || '',
+        }
+      })
   },
 
-  /**
-   * Registra una ENTRADA de stock (compra, recepción, ajuste positivo).
-   */
-  entrada(payload, session) {
-    const { productoId, sucursalId, cantidad, referencia, notas } = payload
-    this._validarMovimiento(productoId, sucursalId, cantidad)
+  getMovimientosCabecera(payload, session) {
+    this._ensureSchema()
+    const filtros = payload || {}
+    const sucursalId = filtros.sucursalId
+    if (!sucursalId) throw new Error('sucursalId es requerido')
+    this._assertSucursalAccess(sucursalId, session, 'inventario.ver')
 
-    // Validar acceso a la sucursal
-    this._validarAccesoSucursal(sucursalId, session)
-
-    // Verificar que el producto existe
-    const producto = Sheets.getBy('Productos', 'id', productoId)
-    if (!producto) throw new Error('Producto no encontrado: ' + productoId)
-
-    // Ajustar stock
-    const stockResultante = InventarioService._ajustarStock(productoId, sucursalId, Number(cantidad))
-
-    // Registrar movimiento
-    const movimiento = this._insertar({
-      tipo: 'ENTRADA',
-      productoId,
-      sucursalOrigen: null,
-      sucursalDestino: sucursalId,
-      cantidad: Number(cantidad),
-      referencia: referencia || '',
-      usuarioId: session.userId,
-      notas: notas || '',
-    })
-
-    // Invalidar cache del catálogo
-    CatalogoService.invalidarCache(sucursalId)
-
-    LogService.registrar(session.userId, 'ENTRADA', 'Inventario', sucursalId,
-      `${producto.nombre} [${producto.sku}]: +${cantidad} → stock=${stockResultante}`)
-
-    return movimiento
-  },
-
-  /**
-   * Registra una SALIDA de stock (venta, uso, baja).
-   */
-  salida(payload, session) {
-    const { productoId, sucursalId, cantidad, referencia, notas } = payload
-    this._validarMovimiento(productoId, sucursalId, cantidad)
-    this._validarAccesoSucursal(sucursalId, session)
-
-    const producto = Sheets.getBy('Productos', 'id', productoId)
-    if (!producto) throw new Error('Producto no encontrado: ' + productoId)
-
-    // Verificar stock disponible
-    const stockItem = InventarioService.getStockProducto({ productoId, sucursalId })
-    if (stockItem.stockActual < Number(cantidad)) {
-      throw new Error(
-        `Stock insuficiente. Disponible: ${stockItem.stockActual}, Solicitado: ${cantidad}`
+    let cabeceras = Sheets.getAll(this.SHEET_CABECERA)
+      .filter(c =>
+        String(c.sucursal_origen || '') === String(sucursalId) ||
+        String(c.sucursal_destino || '') === String(sucursalId)
       )
-    }
 
-    const stockResultante = InventarioService._ajustarStock(productoId, sucursalId, -Number(cantidad))
+    if (filtros.tipo) cabeceras = cabeceras.filter(c => String(c.tipo || '').toUpperCase() === String(filtros.tipo).toUpperCase())
+    if (filtros.modo) cabeceras = cabeceras.filter(c => String(c.modo || '').toUpperCase() === String(filtros.modo).toUpperCase())
+    if (filtros.referenciaTipo) cabeceras = cabeceras.filter(c => String(c.referencia_tipo || '').toUpperCase() === String(filtros.referenciaTipo).toUpperCase())
+    if (filtros.desde) cabeceras = cabeceras.filter(c => String(c.fecha_registro || '') >= String(filtros.desde))
+    if (filtros.hasta) cabeceras = cabeceras.filter(c => String(c.fecha_registro || '') <= String(filtros.hasta))
 
-    const movimiento = this._insertar({
-      tipo: 'SALIDA',
-      productoId,
-      sucursalOrigen: sucursalId,
-      sucursalDestino: null,
-      cantidad: Number(cantidad),
-      referencia: referencia || '',
-      usuarioId: session.userId,
-      notas: notas || '',
-    })
-
-    CatalogoService.invalidarCache(sucursalId)
-
-    LogService.registrar(session.userId, 'SALIDA', 'Inventario', sucursalId,
-      `${producto.nombre} [${producto.sku}]: -${cantidad} → stock=${stockResultante}`)
-
-    // Verificar alertas de stock
-    AlertaService.verificarStockMinimo(productoId, sucursalId, stockResultante)
-
-    return movimiento
+    const movimientos = Sheets.getAll(this.SHEET_MOVIMIENTOS)
+    return cabeceras
+      .sort((a, b) => String(b.fecha_registro || '').localeCompare(String(a.fecha_registro || '')))
+      .map(cabecera => this._mapCabecera(cabecera, movimientos))
   },
 
-  /**
-   * Registra una TRANSFERENCIA de stock entre sucursales.
-   */
-  transferir(payload, session) {
-    const { productoId, sucursalOrigen, sucursalDestino, cantidad, notas } = payload
+  getMovimientoById(payload, session) {
+    this._ensureSchema()
+    if (!payload.id) throw new Error('id es requerido')
+    const cabecera = Sheets.getBy(this.SHEET_CABECERA, 'id', payload.id)
+    if (!cabecera) throw new Error('Movimiento no encontrado: ' + payload.id)
 
-    if (!productoId) throw new Error('productoId es requerido')
-    if (!sucursalOrigen) throw new Error('sucursalOrigen es requerida')
-    if (!sucursalDestino) throw new Error('sucursalDestino es requerida')
-    if (sucursalOrigen === sucursalDestino) throw new Error('Origen y destino no pueden ser iguales')
-    if (!cantidad || Number(cantidad) <= 0) throw new Error('Cantidad debe ser mayor a 0')
+    const sucursalCheck = cabecera.sucursal_origen || cabecera.sucursal_destino
+    if (sucursalCheck) this._assertSucursalAccess(sucursalCheck, session, 'inventario.ver')
 
-    // Solo Admin/Supervisor pueden hacer transferencias
-    if (session.rol !== 'ADMINISTRADOR' && session.rol !== 'SUPERVISOR') {
-      throw new Error('Sin permiso para realizar transferencias entre sucursales')
-    }
+    const movimientos = Sheets.getAll(this.SHEET_MOVIMIENTOS)
+    const productosById = this._productosById()
+    const items = movimientos
+      .filter(m => String(m.cabecera_id) === String(payload.id))
+      .map(m => {
+        const producto = productosById[m.producto_id] || {}
+        return {
+          id: m.id,
+          movimientoOrigenId: m.movimiento_origen_id || '',
+          productoId: m.producto_id,
+          productoSku: producto.sku || '',
+          productoNombre: producto.nombre || '',
+          cantidad: Number(m.cantidad) || 0,
+          precioOfrecido: Number(m.precio_ofrecido) || Number(producto.precio_ofrecido) || 0,
+          precioFinal: Number(m.precio_final) || Number(producto.precio_final) || 0,
+          detalleAccion: m.detalle_accion || '',
+        }
+      })
 
-    const producto = Sheets.getBy('Productos', 'id', productoId)
-    if (!producto) throw new Error('Producto no encontrado: ' + productoId)
-
-    // Verificar stock en origen
-    const stockOrigen = InventarioService.getStockProducto({ productoId, sucursalId: sucursalOrigen })
-    if (stockOrigen.stockActual < Number(cantidad)) {
-      throw new Error(
-        `Stock insuficiente en origen. Disponible: ${stockOrigen.stockActual}, Solicitado: ${cantidad}`
-      )
-    }
-
-    // Descontar en origen, agregar en destino
-    InventarioService._ajustarStock(productoId, sucursalOrigen, -Number(cantidad))
-    InventarioService._ajustarStock(productoId, sucursalDestino, Number(cantidad))
-
-    const movimiento = this._insertar({
-      tipo: 'TRANSFERENCIA',
-      productoId,
-      sucursalOrigen,
-      sucursalDestino,
-      cantidad: Number(cantidad),
-      referencia: `TRANS-${Date.now()}`,
-      usuarioId: session.userId,
-      notas: notas || '',
-    })
-
-    CatalogoService.invalidarCache(sucursalOrigen)
-    CatalogoService.invalidarCache(sucursalDestino)
-
-    LogService.registrar(session.userId, 'TRANSFERENCIA', 'Inventario', sucursalOrigen,
-      `${producto.sku}: ${cantidad} unidades → sucursal ${sucursalDestino}`)
-
-    return movimiento
+    const result = this._mapCabecera(cabecera, movimientos)
+    result.items = items
+    return result
   },
 
-  /** Inserta un movimiento en la hoja */
-  _insertar(data) {
-    const movimiento = {
+  createMovimientoUnitario(payload, session) {
+    return this.createMovimientoMasivo({
+      tipo: payload.tipo,
+      modo: 'UNITARIO',
+      fechaRegistro: payload.fechaRegistro,
+      referenciaTipo: payload.referenciaTipo,
+      referenciaTexto: payload.referenciaTexto,
+      notas: payload.notas || '',
+      sucursalId: payload.sucursalId,
+      sucursalOrigen: payload.sucursalOrigen,
+      sucursalDestino: payload.sucursalDestino,
+      items: [{
+        productoId: payload.productoId,
+        cantidad: Number(payload.cantidad) || 0,
+        precioOfrecido: Number(payload.precioOfrecido) || 0,
+        precioFinal: Number(payload.precioFinal) || 0,
+        detalleAccion: payload.detalleAccion || '',
+      }],
+    }, session)
+  },
+
+  createMovimientoMasivo(payload, session) {
+    this._ensureSchema()
+    const normalized = this._normalizePayload(payload)
+    this._assertCreatePermission(normalized, session)
+    this._assertPriceUpdatesAllowed(normalized, session)
+    this._validateScenario(normalized, null)
+
+    const stockSnapshot = this._buildStockSnapshot()
+    this._simulateScenario(normalized, stockSnapshot, null)
+
+    const now = new Date().toISOString()
+    const cabecera = {
       id: Sheets.generateId(),
-      tipo: data.tipo,
-      producto_id: data.productoId,
-      sucursal_origen: data.sucursalOrigen || '',
-      sucursal_destino: data.sucursalDestino || '',
-      cantidad: data.cantidad,
-      referencia: data.referencia,
-      usuario_id: data.usuarioId,
-      fecha: new Date().toISOString(),
-      notas: data.notas,
+      tipo: normalized.tipo,
+      modo: normalized.modo,
+      sucursal_origen: normalized.sucursalOrigen || '',
+      sucursal_destino: normalized.sucursalDestino || '',
+      fecha_registro: normalized.fechaRegistro,
+      referencia_tipo: normalized.referenciaTipo,
+      referencia_texto: normalized.referenciaTexto,
+      notas: normalized.notas || '',
+      usuario_id: session.userId,
+      estado: this.STATUS_ACTIVE,
+      fecha_creacion: now,
+      fecha_actualizacion: now,
     }
-    Sheets.insert('Movimientos', movimiento)
+    Sheets.insert(this.SHEET_CABECERA, cabecera)
+
+    const movimientos = this._createLineRecords(cabecera, normalized, session)
+    Sheets.insertMany(this.SHEET_MOVIMIENTOS, movimientos)
+    this._applyStockChanges(normalized, null)
+    this._syncProductPrices(normalized, session)
+    this._invalidateCatalogCaches(normalized)
+
+    LogService.registrar(
+      session.userId,
+      'CREATE',
+      this.SHEET_CABECERA,
+      normalized.sucursalOrigen || normalized.sucursalId || normalized.sucursalDestino || null,
+      normalized.tipo + ' ' + normalized.modo + ' creado: ' + cabecera.id
+    )
+
+    return this.getMovimientoById({ id: cabecera.id }, session)
+  },
+
+  updateMovimiento(payload, session) {
+    this._ensureSchema()
+    if (!payload.cabeceraId) throw new Error('cabeceraId es requerido')
+    AccessService.assert(session, 'inventario.editar_movimientos', 'Sin permiso para editar movimientos')
+
+    const existente = this.getMovimientoById({ id: payload.cabeceraId }, session)
+    const normalized = this._normalizePayload(payload)
+    normalized.modo = normalized.modo || existente.modo
+    this._assertCreatePermission(normalized, session)
+    this._assertPriceUpdatesAllowed(normalized, session)
+    if (payload.fechaRegistro && payload.fechaRegistro !== existente.fechaRegistro) {
+      AccessService.assert(session, 'inventario.editar_fecha_movimiento', 'Sin permiso para editar la fecha del movimiento')
+    }
+    if (this._hasPriceChanges(existente.items || [], normalized.items)) {
+      AccessService.assert(session, 'inventario.editar_precios_movimiento', 'Sin permiso para editar precios del movimiento')
+    }
+    this._validateScenario(normalized, existente)
+
+    const stockSnapshot = this._buildStockSnapshot()
+    this._simulateScenario(normalized, stockSnapshot, existente)
+
+    const now = new Date().toISOString()
+    Sheets.update(this.SHEET_CABECERA, payload.cabeceraId, {
+      tipo: normalized.tipo,
+      modo: normalized.modo,
+      sucursal_origen: normalized.sucursalOrigen || '',
+      sucursal_destino: normalized.sucursalDestino || '',
+      fecha_registro: normalized.fechaRegistro,
+      referencia_tipo: normalized.referenciaTipo,
+      referencia_texto: normalized.referenciaTexto,
+      notas: normalized.notas || '',
+      estado: this.STATUS_ACTIVE,
+      fecha_actualizacion: now,
+    })
+
+    this._revertStockChanges(existente)
+    this._deleteMovementLines(payload.cabeceraId)
+    const cabeceraRow = Sheets.getBy(this.SHEET_CABECERA, 'id', payload.cabeceraId)
+    const lineRecords = this._createLineRecords(cabeceraRow, normalized, session, existente.items || [])
+    Sheets.insertMany(this.SHEET_MOVIMIENTOS, lineRecords)
+    this._applyStockChanges(normalized, null)
+    this._syncProductPrices(normalized, session)
+    this._invalidateCatalogCaches(normalized)
+
+    LogService.registrar(
+      session.userId,
+      'UPDATE',
+      this.SHEET_CABECERA,
+      normalized.sucursalOrigen || normalized.sucursalId || normalized.sucursalDestino || null,
+      'Movimiento actualizado: ' + payload.cabeceraId
+    )
+
+    return this.getMovimientoById({ id: payload.cabeceraId }, session)
+  },
+
+  entrada(payload, session) {
+    const result = this.createMovimientoUnitario({
+      tipo: 'ENTRADA',
+      sucursalId: payload.sucursalId,
+      productoId: payload.productoId,
+      cantidad: payload.cantidad,
+      fechaRegistro: payload.fechaRegistro || new Date().toISOString(),
+      referenciaTipo: payload.referenciaTipo || 'OTRO',
+      referenciaTexto: payload.referenciaTexto || payload.referencia || '',
+      notas: payload.notas || '',
+      precioOfrecido: payload.precioOfrecido,
+      precioFinal: payload.precioFinal,
+      detalleAccion: payload.detalleAccion || '',
+    }, session)
+    return this._cabeceraToLegacyMovement(result)
+  },
+
+  salida(payload, session) {
+    const result = this.createMovimientoUnitario({
+      tipo: 'SALIDA',
+      sucursalId: payload.sucursalId,
+      productoId: payload.productoId,
+      cantidad: payload.cantidad,
+      fechaRegistro: payload.fechaRegistro || new Date().toISOString(),
+      referenciaTipo: payload.referenciaTipo || 'OTRO',
+      referenciaTexto: payload.referenciaTexto || payload.referencia || '',
+      notas: payload.notas || '',
+      precioOfrecido: payload.precioOfrecido,
+      precioFinal: payload.precioFinal,
+      detalleAccion: payload.detalleAccion || '',
+    }, session)
+    return this._cabeceraToLegacyMovement(result)
+  },
+
+  transferir(payload, session) {
+    const result = this.createMovimientoUnitario({
+      tipo: 'TRANSFERENCIA',
+      sucursalOrigen: payload.sucursalOrigen,
+      sucursalDestino: payload.sucursalDestino,
+      productoId: payload.productoId,
+      cantidad: payload.cantidad,
+      fechaRegistro: payload.fechaRegistro || new Date().toISOString(),
+      referenciaTipo: payload.referenciaTipo || 'OTRO',
+      referenciaTexto: payload.referenciaTexto || payload.referencia || ('TRANS-' + Date.now()),
+      notas: payload.notas || '',
+      precioOfrecido: payload.precioOfrecido,
+      precioFinal: payload.precioFinal,
+      detalleAccion: payload.detalleAccion || '',
+    }, session)
+    return this._cabeceraToLegacyMovement(result)
+  },
+
+  _cabeceraToLegacyMovement(cabecera) {
+    const item = (cabecera.items || [])[0]
     return {
-      id: movimiento.id,
-      tipo: movimiento.tipo,
-      productoId: movimiento.producto_id,
-      sucursalOrigen: movimiento.sucursal_origen || null,
-      sucursalDestino: movimiento.sucursal_destino || null,
-      cantidad: movimiento.cantidad,
-      referencia: movimiento.referencia,
-      usuarioId: movimiento.usuario_id,
-      fecha: movimiento.fecha,
-      notas: movimiento.notas,
+      id: cabecera.id,
+      cabeceraId: cabecera.id,
+      tipo: cabecera.tipo,
+      productoId: item ? item.productoId : '',
+      sucursalOrigen: cabecera.sucursalOrigen,
+      sucursalDestino: cabecera.sucursalDestino,
+      cantidad: item ? item.cantidad : cabecera.cantidadTotal,
+      referencia: cabecera.referencia,
+      usuarioId: cabecera.usuarioId,
+      fecha: cabecera.fechaCreacion,
+      fechaRegistro: cabecera.fechaRegistro,
+      notas: cabecera.notas,
     }
   },
 
-  _validarMovimiento(productoId, sucursalId, cantidad) {
-    if (!productoId) throw new Error('productoId es requerido')
-    if (!sucursalId) throw new Error('sucursalId es requerida')
-    if (!cantidad || Number(cantidad) <= 0) throw new Error('Cantidad debe ser mayor a 0')
+  _normalizePayload(payload) {
+    const tipo = String(payload.tipo || '').trim().toUpperCase()
+    const modo = String(payload.modo || ((payload.items || []).length > 1 ? 'MASIVO' : 'UNITARIO')).trim().toUpperCase()
+    const isTransfer = tipo === 'TRANSFERENCIA'
+    const sucursalOrigen = payload.sucursalOrigen || (isTransfer ? '' : payload.sucursalId || '')
+    const sucursalDestino = payload.sucursalDestino || (isTransfer ? payload.sucursalDestino || '' : payload.sucursalId || '')
+    return {
+      tipo: tipo,
+      modo: modo === 'MASIVO' ? 'MASIVO' : 'UNITARIO',
+      sucursalId: payload.sucursalId || '',
+      sucursalOrigen: sucursalOrigen,
+      sucursalDestino: sucursalDestino,
+      fechaRegistro: payload.fechaRegistro || new Date().toISOString(),
+      referenciaTipo: String(payload.referenciaTipo || 'OTRO').trim().toUpperCase(),
+      referenciaTexto: String(payload.referenciaTexto || '').trim(),
+      notas: String(payload.notas || '').trim(),
+      items: (payload.items || []).map(item => ({
+        productoId: item.productoId,
+        cantidad: Number(item.cantidad) || 0,
+        precioOfrecido: Number(item.precioOfrecido) || 0,
+        precioFinal: Number(item.precioFinal) || 0,
+        detalleAccion: String(item.detalleAccion || '').trim(),
+      })),
+    }
   },
 
-  _validarAccesoSucursal(sucursalId, session) {
-    if (session.rol !== 'ADMINISTRADOR' && session.rol !== 'SUPERVISOR') {
-      if (session.sucursalId !== sucursalId) {
-        throw new Error('Acceso no autorizado a la sucursal: ' + sucursalId)
+  _validateScenario(normalized, previous) {
+    if (!normalized.tipo) throw new Error('tipo es requerido')
+    if (!normalized.items.length) throw new Error('Debe registrar al menos un ítem')
+    if (normalized.tipo === 'TRANSFERENCIA') {
+      if (!normalized.sucursalOrigen) throw new Error('sucursalOrigen es requerida')
+      if (!normalized.sucursalDestino) throw new Error('sucursalDestino es requerida')
+      if (normalized.sucursalOrigen === normalized.sucursalDestino) {
+        throw new Error('Origen y destino no pueden ser iguales')
       }
+    } else if (!normalized.sucursalId && !normalized.sucursalOrigen) {
+      throw new Error('Sucursal requerida')
+    }
+
+    normalized.items.forEach(item => {
+      if (!item.productoId) throw new Error('productoId es requerido')
+      if (item.cantidad <= 0) throw new Error('Cantidad debe ser mayor a 0')
+    })
+  },
+
+  _assertCreatePermission(normalized, session) {
+    if (normalized.modo === 'MASIVO') {
+      AccessService.assert(session, 'inventario.crear_masivo', 'Sin permiso para registrar operaciones masivas')
+    }
+    if (normalized.referenciaTipo !== 'OTRO') {
+      AccessService.assert(session, 'inventario.usar_plantillas_referencia', 'Sin permiso para usar plantillas de referencia')
+    }
+    if (normalized.tipo === 'ENTRADA') {
+      this._assertSucursalAccess(normalized.sucursalOrigen || normalized.sucursalId, session, 'inventario.entrada')
+      return
+    }
+    if (normalized.tipo === 'SALIDA') {
+      this._assertSucursalAccess(normalized.sucursalOrigen || normalized.sucursalId, session, 'inventario.salida')
+      return
+    }
+    if (normalized.tipo === 'TRANSFERENCIA') {
+      this._assertSucursalAccess(normalized.sucursalOrigen, session, 'inventario.transferencia')
+      this._assertSucursalAccess(normalized.sucursalDestino, session, 'inventario.transferencia')
+    }
+  },
+
+  _assertPriceUpdatesAllowed(normalized, session) {
+    const changed = normalized.items.some(item => {
+      const existente = Sheets.getBy('Productos', 'id', item.productoId) || {}
+      return Number(item.precioOfrecido || 0) !== (Number(existente.precio_ofrecido) || 0) ||
+        Number(item.precioFinal || 0) !== (Number(existente.precio_final) || 0)
+    })
+    if (changed) {
+      AccessService.assert(session, 'inventario.editar_precios_movimiento', 'Sin permiso para editar precios desde movimientos')
+    }
+  },
+
+  _assertSucursalAccess(sucursalId, session, permission) {
+    if (!sucursalId) return
+    if (AccessService.can(session, permission)) {
+      AccessService.assertInSucursal(session, permission, sucursalId, 'Acceso no autorizado a la sucursal: ' + sucursalId)
+      return
+    }
+
+    const legacyRole = String(session.rol || '').toUpperCase()
+    if ((legacyRole === 'ADMINISTRADOR' || legacyRole === 'SUPERVISOR') || String(session.sucursalId || '') === String(sucursalId)) {
+      return
+    }
+    throw new Error('Acceso no autorizado a la sucursal: ' + sucursalId)
+  },
+
+  _buildStockSnapshot() {
+    const snapshot = {}
+    Sheets.getAll('Inventario').forEach(item => {
+      snapshot[this._stockKey(item.producto_id, item.sucursal_id)] = Number(item.stock_actual) || 0
+    })
+    return snapshot
+  },
+
+  _simulateScenario(normalized, snapshot, previous) {
+    const simulated = JSON.parse(JSON.stringify(snapshot || {}))
+    if (previous) this._simulateRevert(previous, simulated)
+    this._simulateApply(normalized, simulated)
+  },
+
+  _simulateRevert(previous, simulated) {
+    ;(previous.items || []).forEach(item => {
+      if (previous.tipo === 'ENTRADA') {
+        this._adjustSimulated(simulated, item.productoId, previous.sucursalDestino || previous.sucursalOrigen, -Number(item.cantidad))
+      } else if (previous.tipo === 'SALIDA') {
+        this._adjustSimulated(simulated, item.productoId, previous.sucursalOrigen || previous.sucursalDestino, Number(item.cantidad))
+      } else if (previous.tipo === 'TRANSFERENCIA') {
+        this._adjustSimulated(simulated, item.productoId, previous.sucursalOrigen, Number(item.cantidad))
+        this._adjustSimulated(simulated, item.productoId, previous.sucursalDestino, -Number(item.cantidad))
+      }
+    })
+  },
+
+  _simulateApply(normalized, simulated) {
+    normalized.items.forEach(item => {
+      if (normalized.tipo === 'ENTRADA') {
+        this._adjustSimulated(simulated, item.productoId, normalized.sucursalOrigen || normalized.sucursalId, Number(item.cantidad))
+      } else if (normalized.tipo === 'SALIDA') {
+        this._adjustSimulated(simulated, item.productoId, normalized.sucursalOrigen || normalized.sucursalId, -Number(item.cantidad))
+      } else if (normalized.tipo === 'TRANSFERENCIA') {
+        this._adjustSimulated(simulated, item.productoId, normalized.sucursalOrigen, -Number(item.cantidad))
+        this._adjustSimulated(simulated, item.productoId, normalized.sucursalDestino, Number(item.cantidad))
+      }
+    })
+  },
+
+  _adjustSimulated(simulated, productoId, sucursalId, delta) {
+    const key = this._stockKey(productoId, sucursalId)
+    const current = Number(simulated[key] || 0)
+    const next = current + Number(delta || 0)
+    if (next < 0) throw new Error('Stock insuficiente para el producto ' + productoId + ' en sucursal ' + sucursalId)
+    simulated[key] = next
+  },
+
+  _createLineRecords(cabecera, normalized, session, previousItems) {
+    const previousMap = {}
+    ;(previousItems || []).forEach(item => { previousMap[item.productoId] = item.id || item.movimientoOrigenId || '' })
+
+    return normalized.items.map(item => {
+      const producto = Sheets.getBy('Productos', 'id', item.productoId)
+      const precioOfrecido = item.precioOfrecido || Number((producto || {}).precio_ofrecido) || 0
+      const precioFinal = item.precioFinal || Number((producto || {}).precio_final) || 0
+      return {
+        id: Sheets.generateId(),
+        cabecera_id: cabecera.id,
+        tipo: normalized.tipo,
+        producto_id: item.productoId,
+        sucursal_origen: normalized.tipo === 'ENTRADA' ? '' : (normalized.sucursalOrigen || normalized.sucursalId || ''),
+        sucursal_destino: normalized.tipo === 'SALIDA' ? '' : (normalized.tipo === 'TRANSFERENCIA' ? normalized.sucursalDestino : (normalized.sucursalOrigen || normalized.sucursalId || '')),
+        cantidad: Number(item.cantidad) || 0,
+        referencia: normalized.referenciaTexto || '',
+        referencia_tipo: normalized.referenciaTipo,
+        referencia_texto: normalized.referenciaTexto || '',
+        usuario_id: session.userId,
+        fecha: new Date().toISOString(),
+        fecha_registro: normalized.fechaRegistro,
+        precio_ofrecido: precioOfrecido,
+        precio_final: precioFinal,
+        detalle_accion: item.detalleAccion || '',
+        editable: true,
+        movimiento_origen_id: previousMap[item.productoId] || '',
+        notas: normalized.notas || '',
+      }
+    })
+  },
+
+  _applyStockChanges(normalized, _previous) {
+    normalized.items.forEach(item => {
+      const cantidad = Number(item.cantidad) || 0
+      if (normalized.tipo === 'ENTRADA') {
+        InventarioService._ajustarStock(item.productoId, normalized.sucursalOrigen || normalized.sucursalId, cantidad)
+      } else if (normalized.tipo === 'SALIDA') {
+        InventarioService._ajustarStock(item.productoId, normalized.sucursalOrigen || normalized.sucursalId, -cantidad)
+        const stockResultante = InventarioService.getStockProducto({
+          productoId: item.productoId,
+          sucursalId: normalized.sucursalOrigen || normalized.sucursalId,
+        }).stockActual
+        AlertaService.verificarStockMinimo(item.productoId, normalized.sucursalOrigen || normalized.sucursalId, stockResultante)
+      } else if (normalized.tipo === 'TRANSFERENCIA') {
+        InventarioService._ajustarStock(item.productoId, normalized.sucursalOrigen, -cantidad)
+        InventarioService._ajustarStock(item.productoId, normalized.sucursalDestino, cantidad)
+        const stockResultante = InventarioService.getStockProducto({
+          productoId: item.productoId,
+          sucursalId: normalized.sucursalOrigen,
+        }).stockActual
+        AlertaService.verificarStockMinimo(item.productoId, normalized.sucursalOrigen, stockResultante)
+      }
+    })
+  },
+
+  _revertStockChanges(previous) {
+    ;(previous.items || []).forEach(item => {
+      const cantidad = Number(item.cantidad) || 0
+      if (previous.tipo === 'ENTRADA') {
+        InventarioService._ajustarStock(item.productoId, previous.sucursalDestino || previous.sucursalOrigen, -cantidad)
+      } else if (previous.tipo === 'SALIDA') {
+        InventarioService._ajustarStock(item.productoId, previous.sucursalOrigen || previous.sucursalDestino, cantidad)
+      } else if (previous.tipo === 'TRANSFERENCIA') {
+        InventarioService._ajustarStock(item.productoId, previous.sucursalOrigen, cantidad)
+        InventarioService._ajustarStock(item.productoId, previous.sucursalDestino, -cantidad)
+      }
+    })
+  },
+
+  _syncProductPrices(normalized, session) {
+    const productos = {}
+    normalized.items.forEach(item => {
+      const precioOfrecido = Number(item.precioOfrecido) || 0
+      const precioFinal = Number(item.precioFinal) || 0
+      productos[item.productoId] = {
+        precioOfrecido: precioOfrecido,
+        precioFinal: precioFinal,
+      }
+    })
+    Object.keys(productos).forEach(productoId => {
+      Sheets.update('Productos', productoId, {
+        precio_ofrecido: productos[productoId].precioOfrecido,
+        precio_final: productos[productoId].precioFinal,
+      })
+    })
+  },
+
+  _invalidateCatalogCaches(normalized) {
+    if (normalized.sucursalOrigen) CatalogoService.invalidarCache(normalized.sucursalOrigen)
+    if (normalized.sucursalDestino && normalized.sucursalDestino !== normalized.sucursalOrigen) {
+      CatalogoService.invalidarCache(normalized.sucursalDestino)
+    }
+    if (normalized.sucursalId) CatalogoService.invalidarCache(normalized.sucursalId)
+  },
+
+  _deleteMovementLines(cabeceraId) {
+    Sheets.getAll(this.SHEET_MOVIMIENTOS)
+      .filter(item => String(item.cabecera_id) === String(cabeceraId))
+      .forEach(item => Sheets.delete(this.SHEET_MOVIMIENTOS, item.id))
+  },
+
+  _cabecerasById() {
+    const map = {}
+    Sheets.getAll(this.SHEET_CABECERA).forEach(cabecera => { map[cabecera.id] = cabecera })
+    return map
+  },
+
+  _productosById() {
+    const map = {}
+    Sheets.getAll('Productos').forEach(producto => { map[producto.id] = producto })
+    return map
+  },
+
+  _mapCabecera(cabecera, movimientos) {
+    const items = (movimientos || []).filter(m => String(m.cabecera_id) === String(cabecera.id))
+    const cantidadTotal = items.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0)
+    return {
+      id: cabecera.id,
+      tipo: cabecera.tipo,
+      modo: cabecera.modo || 'UNITARIO',
+      sucursalOrigen: cabecera.sucursal_origen || null,
+      sucursalDestino: cabecera.sucursal_destino || null,
+      fechaRegistro: cabecera.fecha_registro || '',
+      referenciaTipo: cabecera.referencia_tipo || 'OTRO',
+      referenciaTexto: cabecera.referencia_texto || '',
+      referencia: cabecera.referencia_texto || '',
+      notas: cabecera.notas || '',
+      usuarioId: cabecera.usuario_id || '',
+      estado: cabecera.estado || this.STATUS_ACTIVE,
+      fechaCreacion: cabecera.fecha_creacion || '',
+      fechaActualizacion: cabecera.fecha_actualizacion || '',
+      cantidadTotal: cantidadTotal,
+      totalLineas: items.length,
+      editable: true,
+    }
+  },
+
+  _hasPriceChanges(previousItems, nextItems) {
+    const prevMap = {}
+    ;(previousItems || []).forEach(item => { prevMap[item.productoId] = item })
+    return (nextItems || []).some(item => {
+      const previous = prevMap[item.productoId]
+      if (!previous) return true
+      return Number(previous.precioOfrecido || 0) !== Number(item.precioOfrecido || 0) ||
+        Number(previous.precioFinal || 0) !== Number(item.precioFinal || 0)
+    })
+  },
+
+  _toBool(value, fallback) {
+    if (value === undefined || value === null || value === '') return !!fallback
+    if (value === true || value === 1 || String(value).toUpperCase() === 'TRUE') return true
+    if (value === false || value === 0 || String(value).toUpperCase() === 'FALSE') return false
+    return !!fallback
+  },
+
+  _stockKey(productoId, sucursalId) {
+    return String(productoId || '') + '::' + String(sucursalId || '')
+  },
+
+  _ensureSchema() {
+    try {
+      if (typeof ensureMovimientoSchema === 'function') ensureMovimientoSchema()
+    } catch (e) {
+      Logger.log('ensureMovimientoSchema error: ' + e.message)
     }
   },
 }

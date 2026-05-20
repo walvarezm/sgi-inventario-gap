@@ -20,7 +20,7 @@ export function formatDateTime(isoString: string): string {
 
 export function truncate(text: string, maxLength = 50): string {
   if (text.length <= maxLength) return text
-  return `${text.slice(0, maxLength)}…`
+  return `${text.trim().slice(0, maxLength)}…`
 }
 
 export function formatStock(stock: number, minimo: number): string {

@@ -4,52 +4,50 @@
     <div class="imagen-preview">
       <q-img
         v-if="
-          props.imagenLocation === 'drive' || (props.imagenLocation === 'local' && props.imagenUrl)
+          (props.imagenLocation === 'drive' || props.imagenLocation === 'local') && props.imagenUrl
         "
         :src="imagenUrl"
-        :width="width + 'px'"
-        :height="height + 'px'"
-        style="border-radius: 10px"
+        :width="width + ''"
+        :height="height + ''"
+        style="border-radius: 3px"
         fit="contain"
         class="q-ma-xs-none"
         loading="lazy"
       >
+        <q-tooltip>{{ imagenUrl }}</q-tooltip>
         <template #error>
-          <div class="absolute-full flex flex-center bg-grey-2 text-grey-6">
+          <div class="flex flex-center bg-grey-4 text-grey-7 q-card--bordered" :style="sizeStyle">
             <q-icon
               name="broken_image"
-              color="grey-5"
-              :size="width + 'px'"
-              class="absolute-center"
-              style="opacity: 0.5"
+              color="grey-6"
+              size="md"
+              class="absolute"
+              style="opacity: 0.9"
             />
-            <span class="text-caption q-mt-none text-caption-error" style="font-size: 1rem">
+            <span class="text-caption q-mt-none text-caption-error" style="font-size: 0.8rem">
               Sin imagen
             </span>
-            <q-tooltip>Sin imagen</q-tooltip>
+            <q-tooltip>Sin imagen 1</q-tooltip>
           </div>
         </template>
       </q-img>
 
       <div
-        v-if="props.imagenLocation === 'driveOld' && props.imagenUrl"
-        class="flex flex-inline text-left"
-      >
-        <iframe
-          :src="imagenUrl"
-          :width="width"
-          :height="height"
-          class="q-ma-none"
-          style="border-radius: 10px"
-        ></iframe>
-      </div>
-
-      <div
         v-if="!props.imagenUrl || !imagenUrl"
-        class="placeholder-img flex flex-center column text-muted"
+        class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered"
+        :style="sizeStyle"
       >
-        <q-icon name="image" size="50px" style="opacity: 0.3" />
-        <span class="text-caption q-mt-sm">Sin imagen</span>
+        <q-icon
+          name="broken_image"
+          color="grey-5"
+          size="md"
+          class="absolute"
+          style="opacity: 0.5"
+        />
+        <span class="text-caption q-mt-none text-caption-error" style="font-size: 0.8rem">
+          Sin imagen
+        </span>
+        <q-tooltip>Sin imagen 2</q-tooltip>
       </div>
     </div>
   </div>
@@ -57,20 +55,23 @@
 
 <script setup lang="ts">
 import { drivePreviewUrl } from 'src/utils/qrUtils.ts'
+import { computed } from 'vue'
 
 const URL_BASE_LOCAL = 'images/products/'
 
 interface Props {
   imagenUrl: string
-  width: number
-  height: number
   imagenLocation?: string
+  width?: number
+  height?: number
+  type?: string // 'table' | 'card'
 }
 const props = withDefaults(defineProps<Props>(), {
   imagenUrl: '',
-  width: 48,
-  height: 48,
   imagenLocation: 'local',
+  width: 40,
+  height: 40,
+  type: 'table',
 })
 
 const imagenUrl =
@@ -79,13 +80,47 @@ const imagenUrl =
     : props.imagenLocation === 'drive'
       ? drivePreviewUrl(props.imagenUrl)
       : null
+
+const width = computed(() => (props.type === 'table' ? widthError.value : widthComputed.value + '%'))
+const height = computed(() =>
+  props.type === 'table' ? heightError.value : 100 - heightComputed.value + '%',
+)
+
+const widthComputed = computed(() => (props.type === 'table' ? props.width : props.width))
+const heightComputed = computed(() => (props.type === 'table' ? props.height : 100 - props.height))
+//const height = computed(() => (props.height ? props.height - 20 + '%' : '50%'))
+//const widthError = computed(() => width.value ?? '50')
+const widthError = computed(() =>
+  props.type === 'table'
+    ? props.width / 2 / 10 + 'rem'
+    : widthComputed.value + (100 - widthComputed.value) + '%',
+)
+const heightError = computed(() =>
+  props.type === 'table'
+    ? heightComputed.value / 2 / 10 + 'rem'
+    : heightComputed.value / 2 / 10 + 'rem',
+)
+
+const sizeStyle = computed(() =>
+  props.type === 'table'
+    ? 'width: ' +
+      widthError.value +
+      '; height: ' +
+      heightError.value +
+      '; text-align: center; border-radius: 3px'
+    : 'width: ' +
+      widthError.value +
+      '; height: ' +
+      heightError.value +
+      '; text-align: center; border-radius: 3px',
+)
 </script>
 
 <style scoped lang="scss">
 .placeholder-img {
   height: 180px;
   border: 2px dashed var(--sgi-border);
-  border-radius: 12px;
+  border-radius: 3px;
   background: var(--sgi-surface-alt);
 }
 </style>

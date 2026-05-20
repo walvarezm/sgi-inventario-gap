@@ -71,6 +71,11 @@ function doPost(e) {
       'getAlertasStock':         () => InventarioService.getAlertasStock(payload, session),
       // Movimientos
       'getMovimientos':          () => MovimientoService.getMovimientos(payload, session),
+      'getMovimientosCabecera':  () => MovimientoService.getMovimientosCabecera(payload, session),
+      'getMovimientoById':       () => MovimientoService.getMovimientoById(payload, session),
+      'updateMovimiento':        () => MovimientoService.updateMovimiento(payload, session),
+      'createMovimientoMasivo':  () => MovimientoService.createMovimientoMasivo(payload, session),
+      'getMovimientoPlantillasReferencia': () => MovimientoService.getMovimientoPlantillasReferencia(),
       'registrarEntrada':        () => MovimientoService.entrada(payload, session),
       'registrarSalida':         () => MovimientoService.salida(payload, session),
       'transferir':              () => MovimientoService.transferir(payload, session),

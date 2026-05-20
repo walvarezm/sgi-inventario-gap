@@ -12,7 +12,7 @@ const CatalogoService = {
     const puedeEditarProductos = AccessService.can(session, 'productos.editar')
 
     // Usar cache de 5 minutos para mejorar performance
-/*    const cacheKey = 'catalogo_' + sucursalId + '_' + (puedeEditarProductos ? 'edit' : 'view')
+    /*const cacheKey = 'catalogo_' + sucursalId + '_' + (puedeEditarProductos ? 'edit' : 'view')
     const cache = CacheService.getScriptCache()
     const cached = cache.get(cacheKey)
     if (cached) return JSON.parse(cached)*/

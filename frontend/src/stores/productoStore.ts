@@ -6,6 +6,7 @@ import { ref, computed } from 'vue'
 import type { Producto, ProductoForm } from 'src/types'
 import { productoService } from 'src/services/productoService'
 import { useLoading } from 'src/composables/useLoading.ts'
+import { truncate } from 'src/utils/formatters.ts'
 
 export const useProductoStore = defineStore('producto', () => {
   const items = ref<Producto[]>([])
@@ -15,6 +16,13 @@ export const useProductoStore = defineStore('producto', () => {
   const selected = ref<Producto | null>(null)
 
   const activos = computed(() => items.value.filter((p) => p.activo))
+  const options = computed(() =>
+    activos.value.map((p) => ({
+      //label: `[${p.marca}][${p.sku}] — ${p.nombre}`,
+      label: truncate(`[${p.marca}][${p.sku}] — ${p.nombre}`, 75),
+      value: p.id,
+    })),
+  )
   const bySku = computed(() => {
     const map = new Map<string, Producto>()
     items.value.forEach((p) => map.set(p.sku, p))
@@ -94,6 +102,7 @@ export const useProductoStore = defineStore('producto', () => {
 
   return {
     items,
+    options,
     loading,
     saving,
     error,

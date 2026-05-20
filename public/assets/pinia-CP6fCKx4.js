@@ -1,1 +1,0 @@
-import{gt as e}from"./index-ZuCt84Eb.js";import{t}from"./wrappers-tH29nU8B.js";var n=t(async()=>{let t=e();t.sesion&&!t.isAuthenticated&&t.logout()});export{n as default};

@@ -70,13 +70,6 @@ const productosMostrados = computed(() => {
   let lista = catalogo.productosFiltrados.value
   if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
   if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
-
-  /*  lista = lista.map((p) => ({
-    ...p,
-    imagenLocation: p.imagenUrl ? 'drive' : 'local',
-    imagenUrl: p.imagenUrl ? p.imagenUrl : p.sku,
-  }))*/
-
   return lista
 })
 
@@ -271,7 +264,7 @@ watch(
         </div>-->
       </div>
 
-      <div v-if="authStore.can('productos.editar')" class="catalogo-hero__actions">
+      <div v-if="authStore.can('catalogo.ver_boton_exportar')" class="catalogo-hero__actions">
         <q-btn
           outline
           color="primary"
@@ -394,7 +387,7 @@ watch(
             </q-btn-toggle>
           </div>
         </q-card-section>
-        <q-card-section v-if="!esMovil && authStore.can('productos.editar')" class="q-pt-none">
+        <q-card-section v-if="!esMovil" class="q-pt-none">
           <div class="catalogo-summary q-mb-md">
             <div v-for="chip in chipsResumen" :key="chip.label" class="catalogo-summary__item">
               <div class="catalogo-summary__icon">
