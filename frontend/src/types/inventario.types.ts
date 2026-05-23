@@ -96,6 +96,7 @@ export interface MovimientoDetalleItem {
   precioOfrecido: number
   precioFinal: number
   detalleAccion?: string
+  secuencial?: number
 }
 
 export interface MovimientoPayloadBase {

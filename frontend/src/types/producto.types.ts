@@ -70,6 +70,7 @@ export interface ProductoCatalogo extends Producto{
   qrCode: string
   /** true cuando stock <= stockMinimo */
   stockBajo: boolean
+  sucursalId: string
 }
 
 /** Payload para subida de imagen al backend */

@@ -32,6 +32,7 @@ const productoQR = ref<ProductoCatalogo | null>(null)
 const productoEditar = ref<ProductoCatalogo | null>(null)
 const mostrarSoloStockBajo = ref(false)
 const mostrarSoloAgotados = ref(false)
+const mostrarSoloSucursal = ref(false)
 const exportandoPDF = ref(false)
 
 // ── Computed ───────────────────────────────────────────────────
@@ -39,9 +40,18 @@ const opcionesSucursal = computed(() =>
   sucursalStore.activas.map((s) => ({ label: `${s.nombre} — ${s.ciudad}`, value: s.id })),
 )
 
-const productosAgotados = computed(
-  () => catalogo.productosFiltrados.value.filter((p) => p.stock === 0).length,
+const productosAgotados = computed(() => {
+  let productos = catalogo.productosFiltrados.value.filter(
+    (p) => p.stock === 0 && p.sucursalId === sucursalSeleccionada.value,
+  ).length
+  return productos
+})
+
+const productosStockBajo = computed(
+  () =>
+    catalogo.conStockBajo.value.filter((p) => p.sucursalId === sucursalSeleccionada.value).length,
 )
+
 const esMovil = computed(() => $q.screen.lt.md)
 const vistaActivaEsTabla = computed(() => !esMovil.value && catalogo.vistaTabla.value)
 const puedeCambiarVista = computed(() => !esMovil.value)
@@ -54,7 +64,7 @@ const chipsResumen = computed(() => [
   },
   {
     label: 'Stock bajo',
-    value: catalogo.conStockBajo.value.length,
+    value: productosStockBajo.value,
     tone: 'warning',
     icon: 'warning_amber',
   },
@@ -70,6 +80,8 @@ const productosMostrados = computed(() => {
   let lista = catalogo.productosFiltrados.value
   if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
   if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
+  if (mostrarSoloSucursal.value)
+    lista = lista.filter((p) => p.sucursalId === sucursalSeleccionada.value)
   return lista
 })
 
@@ -215,14 +227,19 @@ function exportarExcel(): void {
 // ── Lifecycle ──────────────────────────────────────────────────
 onMounted(async () => {
   cataloStore.loading = true
-  useLoading(true)
-  await Promise.all([
+  //useLoading(true, 'Cargando Catalogo...')
+  /*await Promise.all([
     sucursalStore.items.length === 0 ? sucursalStore.fetchAll() : Promise.resolve(),
     categoriaStore.fetchAll(),
     marcaStore.fetchAll(),
-  ])
+  ])*/
+
+  if (sucursalStore.items.length === 0) await sucursalStore.fetchAll()
+  if (categoriaStore.items.length === 0) await categoriaStore.fetchAll()
+  if (marcaStore.items.length === 0) await marcaStore.fetchAll()
+
   cataloStore.loading = false
-  useLoading(false)
+  //useLoading(false)
 
   // Si no es global, fijar sucursal y cargar
   if (!authStore.isGlobal && authStore.sucursalId) {
@@ -402,6 +419,15 @@ watch(
 
           <!-- Filtro rápido de stock -->
           <div class="catalogo-quick-filters">
+            <q-chip
+              v-model:selected="mostrarSoloSucursal"
+              clickable
+              outline
+              color="info"
+              icon="store"
+              label="Ver solo productos de sucursal"
+              size="sm"
+            />
             <q-chip
               v-model:selected="mostrarSoloStockBajo"
               clickable

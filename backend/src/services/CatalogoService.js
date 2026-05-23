@@ -46,7 +46,8 @@ const CatalogoService = {
       imagenLocation: p.imagen_url ? 'drive' : 'local',
       qrCode: p.qr_code || p.sku,
       stockBajo: (stockMap[p.id] || 0) <= Number(p.stock_minimo || 0),
-      stockMinimo: p.stock_minimo || 0
+      stockMinimo: p.stock_minimo || 0,
+      sucursalId: stockMap[p.id] !== undefined ? sucursalId : '',
     }))
 
     //cache.put(cacheKey, JSON.stringify(resultado), 600) // 5 minutos

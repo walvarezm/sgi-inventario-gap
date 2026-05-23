@@ -84,6 +84,7 @@ const MovimientoService = {
           usuarioId: movimiento.usuario_id || cabecera.usuario_id || '',
           fecha: movimiento.fecha || '',
           notas: movimiento.notas || cabecera.notas || '',
+          secuencial: Number(movimiento.secuencial) || 0,
         }
       })
   },
@@ -138,6 +139,7 @@ const MovimientoService = {
           precioOfrecido: Number(m.precio_ofrecido) || Number(producto.precio_ofrecido) || 0,
           precioFinal: Number(m.precio_final) || Number(producto.precio_final) || 0,
           detalleAccion: m.detalle_accion || '',
+          secuencial: m.secuencial || '',
         }
       })
 
@@ -163,6 +165,7 @@ const MovimientoService = {
         precioOfrecido: Number(payload.precioOfrecido) || 0,
         precioFinal: Number(payload.precioFinal) || 0,
         detalleAccion: payload.detalleAccion || '',
+        secuencial: Number(payload.secuencial) || 0,
       }],
     }, session)
   },
@@ -280,6 +283,7 @@ const MovimientoService = {
       precioOfrecido: payload.precioOfrecido,
       precioFinal: payload.precioFinal,
       detalleAccion: payload.detalleAccion || '',
+      secuencial: payload.secuencial || 0,
     }, session)
     return this._cabeceraToLegacyMovement(result)
   },
@@ -297,6 +301,7 @@ const MovimientoService = {
       precioOfrecido: payload.precioOfrecido,
       precioFinal: payload.precioFinal,
       detalleAccion: payload.detalleAccion || '',
+      secuencial: payload.secuencial || 0,
     }, session)
     return this._cabeceraToLegacyMovement(result)
   },
@@ -315,6 +320,7 @@ const MovimientoService = {
       precioOfrecido: payload.precioOfrecido,
       precioFinal: payload.precioFinal,
       detalleAccion: payload.detalleAccion || '',
+      secuencial: payload.secuencial || 0,
     }, session)
     return this._cabeceraToLegacyMovement(result)
   },
@@ -359,6 +365,7 @@ const MovimientoService = {
         precioOfrecido: Number(item.precioOfrecido) || 0,
         precioFinal: Number(item.precioFinal) || 0,
         detalleAccion: String(item.detalleAccion || '').trim(),
+        secuencial: Number(item.secuencial) || 0,
       })),
     }
   },
@@ -504,6 +511,7 @@ const MovimientoService = {
         editable: true,
         movimiento_origen_id: previousMap[item.productoId] || '',
         notas: normalized.notas || '',
+        secuencial: Number(item.secuencial) || 0,
       }
     })
   },

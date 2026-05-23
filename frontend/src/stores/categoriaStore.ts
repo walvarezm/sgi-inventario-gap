@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Categoria } from 'src/types'
 import { categoriaService, type CategoriaForm } from 'src/services/categoriaService'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 export const useCategoriaStore = defineStore('categoria', () => {
   const items = ref<Categoria[]>([])
@@ -18,12 +19,14 @@ export const useCategoriaStore = defineStore('categoria', () => {
     if (items.value.length > 0) return
     loading.value = true
     error.value = null
+    useLoading(true, 'Cargando Categorias...')
     try {
       items.value = await categoriaService.getAll()
     } catch (e) {
       error.value = (e as Error).message
     } finally {
       loading.value = false
+      useLoading(false)
     }
   }
 

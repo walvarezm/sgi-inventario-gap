@@ -212,9 +212,14 @@ body.body--dark.sgi-theme-dark {
     min-height: auto !important;
     max-width: 90% !important;
     display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
+    -webkit-line-clamp: 1 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
+
+    /*display: inline-block;*/
+    /*overflow: hidden;*/
+    text-overflow: ellipsis;
+    white-space: nowrap !important;
   }
 }
 

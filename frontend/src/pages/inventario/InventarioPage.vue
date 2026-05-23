@@ -3,9 +3,7 @@
     <div class="row items-center q-mb-lg">
       <div>
         <div class="sgi-page-title">Inventario</div>
-        <div class="text-muted text-body2 q-mt-xs">
-          Control de stock y comprobantes por sucursal
-        </div>
+        <div class="text-muted text-body2 q-mt-xs">Control de Stock y Movimientos por sucursal</div>
       </div>
       <q-space />
       <div class="row q-gutter-xs q-mx-sm">
@@ -48,16 +46,6 @@
       </div>
     </div>
 
-    <q-banner
-      v-if="alertas.length > 0"
-      class="bg-orange-1 text-orange-10 rounded-borders q-mb-md"
-      dense
-    >
-      <template #avatar><q-icon name="warning" color="warning" /></template>
-      <strong>{{ alertas.length }} producto(s) con stock bajo.</strong>
-      {{ alertas.map((item) => item.sku).join(', ') }}
-    </q-banner>
-
     <q-card class="sgi-card" flat>
       <q-tabs v-model="tabActivo" dense align="left" class="q-px-md q-py-xs">
         <q-tab name="stock" icon="warehouse" label="Stock actual" />
@@ -68,7 +56,26 @@
       <q-tab-panels v-model="tabActivo" animated>
         <q-tab-panel name="stock" class="q-pa-none">
           <q-card-section class="row q-col-gutter-sm items-center q-pb-sm">
-            <div class="text-subtitle1 text-weight-bold">Stock Actual</div>
+            <div class="text-subtitle1 text-weight-bold">
+              <q-banner
+                v-if="stockFiltrado.length > 0"
+                class="bg-info text-black rounded-borders q-py-none"
+                dense
+              >
+                <strong>Stock Actual de {{ stockFiltrado.length }} productos</strong>
+              </q-banner>
+            </div>
+            <div class="text-subtitle1 text-weight-bold">
+              <q-banner
+                v-if="alertas.length > 0"
+                class="bg-orange-1 text-orange-10 rounded-borders q-py-none"
+                dense
+              >
+                <template #avatar><q-icon name="warning" color="warning" /></template>
+                <strong>{{ alertas.length }} producto(s) con stock bajo.</strong>
+                <!--      {{ alertas.map((item) => item.sku).join(', ') }}-->
+              </q-banner>
+            </div>
             <q-space />
             <div class="col-12 col-sm-3">
               <q-input v-model="busqueda" placeholder="Buscar producto…" outlined dense clearable>
@@ -145,7 +152,7 @@
                 <q-chip
                   dense
                   outline
-                  :color="row.stockBajo ? 'negative' : 'positive'"
+                  :color="row.stockBajo ? 'warning' : 'positive'"
                   :icon="row.stockBajo ? 'warning' : 'check'"
                 >
                   {{ row.stockActual }} {{ row.stockActual > 1 ? row.unidad + 'es' : row.unidad }}
@@ -367,7 +374,7 @@ const stockFiltrado = computed(() => {
 
 const columnasStock: QTableColumn[] = [
   { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:52px' },
-  { name: 'sku', label: 'SKU', field: 'sku', align: 'left', sortable: true },
+  { name: 'sku', label: 'Codigo', field: 'sku', align: 'left', sortable: true },
   { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
   { name: 'categoriaId', label: 'Categoría', field: 'categoriaId', align: 'left', sortable: true },
   { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
@@ -392,6 +399,7 @@ function cerrarDialogs(): void {
 async function cargarStock(): Promise<void> {
   if (!sucursalActiva.value) return
   loadingStock.value = true
+  useLoading(true, 'Cargando Stock...')
   try {
     stock.value = (await inventarioService.getStockPorSucursal(
       sucursalActiva.value,
@@ -399,12 +407,14 @@ async function cargarStock(): Promise<void> {
     alertas.value = stock.value.filter((row) => row.stockBajo)
   } finally {
     loadingStock.value = false
+    useLoading(false)
   }
 }
 
 async function cargarMovimientos(): Promise<void> {
   if (!sucursalActiva.value) return
   loadingMovimientos.value = true
+  useLoading(true, 'Cargando Movimientos...')
   try {
     movimientos.value = await inventarioService.getMovimientosCabecera({
       sucursalId: sucursalActiva.value,
@@ -416,11 +426,14 @@ async function cargarMovimientos(): Promise<void> {
     })
   } finally {
     loadingMovimientos.value = false
+    useLoading(false)
   }
 }
 
 async function cargarDatos(): Promise<void> {
-  await Promise.all([cargarStock(), cargarMovimientos()])
+  //await Promise.all([cargarStock(), cargarMovimientos()])
+  await cargarStock()
+  await cargarMovimientos()
 }
 
 async function editarMovimiento(id: string): Promise<void> {
@@ -438,7 +451,7 @@ function onMovimientoGuardado(): void {
 }
 
 onMounted(async () => {
-  useLoading(true)
+  useLoading(true, 'Cargando Inventario...')
   if (!sucursalStore.items.length) await sucursalStore.fetchAll()
   if (!categoriaStore.items.length || !marcaStore.items.length) {
     await Promise.all([categoriaStore.fetchAll(), marcaStore.fetchAll()])

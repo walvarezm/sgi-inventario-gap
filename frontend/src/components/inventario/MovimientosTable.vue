@@ -99,7 +99,7 @@
       </template>
 
       <template #body-cell-acciones="{ row }">
-        <q-td class="text-right">
+        <q-td class="text-center">
           <q-btn
             v-if="canEdit && row.editable"
             flat
@@ -179,6 +179,7 @@ const movimientosFiltrados = computed(() => {
 const columnas: QTableColumn[] = [
   { name: 'tipo', label: 'Tipo', field: 'tipo', align: 'left', sortable: true },
   { name: 'modo', label: 'Modo', field: 'modo', align: 'center', sortable: true },
+  { name: 'notas', label: 'Nota', field: 'notas', align: 'left', sortable: true },
   {
     name: 'fechaRegistro',
     label: 'Fecha registro',
@@ -195,7 +196,7 @@ const columnas: QTableColumn[] = [
     align: 'center',
     sortable: true,
   },
-  { name: 'acciones', label: 'Acciones', field: 'id', align: 'right' },
+  { name: 'acciones', label: 'Acciones', field: 'id', align: 'center' },
 ]
 
 function labelTipo(tipo: TipoMovimiento): string {

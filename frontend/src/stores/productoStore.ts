@@ -6,7 +6,7 @@ import { ref, computed } from 'vue'
 import type { Producto, ProductoForm } from 'src/types'
 import { productoService } from 'src/services/productoService'
 import { useLoading } from 'src/composables/useLoading.ts'
-import { truncate } from 'src/utils/formatters.ts'
+//import { truncate } from 'src/utils/formatters.ts'
 
 export const useProductoStore = defineStore('producto', () => {
   const items = ref<Producto[]>([])
@@ -18,8 +18,8 @@ export const useProductoStore = defineStore('producto', () => {
   const activos = computed(() => items.value.filter((p) => p.activo))
   const options = computed(() =>
     activos.value.map((p) => ({
-      //label: `[${p.marca}][${p.sku}] — ${p.nombre}`,
-      label: truncate(`[${p.marca}][${p.sku}] — ${p.nombre}`, 75),
+      label: `[${p.marca}] [${p.sku}] — ${p.nombre}`,
+      //label: truncate(`[${p.marca}][${p.sku}] — ${p.nombre}`, 75),
       value: p.id,
     })),
   )
@@ -32,7 +32,7 @@ export const useProductoStore = defineStore('producto', () => {
   async function fetchAll(): Promise<void> {
     loading.value = true
     error.value = null
-    useLoading(true)
+    useLoading(true, 'Cargando Productos...')
     try {
       items.value = await productoService.getAll()
     } catch (e) {
@@ -92,6 +92,12 @@ export const useProductoStore = defineStore('producto', () => {
   function getById(id: string): Producto | undefined {
     return items.value.find((p) => p.id === id)
   }
+
+  function getMarcaSkuNameProductById(id: string): string | undefined {
+    const product =  items.value.find((p) => p.id === id)
+    return product? '[' + product?.marca + '] [' + product?.sku + '] - ' + product?.nombre : ''
+  }
+
   function findBySku(sku: string): Producto | undefined { return bySku.value.get(sku) }
   function select(producto: Producto | null): void { selected.value = producto }
   function clearError(): void { error.value = null }
@@ -118,5 +124,6 @@ export const useProductoStore = defineStore('producto', () => {
     select,
     clearError,
     forceReload,
+    getMarcaSkuNameProductById,
   }
 })

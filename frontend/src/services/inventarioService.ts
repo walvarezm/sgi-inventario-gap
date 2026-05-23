@@ -57,7 +57,7 @@ export const inventarioService = {
     modo?: string
     referenciaTipo?: string
   }): Promise<MovimientoCabecera[]> {
-    useLoading(true)
+    useLoading(true, 'Cargando Movimientos...')
     const { data } = await api.post<ApiResponse<MovimientoCabecera[]>>('', {
       action: 'getMovimientosCabecera',
       payload,
@@ -68,7 +68,7 @@ export const inventarioService = {
   },
 
   async getMovimientoById(id: string): Promise<MovimientoCabecera> {
-    useLoading(true)
+    useLoading(true, 'Cargando Movimiento...')
     const { data } = await api.post<ApiResponse<MovimientoCabecera>>('', {
       action: 'getMovimientoById',
       payload: { id },

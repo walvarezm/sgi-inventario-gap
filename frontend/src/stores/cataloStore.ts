@@ -7,14 +7,14 @@ import type { ProductoCatalogo } from 'src/types'
 import { cataloService } from 'src/services/cataloService'
 import { useLoading } from 'src/composables/useLoading.ts'
 
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+const CACHE_TTL = 15 * 60 * 1000 // 15 minutos
 
 interface CacheEntry {
   data: ProductoCatalogo[]
   ts: number
 }
 
-export const useCataloStore = defineStore('catalo', () => {
+export const useCataloStore = defineStore('catalogo', () => {
   const cache = ref<Record<string, CacheEntry>>({})
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -23,13 +23,13 @@ export const useCataloStore = defineStore('catalo', () => {
   async function getCatalogo(sucursalId: string, forceRefresh = false): Promise<ProductoCatalogo[]> {
     const now = Date.now()
     const cached = cache.value[sucursalId]
+    sucursalIdCurrent.value = sucursalId
     if (!forceRefresh && cached && now - cached.ts < CACHE_TTL) {
       return cached.data
     }
-    useLoading(true)
     loading.value = true
     error.value = null
-    sucursalIdCurrent.value = sucursalId
+    useLoading(true, 'Cargando Catalogo por Sucursal...')
     try {
       const data = await cataloService.getBySucursal(sucursalId)
       cache.value[sucursalId] = { data, ts: now }

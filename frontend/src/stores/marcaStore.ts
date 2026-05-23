@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Marca, MarcaForm } from 'src/types'
 import { marcaService } from 'src/services/marcaService'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 export const useMarcaStore = defineStore('marca', () => {
   const items = ref<Marca[]>([])
@@ -20,12 +21,14 @@ export const useMarcaStore = defineStore('marca', () => {
     if (items.value.length > 0) return
     loading.value = true
     error.value = null
+    useLoading(true, 'Cargando Marcas...')
     try {
       items.value = await marcaService.getAll()
     } catch (e) {
       error.value = (e as Error).message
     } finally {
       loading.value = false
+      useLoading(false)
     }
   }
 

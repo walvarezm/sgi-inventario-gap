@@ -5,6 +5,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Sucursal, SucursalForm } from 'src/types'
 import { sucursalService } from 'src/services/sucursalService'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 export const useSucursalStore = defineStore('sucursal', () => {
   const items = ref<Sucursal[]>([])
@@ -21,12 +22,14 @@ export const useSucursalStore = defineStore('sucursal', () => {
   async function fetchAll(): Promise<void> {
     loading.value = true
     error.value = null
+    useLoading(true, 'Cargando Sucursales...')
     try {
       items.value = await sucursalService.getAll()
     } catch (e) {
       error.value = (e as Error).message
     } finally {
       loading.value = false
+      useLoading(false)
     }
   }
 
