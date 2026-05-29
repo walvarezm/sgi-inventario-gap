@@ -6,17 +6,45 @@ import { useQuasar } from 'quasar'
 export function useNotify() {
   const $q = useQuasar()
 
-  function notifySuccess(message: string): void {
-    $q.notify({ type: 'positive', message, position: 'top-right', timeout: 3000, icon: 'check_circle' })
+  function notifySuccess(message: string, pos = 'top-right'): void {
+    $q.notify({
+      type: 'positive',
+      message,
+      position: pos as 'top-right',
+      timeout: 3000,
+      icon: 'check_circle',
+      actions: [{ icon: 'close' }],
+    })
   }
-  function notifyError(message: string): void {
-    $q.notify({ type: 'negative', message, position: 'top-right', timeout: 5000, icon: 'error' })
+  function notifyError(message: string, pos = 'top-right'): void {
+    $q.notify({
+      type: 'negative',
+      message,
+      position: pos as 'top-right',
+      timeout: 5000,
+      icon: 'error',
+      actions: [{ icon: 'close' }],
+    })
   }
-  function notifyWarning(message: string): void {
-    $q.notify({ type: 'warning', message, position: 'top-right', timeout: 4000, icon: 'warning' })
+  function notifyWarning(message: string, pos = 'top-right'): void {
+    $q.notify({
+      type: 'warning',
+      message,
+      position: pos as 'top-right',
+      timeout: 3000,
+      icon: 'warning',
+      actions: [ { icon: 'close'}],
+    })
   }
-  function notifyInfo(message: string): void {
-    $q.notify({ type: 'info', message, position: 'top-right', timeout: 3000, icon: 'info' })
+  function notifyInfo(message: string, pos = 'top-right'): void {
+    $q.notify({
+      type: 'info',
+      message,
+      position: pos as 'top-right',
+      timeout: 3000,
+      icon: 'info',
+      actions: [{ icon: 'close' }],
+    })
   }
 
   return { notifySuccess, notifyError, notifyWarning, notifyInfo }

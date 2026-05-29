@@ -9,6 +9,36 @@
       <q-btn icon="close" flat round dense v-close-popup @click="emit('cancelled')" />
     </q-card-section>
 
+    <!-- Banner: draft restaurado -->
+    <q-banner
+      v-if="draftRestoredBanner"
+      dense
+      rounded
+      class="q-mx-md q-mt-sm bg-warning text-dark"
+      icon="restore_page"
+    >
+      <template #avatar>
+        <q-icon name="restore_page" color="dark" />
+      </template>
+      Se restauró un borrador guardado con
+      <strong>{{ items.length }} producto{{ items.length === 1 ? '' : 's' }}</strong>
+      . Puedes continuar editando o
+      <q-btn
+        dense
+        size="sm"
+        color="negative"
+        label="descartar borrador"
+        class="q-ml-xs"
+        @click="
+          () => {
+            draft.discardDraft()
+            limpiarFilas()
+            draftRestoredBanner = false
+          }
+        "
+      />
+    </q-banner>
+
     <q-card-section>
       <q-form ref="formRef" class="q-gutter-md" @submit.prevent="handleSubmit">
         <!-- ── Fila 1: Modo / Fecha / Ruta rápida ── -->
@@ -197,12 +227,20 @@
         <div class="text-subtitle2 text-weight-bold q-mb-xs">Agregar producto</div>
 
         <div class="row q-col-gutter-sm items-end q-mb-sm">
-          <div class="col-6 col-sm-1">
-            <q-input v-model="nuevaLinea.secuencial" label="# Linea" outlined dense type="number" />
+          <div class="col-12 col-sm-1" style="width: 5%">
+            <q-input
+              v-model="nuevaLinea.secuencial"
+              label="# Linea"
+              outlined
+              dense
+              type="number"
+              input-class="text-center"
+            />
           </div>
           <!-- Búsqueda de producto -->
-          <div class="col-12 col-sm-6">
+          <div class="col-12 col-sm-6" style="width: 50%">
             <q-select
+              ref="nuevaLineaProductoIdRef"
               v-model="nuevaLinea.productoId"
               :options="opcionesProducto"
               label="Producto"
@@ -213,27 +251,31 @@
               emit-value
               map-options
               clearable
-              :autofocus="autofocusValue"
+              autofocus
               @filter="filtrarProductos"
               @update:model-value="onNuevaLineaProductoChange"
             />
           </div>
 
           <!-- Cantidad -->
-          <div class="col-6 col-sm-1">
+          <div class="col-6 col-sm-1" style="width: 5%">
             <q-input
+              ref="nuevaLineaCantidadRef"
               v-model.number="nuevaLinea.cantidad"
               label="Cantidad"
               outlined
               dense
               type="number"
               min="1"
+              input-class="text-center"
+              @focus="seleccionarTexto"
             />
           </div>
 
           <!-- Precio ofrecido -->
-          <div class="col-6 col-sm-1">
+          <div class="col-6 col-sm-1" style="width: 10%">
             <q-input
+              ref="nuevaLineaPrecioOfrecidoRef"
               v-model.number="nuevaLinea.precioOfrecido"
               label="P. Venta"
               outlined
@@ -241,14 +283,17 @@
               type="number"
               step="0.01"
               prefix=""
+              input-class="text-right"
               :disable="!canEditPrices"
               @update:model-value="nuevaLinea.precioFinal = Number($event)"
+              @focus="seleccionarTexto"
             />
           </div>
 
           <!-- Precio final -->
-          <div class="col-6 col-sm-1">
+          <div class="col-6 col-sm-1" style="width: 10%">
             <q-input
+              ref="nuevaLineaPrecioFinalRef"
               v-model.number="nuevaLinea.precioFinal"
               label="P. final"
               outlined
@@ -256,19 +301,29 @@
               type="number"
               step="0.01"
               prefix=""
+              input-class="text-right"
               :disable="!canEditPrices"
+              @focus="seleccionarTexto"
             />
           </div>
 
           <!-- Detalle línea -->
 
-          <div class="col-6 col-sm-1">
-            <q-input v-model="nuevaLinea.detalleAccion" label="Obs" outlined dense />
+          <div class="col-6 col-sm-1" style="width: 15%">
+            <q-input
+              ref="nuevaLineaDetalleAccionRef"
+              v-model="nuevaLinea.detalleAccion"
+              label="Obs"
+              outlined
+              dense
+              @focus="seleccionarTexto"
+            />
           </div>
 
           <!-- Botón agregar -->
-          <div class="col-12 col-sm-1 flex items-center">
+          <div class="col-6 col-sm-1 flex items-center" style="width: 5%">
             <q-btn
+              ref="btnAgregarDesdePanelRef"
               round
               unelevated
               :color="color"
@@ -286,7 +341,7 @@
         ══════════════════════════════════════════════════════════ -->
         <div class="row items-center q-mb-xs">
           <div class="text-captions text-weight-bold text-grey-4">
-            En lista [{{ items.length }}] producto{{ items.length !== 1 ? 's' : '' }}
+            En lista [{{ items.length }}] producto{{ items.length === 1 ? '' : 's' }}
           </div>
           <q-space />
           <q-btn
@@ -312,7 +367,7 @@
         >
           <!-- N° de fila -->
           <template #body-cell-nro="{ rowIndex }">
-            <q-td class="text-center text-caption text-grey-6" style="width: 5%">
+            <q-td class="text-center text-caption text-grey-6" style="width: 2%">
               {{ rowIndex + 1 }}
             </q-td>
           </template>
@@ -348,10 +403,10 @@
 
           <!-- Producto: nombre editable inline -->
           <template #body-cell-productoId="{ row }">
-            <q-td style="width: 40%">
+            <q-td class="q-px-xs" style="min-width: 320px; max-width: 320px">
               <div
                 v-if="false"
-                class="text-weight-medium product-name-with-ellipsis"
+                class="text-weight-medium product-name-with-ellipsiss"
                 style="max-width: 100% !important"
               >
                 {{ productoStore.getMarcaSkuNameProductById(row.productoId) }}
@@ -398,7 +453,7 @@
 
           <!-- Precio ofrecido editable -->
           <template #body-cell-precioOfrecido="{ row }">
-            <q-td style="width: 10%">
+            <q-td style="width: 7%">
               <q-input
                 v-model.number="row.precioOfrecido"
                 outlined
@@ -415,7 +470,7 @@
 
           <!-- Precio final editable -->
           <template #body-cell-precioFinal="{ row }">
-            <q-td style="width: 10%">
+            <q-td style="width: 7%">
               <q-input
                 v-model.number="row.precioFinal"
                 outlined
@@ -431,14 +486,15 @@
 
           <!-- Detalle editable -->
           <template #body-cell-detalleAccion="{ row }">
-            <q-td style="width: 10%">
+            <q-td style="width: 20%">
               <q-input v-model="row.detalleAccion" outlined dense borderless placeholder="—" />
+              <q-tooltip v-if="row.detalleAccion">{{ row.detalleAccion }}</q-tooltip>
             </q-td>
           </template>
 
           <!-- Acciones por fila -->
           <template #body-cell-acciones="{ row, rowIndex }">
-            <q-td class="text-center" style="width: 5%">
+            <q-td class="text-center" style="width: 4%">
               <q-btn
                 round
                 dense
@@ -484,8 +540,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { QForm, QTableColumn } from 'quasar'
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
+import { QForm } from 'quasar'
+import type { QTableColumn } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useProductoStore } from 'src/stores/productoStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
@@ -500,6 +557,9 @@ import type {
 import { useNotify } from 'src/composables/useNotify'
 import { truncate } from 'src/utils/formatters.ts'
 import { useInventario } from 'src/composables/useInventario.ts'
+import { nonNegativeNumber, seleccionarTexto, setInputFocusRef } from 'src/utils/validators.ts'
+import { useMovimientoDraft } from 'src/composables/useMovimientoDraft'
+import { useProduct } from 'src/composables/useProducto.ts'
 
 // ── Tipos locales ────────────────────────────────────────────
 type LocalItem = MovimientoDetalleItem & { localId: string }
@@ -530,12 +590,15 @@ const productoStore = useProductoStore()
 const sucursalStore = useSucursalStore()
 const { notifySuccess, notifyError, notifyWarning } = useNotify()
 const { getMovimientoPlantillasReferencia } = useInventario()
+///const producto = useProduct()
+const { opcionesProducto, filtrarProductos } = useProduct()
 
+//useProducto.opcionesProducto.value
 // ── Estado reactivo ──────────────────────────────────────────
 const formRef = ref<InstanceType<typeof QForm> | null>(null)
+const draftRestoredBanner = ref(false)
 //const productoSelec = ref<InstanceType<typeof QSelect> | null>(null)
 const loading = ref(false)
-const autofocus = ref<boolean>(false)
 const modo = ref<'UNITARIO' | 'MASIVO'>('UNITARIO')
 const fechaRegistro = ref(new Date().toISOString().slice(0, 16))
 const sucursalId = ref(authStore.sucursalId ?? '')
@@ -548,8 +611,12 @@ const referenciaTexto = ref('')
 const notas = ref('')
 const items = ref<LocalItem[]>([])
 const plantillas = ref<ReferenciaMovimientoTemplate[]>([])
-
-const autofocusValue = computed(() => autofocus.value).value
+const nuevaLineaProductoIdRef = ref(null)
+const nuevaLineaCantidadRef = ref(null)
+const nuevaLineaPrecioOfrecidoRef = ref(null)
+const nuevaLineaPrecioFinalRef = ref(null)
+const nuevaLineaDetalleAccionRef = ref(null)
+const btnAgregarDesdePanelRef = ref(null)
 
 const ultimoNumeroSecuencial = computed<number>(() => {
   if (!items.value.length) return 1
@@ -611,14 +678,14 @@ const submitLabel = computed(() => (props.initialData ? 'Guardar cambios' : 'Gua
 const PRODUCTOS_SIN_RESTRICCION = new Set<string>(['f14fe181-7896-4c19-8a92-b87bc8511d09'])
 
 // ── Opciones de producto (filtrable) ─────────────────────────
-const opcionesProducto = ref(
+/*const opcionesProducto = ref(
   productoStore.activos.map((p) => ({
     label: truncate(`[${p.marca}][${p.sku}] — ${p.nombre}`, 100),
     value: p.id,
   })),
-)
+)*/
 
-function filtrarProductos(val: string, update: (fn: () => void) => void): void {
+/*function filtrarProductos(val: string, update: (fn: () => void) => void): void {
   update(() => {
     // Divide el criterio en tokens y exige que TODOS estén presentes en algún campo
     const tokens = val
@@ -628,8 +695,8 @@ function filtrarProductos(val: string, update: (fn: () => void) => void): void {
 
     opcionesProducto.value = productoStore.activos
       .filter((p) => {
-        if (!tokens.length) return true
-        const haystack = `${p.sku} ${p.marca} ${p.nombre}`.toLowerCase()
+        if (!tokens.length) return false
+        const haystack = `${p.marca} ${p.sku} ${p.nombre}`.toLowerCase()
         return tokens.every((t) => haystack.includes(t))
       })
       .map((p) => ({
@@ -637,7 +704,7 @@ function filtrarProductos(val: string, update: (fn: () => void) => void): void {
         value: p.id,
       }))
   })
-}
+}*/
 
 /** Obtiene el label legible de un productoId para mostrarlo en la tabla */
 function productoLabel(productoId: string): string {
@@ -650,7 +717,7 @@ const columnasDetalle: QTableColumn[] = [
   { name: 'nro', label: '#', field: 'localId', align: 'center' },
   { name: 'secuencial', label: 'Linea', field: 'secuencial', align: 'center' },
   { name: 'productoId', label: 'Producto', field: 'productoId', align: 'left' },
-  { name: 'cantidad', label: 'Cantidad', field: 'cantidad', align: 'center' },
+  { name: 'cantidad', label: 'Cant.', field: 'cantidad', align: 'center' },
   { name: 'precioOfrecido', label: 'P. Venta', field: 'precioOfrecido', align: 'right' },
   { name: 'precioFinal', label: 'P. final', field: 'precioFinal', align: 'right' },
   { name: 'detalleAccion', label: 'Observación', field: 'detalleAccion', align: 'left' },
@@ -679,7 +746,7 @@ function resetNuevaLinea(): void {
     precioFinal: 0,
     detalleAccion: '',
   }
-  autofocus.value = true
+  setInputFocusRef(nuevaLineaProductoIdRef.value)
 }
 
 /** Máximo secuencial actual en la tabla + 1, listo para asignar a la siguiente línea. */
@@ -710,6 +777,7 @@ function onNuevaLineaProductoChange(): void {
   if (!producto) return
   nuevaLinea.value.precioOfrecido = Number(producto.precioOfrecido) || 0
   nuevaLinea.value.precioFinal = Number(producto.precioFinal) || 0
+  setInputFocusRef(nuevaLineaPrecioOfrecidoRef.value)
 }
 
 /**
@@ -718,7 +786,10 @@ function onNuevaLineaProductoChange(): void {
  * - En modo MASIVO:   valida duplicado; si ya existe, acumula cantidad.
  */
 function agregarDesdePanel(): void {
-  if (!nuevaLinea.value.productoId || nuevaLinea.value.cantidad < 0) return
+  if (!nuevaLinea.value.productoId || nuevaLinea.value.cantidad < 0) {
+    notifyError('Seleccione un producto ó la cantidad Debe ser un número igual o mayor a 0.')
+    return
+  }
 
   if (modo.value === 'UNITARIO') {
     // Reemplaza la única fila
@@ -744,6 +815,7 @@ function agregarDesdePanel(): void {
     notifyError(
       'El producto ya está en la lista. Elimínalo primero o edita directamente en la tabla.',
     )
+    setInputFocusRef(nuevaLineaProductoIdRef.value)
     return
   }
 
@@ -767,14 +839,12 @@ function agregarDesdePanel(): void {
     detalleAccion: nuevaLinea.value.detalleAccion,
   })
   resetNuevaLinea()
-  autofocus.value = true
 }
 
 // ── Acciones sobre filas de la tabla ─────────────────────────
 
 /** Mantiene compatibilidad con código interno (fillFromInitialData, etc.) */
 function agregarFila(seed?: Partial<LocalItem>): void {
-  autofocus.value = true
   if (modo.value === 'UNITARIO' && items.value.length) return
   items.value.push({ ...createEmptyItem(), ...seed, localId: `${Date.now()}-${Math.random()}` })
 }
@@ -796,7 +866,6 @@ function duplicarFila(index: number): void {
 }
 
 function quitarFila(index: number): void {
-  autofocus.value = false
   if (items.value.length === 1 && modo.value === 'UNITARIO') return
   items.value.splice(index, 1)
   //if (!items.value.length) agregarFila()
@@ -882,6 +951,7 @@ async function handleSubmit(): Promise<void> {
       await inventarioService.createMovimientoMasivo(buildPayload())
       notifySuccess('Movimiento registrado correctamente')
     }
+    draft.discardDraft() // ← limpiar draft tras éxito
     emit('saved')
   } catch (e) {
     notifyError((e as Error).message)
@@ -892,7 +962,6 @@ async function handleSubmit(): Promise<void> {
 
 // ── Cargar desde initialData ──────────────────────────────────
 function fillFromInitialData(): void {
-  autofocus.value = true
   console.log('fillFromInitialData', props.initialData, props)
   if (!props.initialData) {
     items.value = [] //[createEmptyItem()]
@@ -918,21 +987,38 @@ function fillFromInitialData(): void {
   if (!items.value.length) items.value = [createEmptyItem()]
 }
 
+// ── Draft persistence ────────────────────────────────────────
+const draft = useMovimientoDraft({
+  tipo: props.tipo,
+  modo,
+  fechaRegistro,
+  sucursalId,
+  sucursalOrigen,
+  sucursalDestino,
+  referenciaTipo: referenciaTipo as any,
+  referenciaTexto,
+  notas,
+  items: items as any,
+})
+
 watch(() => props.initialData, fillFromInitialData, { immediate: true })
-watch(
-  items.value,
-  () => {
-    console.log('watch items.value', items.value.length, items.value)
-  },
-  { immediate: true },
-)
 
 onMounted(async () => {
   if (!sucursalStore.items.length) await sucursalStore.fetchAll()
   if (!productoStore.items.length) await productoStore.fetchAll()
   plantillas.value = (await getMovimientoPlantillasReferencia()) as ReferenciaMovimientoTemplate[]
-  // inventarioService.getMovimientoPlantillasReferencia()
-  if (!items.value.length) items.value = [] //[createEmptyItem()]
+
+  // Restaurar draft solo si no es una edición (initialData vacío)
+  if (!props.initialData) {
+    const restored = draft.restoreDraft()
+    if (restored) {
+      draftRestoredBanner.value = true
+      await nextTick()
+    }
+  }
+
+  // Activar autosave después de restaurar para no sobreescribir inmediatamente
+  draft.enableAutosave()
 })
 </script>
 

@@ -12,8 +12,16 @@ export const useMarcaStore = defineStore('marca', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const activas = computed(() => items.value.filter((c) => c.activo))
-  const options = computed(() => activas.value.map((c) => ({ label: c.nombre, value: c.id })))
+  const activas = computed(() =>
+    items.value
+      .filter((c) => c.activo)
+      .sort((a, b) => {
+        // Ordenar por NOMBRE (A-Z)
+        return a.nombre.localeCompare(b.nombre)
+      }),
+  )
+  const options = computed(() =>
+    activas.value.map((c) => ({ label: c.nombre, value: c.id })))
   const optionsName = computed(() =>
     activas.value.map((c) => ({ label: c.nombre, value: c.nombre })))
 

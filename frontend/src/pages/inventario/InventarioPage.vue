@@ -350,7 +350,8 @@ const opcionesReferenciaTipo = [
 const stockFiltrado = computed(() => {
   let rows = stock.value
   if (busqueda.value) {
-    const q = busqueda.value.toLowerCase()
+
+/*    const q = busqueda.value.toLowerCase()
     rows = rows.filter(
       (row) =>
         String(row.sku || '')
@@ -362,7 +363,20 @@ const stockFiltrado = computed(() => {
         String(row.marca || '')
           .toLowerCase()
           .includes(q),
-    )
+    )*/
+
+    // Busqueda avanzada
+    // Divide el criterio en tokens y exige que TODOS estén presentes en algún campo
+    const tokens = busqueda.value
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 0)
+
+    rows = rows.filter((p) => {
+      if (!tokens.length) return false
+      const haystack = `${p.marca} ${p.sku} ${p.nombre}`.toLowerCase()
+      return tokens.every((t) => haystack.includes(t))
+    })
   }
   if (categoriaFiltro.value) rows = rows.filter((row) => row.categoriaId === categoriaFiltro.value)
   if (marcaFiltro.value)
@@ -451,16 +465,20 @@ function onMovimientoGuardado(): void {
 }
 
 onMounted(async () => {
-  useLoading(true, 'Cargando Inventario...')
+  //useLoading(true, 'Cargando Inventario...')
   if (!sucursalStore.items.length) await sucursalStore.fetchAll()
-  if (!categoriaStore.items.length || !marcaStore.items.length) {
+  if (!categoriaStore.items.length) await categoriaStore.fetchAll()
+  if (!marcaStore.items.length) await marcaStore.fetchAll()
+
+  /*if (!categoriaStore.items.length || !marcaStore.items.length) {
     await Promise.all([categoriaStore.fetchAll(), marcaStore.fetchAll()])
-  }
+  }*/
+
   if (!productoStore.items.length) await productoStore.fetchAll()
   if (!sucursalActiva.value && sucursalStore.activas.length > 0) {
     sucursalActiva.value = sucursalStore.activas[0].id
   }
   await cargarDatos()
-  useLoading(false)
+  //useLoading(false)
 })
 </script>

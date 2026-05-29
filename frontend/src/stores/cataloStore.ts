@@ -7,7 +7,7 @@ import type { ProductoCatalogo } from 'src/types'
 import { cataloService } from 'src/services/cataloService'
 import { useLoading } from 'src/composables/useLoading.ts'
 
-const CACHE_TTL = 15 * 60 * 1000 // 15 minutos
+const CACHE_TTL = 30 * 60 * 1000 // 30 minutos
 
 interface CacheEntry {
   data: ProductoCatalogo[]
@@ -31,7 +31,19 @@ export const useCataloStore = defineStore('catalogo', () => {
     error.value = null
     useLoading(true, 'Cargando Catalogo por Sucursal...')
     try {
-      const data = await cataloService.getBySucursal(sucursalId)
+      const dataResult = await cataloService.getBySucursal(sucursalId)
+
+      const data = dataResult.sort((a, b) => {
+        // 1. Ordenar por MARCA (A-Z)
+        const marcaCompare = a.marca.localeCompare(b.marca)
+        if (marcaCompare !== 0) return marcaCompare
+        // 2. Ordenar por SKU (A-Z)
+        const skuCompare = a.sku.localeCompare(b.sku)
+        if (skuCompare !== 0) return skuCompare
+        // 3. Ordenar por NOMBRE (A-Z)
+        return a.nombre.localeCompare(b.nombre)
+      })
+
       cache.value[sucursalId] = { data, ts: now }
       return data
     } catch (e) {

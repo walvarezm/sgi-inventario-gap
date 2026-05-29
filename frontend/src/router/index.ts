@@ -14,6 +14,16 @@ const routes: RouteRecordRaw[] = [
       { path: '', name: 'login', component: () => import('src/pages/auth/LoginPage.vue') },
     ],
   },
+
+  // ── Ruta pública de detalle de producto (acceso sin sesión) ──
+  // Usada cuando VITE_QR_MODE=enlace: el QR apunta a esta URL.
+  {
+    path: '/producto/:sku',
+    name: 'detalle-producto-publico',
+    component: () => import('src/pages/productos/DetalleProductoPage.vue'),
+    meta: { public: true, title: 'Detalle de Producto' },
+  },
+
   {
     path: '/',
     component: () => import('src/layouts/MainLayout.vue'),

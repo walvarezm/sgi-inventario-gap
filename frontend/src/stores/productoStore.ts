@@ -15,7 +15,22 @@ export const useProductoStore = defineStore('producto', () => {
   const error = ref<string | null>(null)
   const selected = ref<Producto | null>(null)
 
-  const activos = computed(() => items.value.filter((p) => p.activo))
+  const activos = computed(() =>
+    items.value
+      .filter((p) => p.activo)
+      // ✅ Agregar ordenación: primero por marca, luego SKU, luego nombre
+      .sort((a, b) => {
+        // 1. Ordenar por MARCA (A-Z)
+        const marcaCompare = a.marca.localeCompare(b.marca)
+        if (marcaCompare !== 0) return marcaCompare
+        // 2. Ordenar por SKU (A-Z)
+        const skuCompare = a.sku.localeCompare(b.sku)
+        if (skuCompare !== 0) return skuCompare
+        // 3. Ordenar por NOMBRE (A-Z)
+        return a.nombre.localeCompare(b.nombre)
+      }),
+  )
+
   const options = computed(() =>
     activos.value.map((p) => ({
       label: `[${p.marca}] [${p.sku}] — ${p.nombre}`,
@@ -46,6 +61,7 @@ export const useProductoStore = defineStore('producto', () => {
   async function create(form: ProductoForm): Promise<Producto> {
     saving.value = true
     error.value = null
+    useLoading(true, 'Creando Producto...')
     try {
       const nuevo = await productoService.create(form)
       items.value.push(nuevo)
@@ -55,12 +71,14 @@ export const useProductoStore = defineStore('producto', () => {
       throw e
     } finally {
       saving.value = false
+      useLoading(false)
     }
   }
 
   async function update(id: string, changes: Partial<ProductoForm>): Promise<Producto> {
     saving.value = true
     error.value = null
+    useLoading(true, 'Actualizando Producto...')
     try {
       const actualizado = await productoService.update(id, changes)
       const idx = items.value.findIndex((p) => p.id === id)
@@ -72,6 +90,7 @@ export const useProductoStore = defineStore('producto', () => {
       throw e
     } finally {
       saving.value = false
+      useLoading(false)
     }
   }
 

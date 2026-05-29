@@ -1,7 +1,15 @@
 // =============================================================
 // main.gs — Router principal de la Web App SGI v1.1
-// Actualizado Fase 7: Reportes y Dashboard
+// Actualizado: soporte de acciones públicas sin token
 // =============================================================
+
+// ── Acciones que NO requieren token de sesión ────────────────
+// Solo deben exponerse datos no sensibles (sin stock, sin
+// precio de compra, sin datos de usuarios/clientes).
+var ACCIONES_PUBLICAS = [
+  'getProductoBySku',   // Detalle público de producto (página QR enlace)
+  'getCategorias',      // Listado de categorías (nombres para mostrar en detalle)
+]
 
 function doPost(e) {
   try {
@@ -12,11 +20,18 @@ function doPost(e) {
     const { action, payload, token } = body
     if (!action) return respond(400, 'Acción requerida')
 
+    // ── Login: sin token, flujo propio ───────────────────────
     if (action === 'login') {
       return respond(200, 'OK', Auth.login(payload.email, payload.password))
     }
 
-    const session = Auth.verifyToken(token)
+    // ── Acciones públicas: sin verificación de token ─────────
+    const esPublica = ACCIONES_PUBLICAS.indexOf(action) !== -1
+
+    var session = null
+    if (!esPublica) {
+      session = Auth.verifyToken(token)
+    }
 
     const routes = {
       'verificarToken':          () => Auth.verifyToken(token),
@@ -44,7 +59,7 @@ function doPost(e) {
       // Catálogo
       'getCatalogo':             () => CatalogoService.getBySucursal(payload, session),
       // Categorías
-      'getCategorias':           () => CategoriaService.getAll(),
+      'getCategorias':           () => CategoriaService.getAll(),          // pública
       'getCategoriaById':        () => CategoriaService.getById(payload),
       'createCategoria':         () => CategoriaService.create(payload, session),
       'updateCategoria':         () => CategoriaService.update(payload, session),
@@ -56,7 +71,7 @@ function doPost(e) {
       // Productos
       'getProductos':            () => ProductoService.getAll(payload),
       'getProductoById':         () => ProductoService.getById(payload),
-      'getProductoBySku':        () => ProductoService.getBySku(payload),
+      'getProductoBySku':        () => _getProductoBySkuPublico(payload),  // pública
       'createProducto':          () => ProductoService.create(payload, session),
       'updateProducto':          () => ProductoService.update(payload, session),
       'deleteProducto':          () => ProductoService.remove(payload, session),
@@ -73,12 +88,14 @@ function doPost(e) {
       'getMovimientos':          () => MovimientoService.getMovimientos(payload, session),
       'getMovimientosCabecera':  () => MovimientoService.getMovimientosCabecera(payload, session),
       'getMovimientoById':       () => MovimientoService.getMovimientoById(payload, session),
-      'updateMovimiento':        () => MovimientoService.updateMovimiento(payload, session),
-      'createMovimientoMasivo':  () => MovimientoService.createMovimientoMasivo(payload, session),
+      'updateMovimiento':          () => MovimientoService.updateMovimiento(payload, session),
+      'updateMovimientoDetalle':   () => MovimientoService.updateMovimientoDetalle(payload, session),
+      'deleteMovimientoDetalle':   () => MovimientoService.deleteMovimientoDetalle(payload, session),
+      'createMovimientoMasivo':    () => MovimientoService.createMovimientoMasivo(payload, session),
       'getMovimientoPlantillasReferencia': () => MovimientoService.getMovimientoPlantillasReferencia(),
-      'registrarEntrada':        () => MovimientoService.entrada(payload, session),
-      'registrarSalida':         () => MovimientoService.salida(payload, session),
-      'transferir':              () => MovimientoService.transferir(payload, session),
+      'registrarEntrada':          () => MovimientoService.entrada(payload, session),
+      'registrarSalida':           () => MovimientoService.salida(payload, session),
+      'transferir':                () => MovimientoService.transferir(payload, session),
       // Proveedores
       'getProveedores':          () => ProveedorService.getAll(payload),
       'getProveedorById':        () => ProveedorService.getById(payload),
@@ -105,7 +122,7 @@ function doPost(e) {
       'anularDocumentoVenta':    () => DocumentoVentaService.anular(payload, session),
       'convertirDocumentoVenta': () => DocumentoVentaService.convertir(payload, session),
       'generarHtmlDocumentoVenta': () => DocumentoVentaService.generarHtml(payload, session),
-      // ── FASE 7 — Reportes ──────────────────────────────
+      // ── FASE 7 — Reportes ──────────────────────────────────
       'getKPIs':                 () => ReporteService.getKPIs(payload, session),
       'getReporteVentas':        () => ReporteService.getReporteVentas(payload, session),
       'getTopProductos':         () => ReporteService.getTopProductos(payload, session),
@@ -121,6 +138,40 @@ function doPost(e) {
     Logger.log('ERROR doPost: ' + err.message)
     const status = err.message.includes('Token') || err.message.includes('autorizado') ? 401 : 500
     return respond(status, err.message)
+  }
+}
+
+// ── Handler público de getProductoBySku ─────────────────────
+// Variante segura que solo expone campos no sensibles:
+// excluye precio_compra, stock, movimientos, etc.
+function _getProductoBySkuPublico(payload) {
+  if (!payload || !payload.sku) throw new Error('SKU requerido')
+
+  const producto = ProductoService.getBySku(payload)
+
+  // Solo exponer si el producto está activo
+  if (!producto.activo) throw new Error('Producto no encontrado con SKU: ' + payload.sku)
+
+  // Retornar solo campos públicos (sin precio_compra ni datos internos)
+  return {
+    id:             producto.id,
+    sku:            producto.sku,
+    marcaId:        producto.marcaId,
+    marca:          producto.marca,
+    nombre:         producto.nombre,
+    descripcion:    producto.descripcion,
+    categoriaId:    producto.categoriaId,
+    unidad:         producto.unidad,
+    precioOfrecido: producto.precioOfrecido,
+    precioFinal:    producto.precioFinal,
+    stockMinimo:    producto.stockMinimo,
+    imagenUrl:      producto.imagenUrl,
+    imagenLocation: producto.imagenLocation,
+    qrCode:         producto.qrCode,
+    activo:         producto.activo,
+    fechaCreacion:  producto.fechaCreacion,
+    // precioCompra: OMITIDO — dato interno
+    // stock:        OMITIDO — requiere sucursal y autenticación
   }
 }
 

@@ -1,7 +1,11 @@
 <template>
   <MovimientoFormBase
     tipo="TRANSFERENCIA"
-    title="Transferencia entre Sucursales"
+    :title="
+      !initialData
+        ? 'Registrar Transferencia entre Sucursales'
+        : 'Modificar Transferencia entre Sucursales'
+    "
     color="primary"
     icon="swap_horiz"
     :initial-data="initialData ?? null"

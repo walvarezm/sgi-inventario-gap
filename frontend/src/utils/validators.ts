@@ -2,6 +2,8 @@
 // validators.ts — Validadores reutilizables para formularios
 // =============================================================
 
+import { Ref } from 'vue'
+
 export const required = (val: unknown): boolean | string =>
   (val !== null && val !== undefined && String(val).trim() !== '') || 'Este campo es requerido'
 
@@ -18,14 +20,39 @@ export const nonNegativeNumber = (val: unknown): boolean | string => {
   return (!isNaN(n) && n >= 0) || 'Debe ser un número igual o mayor a 0'
 }
 
-export const minLength = (min: number) => (val: string): boolean | string =>
-  (val && val.length >= min) || `Mínimo ${min} caracteres`
+export const minLength =
+  (min: number) =>
+  (val: string): boolean | string =>
+    (val && val.length >= min) || `Mínimo ${min} caracteres`
 
-export const maxLength = (max: number) => (val: string): boolean | string =>
-  !val || val.length <= max || `Máximo ${max} caracteres`
+export const maxLength =
+  (max: number) =>
+  (val: string): boolean | string =>
+    !val || val.length <= max || `Máximo ${max} caracteres`
 
 export const skuFormat = (val: string): boolean | string =>
   /^[A-Z0-9\-_]+$/i.test(val) || 'Solo letras, números, guiones y guiones bajos'
 
 export const phoneBolivia = (val: string): boolean | string =>
   !val || /^\+?[0-9\s\-()]{7,15}$/.test(val) || 'Formato de teléfono inválido'
+
+export const seleccionarTexto = (event) => {
+  console.log('seleccionarTexto', event.target)
+  event.target.select()
+}
+
+export const seleccionarTextoRef = (inputRef ) => {
+  console.log('seleccionarTextoRef', inputRef)
+  if (inputRef) {
+    const input = inputRef.getNativeElement()
+    input.select()
+  }
+}
+
+export const setInputFocusRef = (inputRef: any ) => {
+  console.log('setInputFocusRef', inputRef )
+  if (inputRef) {
+    //const input = inputRef.getNativeElement()
+    inputRef.focus()
+  }
+}

@@ -24,10 +24,12 @@ const CatalogoService = {
 
     // Construir mapa de stock por producto para la sucursal
     const stockMap = {}
+    const productoSucursalMap = {}
     inventario
       .filter(i => String(i.sucursal_id) === String(sucursalId))
       .forEach(i => {
         stockMap[i.producto_id] = Number(i.stock_actual) || 0
+        productoSucursalMap[i.producto_id] = i || {}
       })
 
     const resultado = productos.map(p => ({
@@ -48,6 +50,7 @@ const CatalogoService = {
       stockBajo: (stockMap[p.id] || 0) <= Number(p.stock_minimo || 0),
       stockMinimo: p.stock_minimo || 0,
       sucursalId: stockMap[p.id] !== undefined ? sucursalId : '',
+      productoSucursal: productoSucursalMap[p.id] !== undefined ? productoSucursalMap[p.id] : {},
     }))
 
     //cache.put(cacheKey, JSON.stringify(resultado), 600) // 5 minutos

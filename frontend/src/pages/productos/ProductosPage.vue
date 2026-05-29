@@ -30,7 +30,7 @@
       <q-expansion-item
         icon="tune"
         label="Filtros y búsqueda"
-        caption="Busca por SKU, marca, categoría y estado"
+        caption="Busca por marca, codigo, nombre o filtra por categoria marca y/o estado"
         expand-separator
         :default-opened="!esMovil"
         header-class="sgi-filter-toggle"
@@ -39,7 +39,7 @@
           <div class="col-12 col-sm-4">
             <q-input
               v-model="busqueda"
-              placeholder="Buscar SKU, nombre, marca…"
+              placeholder="Buscar marca, codigo, nombre…"
               outlined
               dense
               clearable
@@ -61,7 +61,7 @@
           <div class="col-12 col-sm-2">
             <q-select
               v-model="filtroMarca"
-              :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.optionsName]"
+              :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.options]"
               label="Marca"
               outlined
               dense
@@ -93,7 +93,7 @@
             </q-btn>
           </div>
           <q-space />
-          <div class="text-caption text-muted">{{ productosFiltrados.length }} resultado(s)</div>
+          <div class="text-caption text-muted">{{ productosFiltrados.length }} producto(s)</div>
         </q-card-section>
       </q-expansion-item>
     </q-card>
@@ -110,15 +110,19 @@
         class="sgi-table"
         :pagination="{ rowsPerPage: 10 }"
         no-data-label="No hay productos registrados"
+        @row-dblclick="fnRowDblClick"
       >
         <template #body-cell-imagenUrl="{ row }">
           <q-td>
+            <span :style="row.imagenUrl ? 'cursor: pointer' : ''" @click="verIMG(row)">
               <ProductoImagenIFrame
                 :imagen-url="row.imagenUrl"
-                :width="40"
-                :height="40"
+                :width="35"
+                :height="35"
                 :imagen-location="row.imagenLocation"
               />
+              <q-tooltip>Ver Imagen</q-tooltip>
+            </span>
           </q-td>
         </template>
 
@@ -126,10 +130,13 @@
           <q-td>
             <div class="row items-center no-wrap q-gutter-xs">
               <span class="text-weight-bold">{{ row.sku }}</span>
-              <q-btn flat round dense size="xs" icon="qr_code" color="primary" @click="verQR(row)">
-                <q-tooltip>Ver QR</q-tooltip>
-              </q-btn>
             </div>
+          </q-td>
+        </template>
+
+        <template #body-cell-precioCompra="{ value }">
+          <q-td class="text-right text-muted">
+            <span class="text-weight-bold text-primary">{{ formatCurrency(value) }}</span>
           </q-td>
         </template>
 
@@ -221,9 +228,29 @@
       <ProductoImportDialog @imported="onImported" @cancelled="dialogImport = false" />
     </q-dialog>
 
+    <!-- Dialog IMG -->
+    <q-dialog v-model="dialogIMG">
+      <q-card class="sgi-card q-pa-md text-center" style="min-width: 280px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-subtitle1 text-weight-bold">Código producto: {{ productoQR?.sku }}</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-card-section>
+          <ProductoImagenIFrame
+            :imagen-url="String(productoQR?.imagenUrl)"
+            :width="300"
+            :height="300"
+            :imagen-location="productoQR?.imagenLocation"
+          />
+          <div class="text-caption text-muted q-mt-sm">{{ productoQR?.nombre }}</div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
     <!-- Dialog QR -->
     <q-dialog v-model="dialogQR">
-      <q-card class="sgi-card q-pa-md text-center" style="min-width: 280px">
+      <q-card class="sgi-card q-pa-md text-center" style="min-width: 280px; max-width: 320px">
         <q-card-section class="row items-center q-pb-none">
           <div class="text-subtitle1 text-weight-bold">QR — {{ productoQR?.sku }}</div>
           <q-space />
@@ -256,7 +283,7 @@ import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.
 const productoStore = useProductoStore()
 const categoriaStore = useCategoriaStore()
 const marcaStore = useMarcaStore()
-const { notifySuccess, notifyError } = useNotify()
+const { notifySuccess, notifyWarning, notifyError } = useNotify()
 const $q = useQuasar()
 const esMovil = computed(() => $q.screen.lt.md)
 
@@ -266,6 +293,7 @@ const filtroMarca = ref<string | null>(null)
 const filtroActivo = ref<boolean | null>(true)
 const dialogForm = ref(false)
 const dialogImport = ref(false)
+const dialogIMG = ref(false)
 const dialogQR = ref(false)
 const productoEditar = ref<Producto | null>(null)
 const productoQR = ref<Producto | null>(null)
@@ -274,24 +302,31 @@ const productosFiltrados = computed(() => {
   let lista = productoStore.items
   if (filtroActivo.value !== null) lista = lista.filter((p) => p.activo === filtroActivo.value)
   if (filtroCategoria.value) lista = lista.filter((p) => p.categoriaId === filtroCategoria.value)
-  if (filtroMarca.value) lista = lista.filter((p) => p.marca === filtroMarca.value)
-  //if (filtroMarca.value) lista = lista.filter((p) => p.marcaId === filtroMarca.value)
+  //if (filtroMarca.value) lista = lista.filter((p) => p.marca === filtroMarca.value)
+  if (filtroMarca.value) lista = lista.filter((p) => p.marcaId === filtroMarca.value)
   if (busqueda.value) {
-    const q = busqueda.value.toLowerCase()
+    /*const q = busqueda.value.toLowerCase()
     lista = lista.filter(
       (p) =>
         p.sku.toLowerCase().includes(q) ||
         p.nombre.toLowerCase().includes(q) ||
         p.marca.toLowerCase().includes(q) ||
         p.descripcion.toLowerCase().includes(q),
-    )
-  }
+    )*/
 
-  lista = lista.map((p) => ({
-    ...p,
-    imagenLocation: p.imagenUrl ? 'drive' : 'local',
-    imagenUrl: p.imagenUrl ? p.imagenUrl : '', // p.sku,
-  }))
+    // Busqueda avanzada
+    // Divide el criterio en tokens y exige que TODOS estén presentes en algún campo
+    const tokens = busqueda.value
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 0)
+
+    lista = lista.filter((p) => {
+      if (!tokens.length) return false
+      const haystack = `${p.marca} ${p.sku} ${p.nombre} ${p.descripcion}`.toLowerCase()
+      return tokens.every((t) => haystack.includes(t))
+    })
+  }
 
   return lista
 })
@@ -303,21 +338,28 @@ const opcionesEstado = [
 ]
 
 const columnas: QTableColumn[] = [
-  { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:56px' },
-  { name: 'sku', label: 'SKU', field: 'sku', align: 'left', sortable: true },
-  { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left', sortable: true },
+  { name: 'imagenUrl', label: 'img', field: 'imagenUrl', align: 'center', style: 'width:56px' },
+  { name: 'categoriaId', label: 'Categ', field: 'categoriaId', align: 'left' },
   { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
-  { name: 'categoriaId', label: 'Categoría', field: 'categoriaId', align: 'left' },
-  { name: 'unidad', label: 'Unidad', field: 'unidad', align: 'center' },
+  { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
+  { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left', sortable: true },
+  //{ name: 'unidad', label: 'Unidad', field: 'unidad', align: 'center' },
+  {
+    name: 'precioCompra',
+    label: 'P. Compra',
+    field: 'precioCompra',
+    align: 'right',
+    sortable: true,
+  },
   {
     name: 'precioOfrecido',
-    label: 'P. Lista',
+    label: 'P. Venta',
     field: 'precioOfrecido',
     align: 'right',
     sortable: true,
   },
-  { name: 'precioFinal', label: 'P. Venta', field: 'precioFinal', align: 'right', sortable: true },
-  { name: 'stockMinimo', label: 'Stock Mín.', field: 'stockMinimo', align: 'center' },
+  { name: 'precioFinal', label: 'P. Final', field: 'precioFinal', align: 'right', sortable: true },
+  //{ name: 'stockMinimo', label: 'Stock Mín.', field: 'stockMinimo', align: 'center' },
   { name: 'activo', label: 'Estado', field: 'activo', align: 'center', sortable: true },
   { name: 'acciones', label: 'Acciones', field: 'id', align: 'right' },
 ]
@@ -332,9 +374,22 @@ function onSaved(_p: Producto): void {
 function onImported(): void {
   dialogImport.value = false
 }
+function verIMG(p: Producto): void {
+  if (!p.imagenUrl) {
+    notifyWarning('Producto Sin Imagen', 'top')
+    return
+  }
+  productoQR.value = p
+  dialogIMG.value = true
+}
+
 function verQR(p: Producto): void {
   productoQR.value = p
   dialogQR.value = true
+}
+
+const fnRowDblClick = (_e: Event, row: Producto, _index: number) => {
+  abrirFormulario(row)
 }
 
 function confirmarEliminar(p: Producto): void {

@@ -12,8 +12,17 @@ export const useCategoriaStore = defineStore('categoria', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const activas = computed(() => items.value.filter((c) => c.activo))
-  const options = computed(() => activas.value.map((c) => ({ label: c.nombre, value: c.id })))
+  const activas = computed(() =>
+    items.value
+      .filter((c) => c.activo)
+      .sort((a, b) => {
+        // Ordenar por NOMBRE (A-Z)
+        return a.nombre.localeCompare(b.nombre)
+      }),
+  )
+  const options = computed(() =>
+    activas.value.map((c) => ({ label: c.nombre, value: c.id }))
+  )
 
   async function fetchAll(): Promise<void> {
     if (items.value.length > 0) return

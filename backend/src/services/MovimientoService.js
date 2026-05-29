@@ -651,4 +651,163 @@ const MovimientoService = {
       Logger.log('ensureMovimientoSchema error: ' + e.message)
     }
   },
+
+  // ============================================================
+  // updateMovimientoDetalle
+  // Actualiza UNA línea de un comprobante sin modificar las demás.
+  // Revierte el stock de la cantidad anterior y aplica la nueva.
+  // ============================================================
+  updateMovimientoDetalle(payload, session) {
+    this._ensureSchema()
+    AccessService.assert(session, 'inventario.editar_movimientos', 'Sin permiso para editar líneas de movimiento')
+
+    const { cabeceraId, tipo, detalleId, productoId, cantidad, precioOfrecido, precioFinal, detalleAccion, secuencial, sucursalOrigen, sucursalDestino } = payload || {}
+
+    if (!cabeceraId) throw new Error('cabeceraId es requerido')
+    if (!detalleId) throw new Error('detalleId es requerido')
+    if (!productoId) throw new Error('productoId es requerido')
+    if (!cantidad || Number(cantidad) <= 0) throw new Error('cantidad debe ser mayor a 0')
+
+    const cabecera = Sheets.getBy(this.SHEET_CABECERA, 'id', cabeceraId)
+    if (!cabecera) throw new Error('Movimiento no encontrado: ' + cabeceraId)
+    const sucursalCheck = cabecera.sucursal_origen || cabecera.sucursal_destino
+    if (sucursalCheck) this._assertSucursalAccess(sucursalCheck, session, 'inventario.ver')
+
+    const detalleOriginal = Sheets.getBy(this.SHEET_MOVIMIENTOS, 'id', detalleId)
+    if (!detalleOriginal) throw new Error('Línea de movimiento no encontrada: ' + detalleId)
+    if (String(detalleOriginal.cabecera_id) !== String(cabeceraId)) {
+      throw new Error('La línea no pertenece a este movimiento')
+    }
+
+    const tipoMov = String(tipo || cabecera.tipo || '').trim().toUpperCase()
+    const sucOrigen = sucursalOrigen || detalleOriginal.sucursal_origen || cabecera.sucursal_origen || ''
+    const sucDestino = sucursalDestino || detalleOriginal.sucursal_destino || cabecera.sucursal_destino || ''
+    const cantidadAnterior = Number(detalleOriginal.cantidad) || 0
+    const cantidadNueva = Number(cantidad) || 0
+    const productoIdAnterior = detalleOriginal.producto_id
+
+    // 1. Revertir stock de la línea anterior
+    if (tipoMov === 'ENTRADA') {
+      InventarioService._ajustarStock(productoIdAnterior, sucDestino || sucOrigen, -cantidadAnterior)
+    } else if (tipoMov === 'SALIDA') {
+      InventarioService._ajustarStock(productoIdAnterior, sucOrigen || sucDestino, cantidadAnterior)
+    } else if (tipoMov === 'TRANSFERENCIA') {
+      InventarioService._ajustarStock(productoIdAnterior, sucOrigen, cantidadAnterior)
+      InventarioService._ajustarStock(productoIdAnterior, sucDestino, -cantidadAnterior)
+    }
+
+    // 2. Aplicar stock de la línea nueva
+    if (tipoMov === 'ENTRADA') {
+      InventarioService._ajustarStock(productoId, sucDestino || sucOrigen, cantidadNueva)
+    } else if (tipoMov === 'SALIDA') {
+      const stockDisponible = InventarioService.getStockProducto({ productoId, sucursalId: sucOrigen || sucDestino }).stockActual
+      if (stockDisponible < cantidadNueva) throw new Error('Stock insuficiente para la nueva cantidad en la línea')
+      InventarioService._ajustarStock(productoId, sucOrigen || sucDestino, -cantidadNueva)
+      AlertaService.verificarStockMinimo(productoId, sucOrigen || sucDestino, stockDisponible - cantidadNueva)
+    } else if (tipoMov === 'TRANSFERENCIA') {
+      const stockOrigen = InventarioService.getStockProducto({ productoId, sucursalId: sucOrigen }).stockActual
+      if (stockOrigen < cantidadNueva) throw new Error('Stock insuficiente en sucursal origen para la nueva cantidad')
+      InventarioService._ajustarStock(productoId, sucOrigen, -cantidadNueva)
+      InventarioService._ajustarStock(productoId, sucDestino, cantidadNueva)
+      AlertaService.verificarStockMinimo(productoId, sucOrigen, stockOrigen - cantidadNueva)
+    }
+
+    // 3. Actualizar el registro de la línea
+    const now = new Date().toISOString()
+    Sheets.update(this.SHEET_MOVIMIENTOS, detalleId, {
+      producto_id: productoId,
+      cantidad: cantidadNueva,
+      precio_ofrecido: Number(precioOfrecido) || 0,
+      precio_final: Number(precioFinal) || 0,
+      detalle_accion: String(detalleAccion || '').trim(),
+      secuencial: Number(secuencial) || 0,
+      fecha: now,
+    })
+
+    // 4. Actualizar fecha_actualizacion de la cabecera
+    Sheets.update(this.SHEET_CABECERA, cabeceraId, { fecha_actualizacion: now })
+
+    // 5. Sincronizar precios del producto si se cambiaron
+    if (Number(precioOfrecido) > 0 || Number(precioFinal) > 0) {
+      this._syncProductPrices({ items: [{ productoId, precioOfrecido: Number(precioOfrecido) || 0, precioFinal: Number(precioFinal) || 0 }] }, session)
+    }
+    this._invalidateCatalogCaches({ sucursalOrigen: sucOrigen, sucursalDestino: sucDestino })
+
+    LogService.registrar(session.userId, 'UPDATE', this.SHEET_MOVIMIENTOS, sucOrigen || sucDestino || null,
+      'Línea actualizada: ' + detalleId + ' en cabecera: ' + cabeceraId)
+
+    const producto = Sheets.getBy('Productos', 'id', productoId) || {}
+    return {
+      id: detalleId,
+      productoId: productoId,
+      productoSku: producto.sku || '',
+      productoNombre: producto.nombre || '',
+      cantidad: cantidadNueva,
+      precioOfrecido: Number(precioOfrecido) || 0,
+      precioFinal: Number(precioFinal) || 0,
+      detalleAccion: String(detalleAccion || '').trim(),
+      secuencial: Number(secuencial) || 0,
+    }
+  },
+
+  // ============================================================
+  // deleteMovimientoDetalle
+  // Elimina UNA línea de un comprobante revirtiendo su efecto
+  // en el stock. No permite eliminar si es la última línea.
+  // ============================================================
+  deleteMovimientoDetalle(payload, session) {
+    this._ensureSchema()
+    AccessService.assert(session, 'inventario.editar_movimientos', 'Sin permiso para eliminar líneas de movimiento')
+
+    const { cabeceraId, tipo, detalleId, productoId, cantidad, sucursalOrigen, sucursalDestino } = payload || {}
+
+    if (!cabeceraId) throw new Error('cabeceraId es requerido')
+    if (!detalleId) throw new Error('detalleId es requerido')
+
+    const cabecera = Sheets.getBy(this.SHEET_CABECERA, 'id', cabeceraId)
+    if (!cabecera) throw new Error('Movimiento no encontrado: ' + cabeceraId)
+    const sucursalCheck = cabecera.sucursal_origen || cabecera.sucursal_destino
+    if (sucursalCheck) this._assertSucursalAccess(sucursalCheck, session, 'inventario.ver')
+
+    const lineasActivas = Sheets.getAll(this.SHEET_MOVIMIENTOS).filter(m => String(m.cabecera_id) === String(cabeceraId))
+    if (lineasActivas.length <= 1) {
+      throw new Error('No se puede eliminar la única línea del comprobante. Use el formulario de edición completo para modificarlo.')
+    }
+
+    const detalle = Sheets.getBy(this.SHEET_MOVIMIENTOS, 'id', detalleId)
+    if (!detalle) throw new Error('Línea de movimiento no encontrada: ' + detalleId)
+    if (String(detalle.cabecera_id) !== String(cabeceraId)) {
+      throw new Error('La línea no pertenece a este movimiento')
+    }
+
+    const tipoMov = String(tipo || cabecera.tipo || '').trim().toUpperCase()
+    const sucOrigen = sucursalOrigen || detalle.sucursal_origen || cabecera.sucursal_origen || ''
+    const sucDestino = sucursalDestino || detalle.sucursal_destino || cabecera.sucursal_destino || ''
+    const cantidadLinea = Number(detalle.cantidad || cantidad) || 0
+    const productoIdLinea = detalle.producto_id || productoId || ''
+
+    // Revertir el efecto de stock de esta línea
+    if (tipoMov === 'ENTRADA') {
+      InventarioService._ajustarStock(productoIdLinea, sucDestino || sucOrigen, -cantidadLinea)
+    } else if (tipoMov === 'SALIDA') {
+      InventarioService._ajustarStock(productoIdLinea, sucOrigen || sucDestino, cantidadLinea)
+    } else if (tipoMov === 'TRANSFERENCIA') {
+      InventarioService._ajustarStock(productoIdLinea, sucOrigen, cantidadLinea)
+      InventarioService._ajustarStock(productoIdLinea, sucDestino, -cantidadLinea)
+    }
+
+    // Eliminar la línea
+    Sheets.delete(this.SHEET_MOVIMIENTOS, detalleId)
+
+    // Actualizar fecha de la cabecera
+    const now = new Date().toISOString()
+    Sheets.update(this.SHEET_CABECERA, cabeceraId, { fecha_actualizacion: now })
+
+    this._invalidateCatalogCaches({ sucursalOrigen: sucOrigen, sucursalDestino: sucDestino })
+
+    LogService.registrar(session.userId, 'DELETE', this.SHEET_MOVIMIENTOS, sucOrigen || sucDestino || null,
+      'Línea eliminada: ' + detalleId + ' en cabecera: ' + cabeceraId)
+
+    return { deleted: true, detalleId: detalleId }
+  },
 }

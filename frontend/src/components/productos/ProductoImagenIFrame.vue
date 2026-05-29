@@ -14,7 +14,7 @@
         class="q-ma-xs-none"
         loading="lazy"
       >
-        <q-tooltip>{{ imagenUrl }}</q-tooltip>
+<!--        <q-tooltip>{{ imagenUrl }}</q-tooltip>-->
         <template #error>
           <div class="flex flex-center bg-grey-4 text-grey-7 q-card--bordered" :style="sizeStyle">
             <q-icon
@@ -47,7 +47,7 @@
         <span class="text-caption q-mt-none text-caption-error" style="font-size: 0.8rem">
           Sin imagen
         </span>
-        <q-tooltip>Sin imagen 2</q-tooltip>
+        <q-tooltip>Sin imagen</q-tooltip>
       </div>
     </div>
   </div>

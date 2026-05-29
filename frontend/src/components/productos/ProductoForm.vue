@@ -27,8 +27,11 @@
             <q-separator class="q-my-md" />
 
             <div class="text-subtitle2 text-weight-bold q-mb-sm">Código QR</div>
-            <ProductoQR :sku="form.sku" :qr-code="form.qrCode" />
-
+            <ProductoQR
+              :sku="form.sku"
+              :qr-code="modoQR === 'texto' ? form.qrCode : ''"
+              :datos="modoQR === 'texto' ? qrDatos : undefined"
+            />
           </div>
 
           <!-- Columna derecha: datos -->
@@ -45,9 +48,6 @@
                   :disable="isEdit"
                 />
               </div>
-              <!--              <div class="col-6">
-                <q-input v-model="form.marca" label="Marca / Fabricante" outlined dense />
-              </div>-->
               <div class="col-6">
                 <q-select
                   v-model="form.marcaId"
@@ -119,7 +119,7 @@
               <div class="col-4">
                 <q-input
                   v-model.number="form.precioCompra"
-                  label="Precio compra"
+                  label="Precio Compra"
                   outlined
                   dense
                   type="number"
@@ -130,7 +130,7 @@
               <div class="col-4">
                 <q-input
                   v-model.number="form.precioOfrecido"
-                  label="Precio ofrecido"
+                  label="Precio Venta"
                   outlined
                   dense
                   type="number"
@@ -141,12 +141,12 @@
               <div class="col-4">
                 <q-input
                   v-model.number="form.precioFinal"
-                  label="Precio final *"
+                  label="Precio Final"
                   outlined
                   dense
                   type="number"
                   prefix="Bs."
-                  :rules="[required, positiveNumber]"
+                  :rules="[nonNegativeNumber]"
                 />
               </div>
 
@@ -164,17 +164,30 @@
               <div class="col-8 flex items-center">
                 <q-toggle v-model="form.activo" label="Producto activo" color="positive" />
               </div>
-              <div class="col-12 q-mt-xs">
+
+              <!-- Campo qrCode: solo visible en modo texto -->
+              <div v-if="modoQR === 'texto'" class="col-12 q-mt-xs">
                 <q-input
                   v-model="form.qrCode"
                   label="Contenido del QR"
                   outlined
                   dense
                   type="textarea"
-                  rows="6"
+                  autogrow
                   class="q-mt-sm"
                   hint="Vacío = usa el SKU automáticamente"
                 />
+              </div>
+
+              <!-- Indicador en modo enlace -->
+              <div v-else class="col-12 q-mt-xs">
+                <q-banner dense rounded class="bg-teal-1 text-teal-9 q-mt-sm">
+                  <template #avatar>
+                    <q-icon name="link" color="teal" />
+                  </template>
+                  El QR generará el enlace:
+                  <strong>{{ qrEnlacePreview }}</strong>
+                </q-banner>
               </div>
             </div>
           </div>
@@ -204,7 +217,6 @@ import { useCategoriaStore } from 'src/stores/categoriaStore'
 import {
   minLength,
   nonNegativeNumber,
-  positiveNumber,
   required,
   skuFormat,
 } from 'src/utils/validators'
@@ -212,8 +224,13 @@ import { useNotify } from 'src/composables/useNotify'
 import ProductoImagen from './ProductoImagen.vue'
 import ProductoQR from './ProductoQR.vue'
 import { useMarcaStore } from 'src/stores/marcaStore.ts'
-import { useQR } from 'src/composables/useQR.ts'
-const { addContentBreak, clearContentBreak } = useQR()
+import { useQR, getQrMode } from 'src/composables/useQR.ts'
+import type { QrProductoDatos } from 'src/composables/useQR.ts'
+
+const { addContentBreak, clearContentBreak, buildQrEnlace, buildQrTexto } = useQR()
+
+/** Modo activo leído de VITE_QR_MODE (reactivo al build, no cambia en runtime) */
+const modoQR = getQrMode()
 
 interface Props {
   producto?: Producto | null
@@ -259,6 +276,22 @@ const defaultForm = (): ProductoForm => ({
 })
 const form = ref<ProductoForm>(defaultForm())
 
+// ─── Datos del producto para el composable QR ───────────────
+const qrDatos = computed<QrProductoDatos>(() => ({
+  sku: form.value.sku,
+  marca: form.value.marca || (marcaStore.getById(form.value.marcaId as string)?.nombre ?? ''),
+  nombre: form.value.nombre,
+  precioOfrecido: form.value.precioOfrecido,
+  precioFinal: form.value.precioFinal,
+}))
+
+/** Preview del enlace que se generaría (solo modo enlace) */
+const qrEnlacePreview = computed(() =>
+  form.value.sku ? buildQrEnlace(form.value.sku) : '(ingresa el SKU para ver el enlace)',
+)
+
+// ─── Watchers ────────────────────────────────────────────────
+
 watch(
   () => props.producto,
   (p) => {
@@ -278,7 +311,7 @@ watch(
           precioFinal: p.precioFinal,
           stockMinimo: p.stockMinimo,
           imagenUrl: p.imagenUrl,
-          qrCode: addContentBreak(p.qrCode),
+          qrCode: modoQR === 'texto' ? addContentBreak(p.qrCode) : p.qrCode,
           activo: p.activo,
           imagenLocation: p.imagenLocation,
         }
@@ -287,12 +320,42 @@ watch(
   { immediate: true },
 )
 
+/**
+ * En modo TEXTO: auto-genera el contenido del QR cuando cambian
+ * los campos del producto que se incluyen en el texto del QR.
+ * En modo ENLACE: no se necesita actualizar qrCode (se construye al vuelo).
+ */
+watch(
+  () => [
+    form.value.sku,
+    form.value.marca,
+    form.value.nombre,
+    form.value.precioOfrecido,
+    form.value.precioFinal,
+  ],
+  () => {
+    if (modoQR === 'texto') {
+      form.value.qrCode = addContentBreak(buildQrTexto(form.value.sku, qrDatos.value))
+    }
+  },
+)
+
+// ─── Submit ──────────────────────────────────────────────────
+
 async function handleSubmit(): Promise<void> {
   const valid = await formRef.value?.validate()
   if (!valid) return
-  if (!form.value.qrCode.trim()) form.value.qrCode = form.value.sku
 
-  form.value.qrCode = clearContentBreak(form.value.qrCode.trim())
+  form.value.marca = marcaStore.getById(form.value.marcaId as string)?.nombre as string
+
+  if (modoQR === 'enlace') {
+    // En modo enlace guardamos la URL construida como qrCode
+    form.value.qrCode = buildQrEnlace(form.value.sku)
+  } else {
+    // Modo texto: limpiamos saltos de línea y usamos SKU si está vacío
+    const codigoLimpio = clearContentBreak(form.value.qrCode.trim())
+    form.value.qrCode = codigoLimpio || form.value.sku
+  }
 
   try {
     let resultado: Producto
@@ -313,37 +376,4 @@ onMounted(() => {
   categoriaStore.fetchAll()
   marcaStore.fetchAll()
 })
-
-const formQrCode = computed(() => {
-  return (
-    'Código: ' +
-    form.value.sku +
-    ' | ' +
-    'Marca: ' +
-    form.value.marca +
-    ' | ' +
-    'Producto: ' +
-    form.value.nombre +
-    ' | ' +
-    'Precio Catalogo: Bs. ' +
-    form.value.precioOfrecido +
-    ' | ' +
-    'Precio Venta: Bs. ' +
-    form.value.precioFinal
-  )
-})
-
-watch(
-  () => [
-    form.value.sku,
-    form.value.marca,
-    form.value.nombre,
-    form.value.descripcion,
-    form.value.precioOfrecido,
-    form.value.precioFinal,
-  ],
-  () => {
-    form.value.qrCode = addContentBreak(formQrCode.value)
-  },
-)
 </script>

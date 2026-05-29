@@ -5,22 +5,13 @@ import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import type { Rol } from 'src/types'
 import { useAuthStore } from 'src/stores/authStore'
 
-/*function getAuthStore() {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { useAuthStore } = require('src/stores/authStore')
-  //import { useAuthStore } from 'src/stores/authStore'
-  return useAuthStore()
-}*/
-//const useAuthStoreP = useAuthStore()
-//const auth = useAuthStore()
-
-
 export function authGuard(
   _to: RouteLocationNormalized,
   _from: RouteLocationNormalized,
   next: NavigationGuardNext,
 ): void {
-  //const auth = getAuthStore()
+  // Las rutas con meta.public no requieren autenticación
+  if (_to.meta?.public) { next(); return }
   const auth = useAuthStore()
   if (!auth.isAuthenticated) {
     next({ name: 'login', query: { redirect: _to.fullPath } })
@@ -34,7 +25,6 @@ export function guestGuard(
   _from: RouteLocationNormalized,
   next: NavigationGuardNext,
 ): void {
-  //const auth = getAuthStore()
   const auth = useAuthStore()
   if (auth.isAuthenticated) { next({ name: 'dashboard' }); return }
   next()
@@ -46,7 +36,6 @@ export function roleGuard(roles: Rol[]) {
     _from: RouteLocationNormalized,
     next: NavigationGuardNext,
   ): void => {
-    //const auth = getAuthStore()
     const auth = useAuthStore()
     if (!auth.isAuthenticated) { next({ name: 'login' }); return }
     if (!auth.hasRole(roles)) { next({ name: 'sin-permiso' }); return }
@@ -85,7 +74,6 @@ export function sucursalGuard(
   _from: RouteLocationNormalized,
   next: NavigationGuardNext,
 ): void {
-  //const auth = getAuthStore()
   const auth = useAuthStore()
   const sucursalId = to.query.sucursalId as string | undefined
   if (!auth.isAuthenticated) { next({ name: 'login' }); return }

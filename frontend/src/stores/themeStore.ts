@@ -8,7 +8,7 @@ const THEME_KEY = 'sgi_theme'
 const THEMES: AppTheme[] = ['light', 'medium', 'dark']
 
 function normalizeTheme(value: unknown): AppTheme {
-  return THEMES.includes(value as AppTheme) ? (value as AppTheme) : 'dark'
+  return THEMES.includes(value as AppTheme) ? (value as AppTheme) : 'light'
 }
 
 export const useThemeStore = defineStore('theme', () => {

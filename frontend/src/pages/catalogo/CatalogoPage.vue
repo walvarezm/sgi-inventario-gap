@@ -486,20 +486,23 @@ watch(
 
     <!-- ── Dialog QR ────────────────────────────────────────── -->
     <q-dialog v-model="dialogQR">
-      <q-card class="sgi-card q-pa-md text-center" style="min-width: 300px; max-width: 360px">
+      <q-card class="sgi-card q-pa-md text-center" style="min-width: 300px; max-width: 560px">
         <q-card-section class="row items-center q-pb-none">
           <div>
             <div class="text-subtitle1 text-weight-bold">{{ productoQR?.sku }}</div>
-            <div class="text-caption text-muted">{{ productoQR?.nombre }}</div>
           </div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
+        <q-separator/>
         <q-card-section>
+          <div class="text-caption text-muted product-name-with-ellipsis">
+            {{ productoQR?.nombre }}
+          </div>
           <ProductoQR v-if="productoQR" :sku="productoQR.sku" :qr-code="productoQR.qrCode" />
           <div class="q-mt-sm">
             <q-chip dense color="blue-1" text-color="blue-9" icon="sell">
-              {{ formatCurrency(productoQR?.precioFinal ?? 0) }}
+              {{ formatCurrency(productoQR?.precioOfrecido ?? 0) }}
             </q-chip>
             <q-chip
               dense

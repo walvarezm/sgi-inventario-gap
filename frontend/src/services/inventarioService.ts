@@ -7,6 +7,7 @@ import type {
   InventarioItem,
   Movimiento,
   MovimientoCabecera,
+  MovimientoDetalleItem,
   MovimientoMasivoPayload,
   MovimientoUpdatePayload,
   ReferenciaMovimientoTemplate,
@@ -14,9 +15,36 @@ import type {
   SalidaPayload,
   TransferenciaPayload,
   StockResumen,
+  TipoMovimiento,
 } from 'src/types'
 import { useLoading } from 'src/composables/useLoading.ts'
 
+// ── Tipos de payload para operaciones de detalle individual ──────────────────
+export interface MovimientoDetalleUpdatePayload {
+  cabeceraId: string
+  tipo: TipoMovimiento
+  detalleId: string
+  productoId: string
+  cantidad: number
+  precioOfrecido: number
+  precioFinal: number
+  detalleAccion: string
+  secuencial: number
+  sucursalOrigen?: string | null
+  sucursalDestino?: string | null
+}
+
+export interface MovimientoDetalleDeletePayload {
+  cabeceraId: string
+  tipo: TipoMovimiento
+  detalleId: string
+  productoId: string
+  cantidad: number
+  sucursalOrigen?: string | null
+  sucursalDestino?: string | null
+}
+
+// ── Servicio ─────────────────────────────────────────────────────────────────
 export const inventarioService = {
   async getStockPorSucursal(sucursalId: string): Promise<InventarioItem[]> {
     const { data } = await api.post<ApiResponse<InventarioItem[]>>('', {
@@ -68,7 +96,7 @@ export const inventarioService = {
   },
 
   async getMovimientoById(id: string): Promise<MovimientoCabecera> {
-    useLoading(true, 'Cargando Movimiento...')
+    useLoading(true, 'Cargando Detalle Movimiento...')
     const { data } = await api.post<ApiResponse<MovimientoCabecera>>('', {
       action: 'getMovimientoById',
       payload: { id },
@@ -120,6 +148,40 @@ export const inventarioService = {
     useLoading(true)
     const { data } = await api.post<ApiResponse<MovimientoCabecera>>('', {
       action: 'updateMovimiento',
+      payload,
+    })
+    useLoading(false)
+    if (!data.success) throw new Error(data.message)
+    return data.result
+  },
+
+  /**
+   * Actualiza una sola línea (detalle) de un movimiento existente
+   * sin tocar las demás líneas del mismo comprobante.
+   */
+  async updateMovimientoDetalle(
+    payload: MovimientoDetalleUpdatePayload,
+  ): Promise<MovimientoDetalleItem> {
+    useLoading(true, 'Actualizando línea...')
+    const { data } = await api.post<ApiResponse<MovimientoDetalleItem>>('', {
+      action: 'updateMovimientoDetalle',
+      payload,
+    })
+    useLoading(false)
+    if (!data.success) throw new Error(data.message)
+    return data.result
+  },
+
+  /**
+   * Elimina una sola línea (detalle) de un movimiento existente,
+   * revirtiendo el efecto de esa línea en el stock.
+   */
+  async deleteMovimientoDetalle(
+    payload: MovimientoDetalleDeletePayload,
+  ): Promise<{ deleted: boolean; detalleId: string }> {
+    useLoading(true, 'Eliminando línea...')
+    const { data } = await api.post<ApiResponse<{ deleted: boolean; detalleId: string }>>('', {
+      action: 'deleteMovimientoDetalle',
       payload,
     })
     useLoading(false)

@@ -14,10 +14,27 @@ export const useRolStore = defineStore('rol', () => {
   const saving = ref(false)
   const error = ref<string | null>(null)
 
-  const activos = computed(() => roles.value.filter((r) => r.activo))
-  const roleOptions = computed(() => activos.value.map((r) => ({ label: r.nombre, value: r.codigo })))
+  const activos = computed(() =>
+    roles.value
+      .filter((r) => r.activo)
+      .sort((a, b) => {
+        // Ordenar por NOMBRE (A-Z)
+        return a.nombre.localeCompare(b.nombre)
+      }),
+  )
+  const roleOptions = computed(() =>
+    activos.value.map((r) => ({ label: r.nombre, value: r.codigo }))
+  )
   const permissionOptions = computed(() =>
-    permissions.value.map((p) => ({
+    permissions.value
+      .sort((a, b) => {
+        // Ordenar por MODULO (A-Z)
+        const moduloCompare = a.modulo.localeCompare(b.modulo)
+        if (moduloCompare !== 0) return moduloCompare
+        // Ordenar por ACCION (A-Z)
+        return a.accion.localeCompare(b.accion)
+      })
+      .map((p) => ({
       label: `${p.codigo} — ${p.descripcion || p.modulo}`,
       value: p.codigo,
     })),

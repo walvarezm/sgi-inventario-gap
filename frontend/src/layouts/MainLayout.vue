@@ -1,14 +1,14 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="lHh lpr lFf">
     <!-- ── Header ─────────────────────────────────────────── -->
     <q-header elevated class="sgi-header">
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menú" @click="toggleDrawer" />
 
         <q-toolbar-title class="sgi-logo">
-          <q-icon name="inventory_2" size="22px" class="q-mr-xs" />
-          SGI - MAXEL
-          <span class="sgi-logo-sub">Inventarios</span>
+          <q-icon name="inventory_2" size="15px" class="q-mr-xs" />
+          <span>{{ appName }}</span>
+          <span class="sgi-logo-sub">  [ {{ appNameSub }} ]</span>
         </q-toolbar-title>
 
         <q-chip
@@ -19,7 +19,7 @@
           class="q-mr-sm sgi-store-chip"
         />
 
-<!--        <q-btn flat round dense icon="notifications">
+        <!--        <q-btn flat round dense icon="notifications">
           <q-badge color="negative" floating>0</q-badge>
           <q-tooltip>Alertas de stock</q-tooltip>
         </q-btn>-->
@@ -75,15 +75,19 @@
       </q-toolbar>
     </q-header>
 
+    <q-footer v-if="!isMobile" elevated class="sgi-footer q-pa-sm">
+      <q-icon name="copyright" size="14px" class="q-mr-xs" color="primary" text-color="white" />
+      <div class="text-caption text-muted text-center">{{ appAuthor }}</div>
+    </q-footer>
+
     <!-- ── Sidebar ────────────────────────────────────────── -->
     <q-drawer v-model="drawerOpen" show-if-above :width="260" :breakpoint="768" class="sgi-drawer">
       <q-scroll-area class="fit">
         <div class="sgi-drawer-brand q-pa-md">
-          <div class="text-h6 text-weight-bold text-primary">
+          <div class="text-body1 text-weight-bolder text-grey-6">
             <q-icon name="inventory_2" class="q-mr-sm" />
-            SGI - MAXEL
+            <span>{{ appName }}</span>
           </div>
-          <div class="text-caption text-muted">Sistema de Gestión de Inventarios</div>
         </div>
         <q-separator />
         <q-list padding class="q-mt-sm">
@@ -102,7 +106,7 @@
           </template>
         </q-list>
         <div class="sgi-drawer-footer q-pa-md">
-          <div class="text-caption text-muted">v{{ appVersion }}</div>
+          <div class="text-caption text-muted">{{ appVersion }}</div>
         </div>
       </q-scroll-area>
     </q-drawer>
@@ -130,6 +134,17 @@ const themeStore = useThemeStore()
 const router = useRouter()
 const $q = useQuasar()
 const drawerOpen = ref(!$q.screen.lt.md)
+const isMobile = computed(() => $q.screen.lt.md)
+
+// ── Config ──────────────────────────────────────────────────
+const appName = computed(() =>
+  !isMobile.value ? (import.meta.env.VITE_APP_NAME ?? 'SGI - MAXEL') : 'SGI - MAXEL',
+)
+
+const appNameSub = computed(() => (!isMobile.value ? import.meta.env.VITE_APP_NAME_SUBTITLE : ''))
+const appAuthor = computed(() =>
+  !isMobile.value ? (import.meta.env.VITE_APP_AUTHOR ?? 'AlvareX') : '',
+)
 
 const avatarLetra = computed(() =>
   authStore.nombreUsuario ? authStore.nombreUsuario[0].toUpperCase() : 'U',
@@ -242,6 +257,20 @@ onMounted(async () => {
     bottom: 0;
     width: 100%;
     border-top: 1px solid var(--sgi-border);
+  }
+}
+.sgi-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--sgi-surface);
+
+  width: 100%;
+  border-top: 1px solid var(--sgi-border);
+
+  .sgi-footer-brand {
+    background: var(--sgi-surface-alt);
   }
 }
 .sgi-nav-item {

@@ -32,6 +32,7 @@ export function useCatalogo() {
     if (marcaFiltro.value) {
       lista = lista.filter((p) => p.marca === marcaFiltro.value || p.marcaId === marcaFiltro.value)
     }
+    console.log('productosFiltrados', lista)
     return lista
   })
 

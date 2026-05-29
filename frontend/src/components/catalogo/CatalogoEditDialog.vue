@@ -1,7 +1,7 @@
 <template>
   <q-card class="sgi-card catalogo-edit-card" style="width: 760px; max-width: 96vw">
     <q-card-section class="row items-center q-pb-none">
-      <div class="text-h6 text-weight-bold">Editar desde catálogo</div>
+      <div class="text-h6 text-weight-bold">Editar Producto desde catálogo</div>
       <q-space />
       <q-btn icon="close" flat round dense v-close-popup />
     </q-card-section>
@@ -10,7 +10,7 @@
       <q-form ref="formRef" @submit.prevent="handleSubmit">
         <div class="row q-col-gutter-sm">
           <div class="col-12 col-md-6">
-            <q-input v-model="form.sku" label="SKU" outlined dense disable />
+            <q-input v-model="form.sku" label="Código" outlined dense disable />
           </div>
           <div class="col-12 col-md-6">
             <q-input v-model="form.marca" label="Marca" outlined dense disable />
@@ -47,31 +47,44 @@
               :outlined="true"
               dense
               type="number"
-              input-class="text-left"
-              prefix="Bs."
+              step="0.01"
+              input-class="text-right"
+              prefix=""
+              autofocus
               :rules="[required, nonNegativeNumber]"
+              @focus="seleccionarTexto"
+              @blur="setInputFocusRef(formPrecioOfrecidoRef)"
             />
           </div>
           <div class="col-12 col-md-4 col-sm-6">
             <q-input
+              ref="formPrecioOfrecidoRef"
               v-model.number="form.precioOfrecido"
               label="Precio Venta"
               outlined
               dense
               type="number"
-              prefix="Bs."
+              step="0.01"
+              input-class="text-right"
+              prefix=""
               :rules="[nonNegativeNumber]"
+              @focus="seleccionarTextoRef(formPrecioOfrecidoRef)"
+              @blur="setInputFocusRef(formPrecioFinalRef)"
             />
           </div>
           <div class="col-12 col-md-4 col-sm-6">
             <q-input
+              ref="formPrecioFinalRef"
               v-model.number="form.precioFinal"
-              label="Precio final *"
+              label="Precio final"
               outlined
               dense
               type="number"
-              prefix="Bs."
-              :rules="[required, positiveNumber]"
+              step="0.01"
+              input-class="text-right"
+              prefix=""
+              :rules="[nonNegativeNumber]"
+              @focus="seleccionarTexto"
             />
           </div>
         </div>
@@ -96,7 +109,15 @@ import { ref, watch } from 'vue'
 import { QForm } from 'quasar'
 import type { Producto, ProductoCatalogo } from 'src/types'
 import { useNotify } from 'src/composables/useNotify'
-import { minLength, nonNegativeNumber, positiveNumber, required } from 'src/utils/validators'
+import {
+  minLength,
+  nonNegativeNumber,
+  positiveNumber,
+  required,
+  seleccionarTexto,
+  seleccionarTextoRef,
+  setInputFocusRef,
+} from 'src/utils/validators'
 import { useProductoStore } from 'src/stores/productoStore'
 
 interface Props {
@@ -118,6 +139,8 @@ const emit = defineEmits<{ saved: [producto: Producto]; cancelled: [] }>()
 const productoStore = useProductoStore()
 const { notifyError, notifySuccess } = useNotify()
 const formRef = ref<InstanceType<typeof QForm> | null>(null)
+const formPrecioOfrecidoRef = ref(null)
+const formPrecioFinalRef = ref(null)
 
 const form = ref<CatalogoEditableForm>({
   sku: '',

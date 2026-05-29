@@ -1,7 +1,7 @@
 <template>
   <MovimientoFormBase
     tipo="ENTRADA"
-    title="Registrar Entrada"
+    :title="!initialData? 'Registrar Entrada' : 'Modificar Entrada'"
     color="positive"
     icon="add_circle"
     :initial-data="initialData ?? null"
