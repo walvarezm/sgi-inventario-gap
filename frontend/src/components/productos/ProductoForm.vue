@@ -196,7 +196,7 @@
     </q-card-section>
 
     <q-card-actions align="right" class="q-px-md q-pb-md">
-      <q-btn label="Cancelar" flat color="grey" v-close-popup />
+      <q-btn label="Cancelar"  color="negative" v-close-popup />
       <q-btn
         :label="isEdit ? 'Guardar cambios' : 'Crear producto'"
         color="primary"

@@ -10,28 +10,55 @@
 
     <q-card-section>
       <q-form ref="formRef" @submit.prevent="handleSubmit" class="q-gutter-sm">
-        <q-input v-model="form.nombre" label="Nombre de la sucursal *" outlined dense :rules="[required, minLength(3)]" />
+        <q-input
+          v-model="form.nombre"
+          label="Nombre de la sucursal *"
+          outlined
+          dense
+          :rules="[required, minLength(3)]"
+        />
         <q-input v-model="form.direccion" label="Dirección *" outlined dense :rules="[required]" />
         <q-input v-model="form.ciudad" label="Ciudad *" outlined dense :rules="[required]" />
 
         <div class="row q-col-gutter-sm">
           <div class="col-6">
-            <q-input v-model="form.telefono" label="Teléfono" outlined dense :rules="[phoneBolivia]" />
+            <q-input
+              v-model="form.telefono"
+              label="Teléfono"
+              outlined
+              dense
+              :rules="[phoneBolivia]"
+            />
           </div>
           <div class="col-6">
-            <q-input v-model="form.email" label="Email" type="email" outlined dense :rules="[(v) => !v || emailValid(v)]" />
+            <q-input
+              v-model="form.email"
+              label="Email"
+              type="email"
+              outlined
+              dense
+              :rules="[(v) => !v || emailValid(v)]"
+            />
           </div>
         </div>
 
-        <q-toggle v-model="form.activo" label="Sucursal activa" color="positive" checked-icon="check" unchecked-icon="close" />
+        <q-toggle
+          v-model="form.activo"
+          label="Sucursal activa"
+          color="positive"
+          checked-icon="check"
+          unchecked-icon="close"
+        />
       </q-form>
     </q-card-section>
 
     <q-card-actions align="right" class="q-px-md q-pb-md">
-      <q-btn label="Cancelar" flat color="grey" v-close-popup />
+      <q-btn label="Cancelar" color="negative" v-close-popup class="text-warning" />
       <q-btn
         :label="isEdit ? 'Guardar cambios' : 'Crear sucursal'"
-        color="primary" unelevated :loading="store.saving"
+        color="primary"
+        unelevated
+        :loading="store.saving"
         @click="handleSubmit"
       />
     </q-card-actions>
@@ -46,7 +73,9 @@ import { useSucursalStore } from 'src/stores/sucursalStore'
 import { required, minLength, emailValid, phoneBolivia } from 'src/utils/validators'
 import { useNotify } from 'src/composables/useNotify'
 
-interface Props { sucursal?: Sucursal | null }
+interface Props {
+  sucursal?: Sucursal | null
+}
 const props = withDefaults(defineProps<Props>(), { sucursal: null })
 const emit = defineEmits<{ saved: [sucursal: Sucursal]; cancelled: [] }>()
 
@@ -56,7 +85,13 @@ const formRef = ref<InstanceType<typeof QForm> | null>(null)
 const isEdit = ref(false)
 
 const defaultForm = (): SucursalForm => ({
-  nombre: '', direccion: '', ciudad: '', telefono: '', email: '', responsableId: '', activo: true,
+  nombre: '',
+  direccion: '',
+  ciudad: '',
+  telefono: '',
+  email: '',
+  responsableId: '',
+  activo: true,
 })
 const form = ref<SucursalForm>(defaultForm())
 
@@ -65,7 +100,15 @@ watch(
   (s) => {
     isEdit.value = !!s
     form.value = s
-      ? { nombre: s.nombre, direccion: s.direccion, ciudad: s.ciudad, telefono: s.telefono, email: s.email, responsableId: s.responsableId, activo: s.activo }
+      ? {
+          nombre: s.nombre,
+          direccion: s.direccion,
+          ciudad: s.ciudad,
+          telefono: s.telefono,
+          email: s.email,
+          responsableId: s.responsableId,
+          activo: s.activo,
+        }
       : defaultForm()
   },
   { immediate: true },

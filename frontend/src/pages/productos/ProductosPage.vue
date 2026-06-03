@@ -229,24 +229,7 @@
     </q-dialog>
 
     <!-- Dialog IMG -->
-    <q-dialog v-model="dialogIMG">
-      <q-card class="sgi-card q-pa-md text-center" style="min-width: 280px">
-        <q-card-section class="row items-center q-pb-none">
-          <div class="text-subtitle1 text-weight-bold">Código producto: {{ productoQR?.sku }}</div>
-          <q-space />
-          <q-btn icon="close" flat round dense v-close-popup />
-        </q-card-section>
-        <q-card-section>
-          <ProductoImagenIFrame
-            :imagen-url="String(productoQR?.imagenUrl)"
-            :width="300"
-            :height="300"
-            :imagen-location="productoQR?.imagenLocation"
-          />
-          <div class="text-caption text-muted q-mt-sm">{{ productoQR?.nombre }}</div>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <ProductoViewImage :is-open="dialogIMG" :producto="productoQR" @cancelled="dialogIMG = false" />
 
     <!-- Dialog QR -->
     <q-dialog v-model="dialogQR">
@@ -279,6 +262,7 @@ import ProductoForm from 'src/components/productos/ProductoForm.vue'
 import ProductoImportDialog from 'src/components/productos/ProductoImportDialog.vue'
 import ProductoQR from 'src/components/productos/ProductoQR.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
+import ProductoViewImage from 'src/components/productos/ProductoViewImage.vue'
 
 const productoStore = useProductoStore()
 const categoriaStore = useCategoriaStore()

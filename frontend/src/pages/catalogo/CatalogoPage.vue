@@ -14,6 +14,8 @@ import CatalogoTarjeta from 'src/components/catalogo/CatalogoTarjeta.vue'
 import ProductoQR from 'src/components/productos/ProductoQR.vue'
 import { useMarcaStore } from 'src/stores/marcaStore.ts'
 import { useLoading } from 'src/composables/useLoading.ts'
+import { useNotify } from 'src/composables/useNotify.ts'
+import ProductoViewImage from 'src/components/productos/ProductoViewImage.vue'
 
 // ── Stores ─────────────────────────────────────────────────────
 const authStore = useAuthStore()
@@ -23,67 +25,99 @@ const marcaStore = useMarcaStore()
 const cataloStore = useCataloStore()
 const catalogo = useCatalogo()
 const $q = useQuasar()
+const { notifyWarning } = useNotify()
 
 // ── State ──────────────────────────────────────────────────────
 const sucursalSeleccionada = ref(authStore.isGlobal ? '' : (authStore.sucursalId ?? ''))
+const dialogViewImage = ref(false)
 const dialogQR = ref(false)
 const dialogEditarProducto = ref(false)
 const productoQR = ref<ProductoCatalogo | null>(null)
 const productoEditar = ref<ProductoCatalogo | null>(null)
 const mostrarSoloStockBajo = ref(false)
 const mostrarSoloAgotados = ref(false)
-const mostrarSoloSucursal = ref(false)
+const mostrarTodosProductos = ref(false)
 const exportandoPDF = ref(false)
 
 // ── Computed ───────────────────────────────────────────────────
-const opcionesSucursal = computed(() =>
+const opcionesSucursal = sucursalStore.options
+/*const opcionesSucursal = computed(() =>
   sucursalStore.activas.map((s) => ({ label: `${s.nombre} — ${s.ciudad}`, value: s.id })),
-)
+)*/
+
+const productosMostrados = computed(() => {
+  //catalogo.sucursalFiltro.value = toRef(null)
+  let lista = catalogo.productosFiltrados.value
+  if (!mostrarTodosProductos.value) {
+    //sucursalSeleccionada.value
+    //catalogo.sucursalFiltro.value = null
+    lista = lista.filter((p) => p.sucursalId === sucursalSeleccionada.value)
+  }
+  if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
+  if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
+  //useLoading(false)
+  return lista
+})
+
+const productosStockBajo = computed(() => {
+  //let lista = catalogo.conStockBajo.value
+  let productos = catalogo.productosFiltrados.value
+
+  //lista = lista.filter((p) => p.sucursalId === sucursalSeleccionada.value)
+  productos = productos.filter((p) => p.stockBajo && p.sucursalId === sucursalSeleccionada.value)
+
+  /*if (catalogo.categoriaFiltro.value) {
+    lista = lista.filter((p) => p.categoriaId === catalogo.categoriaFiltro.value)
+  }
+  if (catalogo.marcaFiltro.value) {
+    lista = lista.filter(
+      (p) => p.marca === catalogo.marcaFiltro.value || p.marcaId === catalogo.marcaFiltro.value,
+    )
+  }*/
+  return productos.length
+})
 
 const productosAgotados = computed(() => {
   let productos = catalogo.productosFiltrados.value.filter(
     (p) => p.stock === 0 && p.sucursalId === sucursalSeleccionada.value,
-  ).length
-  return productos
+  )
+  /*if (catalogo.categoriaFiltro.value) {
+    productos = productos.filter((p) => p.categoriaId === catalogo.categoriaFiltro.value)
+  }
+  if (catalogo.marcaFiltro.value) {
+    productos = productos.filter(
+      (p) => p.marca === catalogo.marcaFiltro.value || p.marcaId === catalogo.marcaFiltro.value,
+    )
+  }*/
+  return productos.length
 })
-
-const productosStockBajo = computed(
-  () =>
-    catalogo.conStockBajo.value.filter((p) => p.sucursalId === sucursalSeleccionada.value).length,
-)
 
 const esMovil = computed(() => $q.screen.lt.md)
 const vistaActivaEsTabla = computed(() => !esMovil.value && catalogo.vistaTabla.value)
 const puedeCambiarVista = computed(() => !esMovil.value)
 const chipsResumen = computed(() => [
   {
-    label: 'Mostrados',
+    label: 'Productos',
     value: productosMostrados.value.length,
     tone: 'primary',
     icon: 'inventory_2',
+    hidden: productosMostrados.value.length !== 0,
   },
   {
     label: 'Stock bajo',
     value: productosStockBajo.value,
     tone: 'warning',
     icon: 'warning_amber',
+    hidden: productosStockBajo.value !== 0,
   },
   {
     label: 'Agotados',
     value: productosAgotados.value,
     tone: 'grey-7',
     icon: 'remove_circle_outline',
+    hidden: productosAgotados.value !== 0,
   },
 ])
-
-const productosMostrados = computed(() => {
-  let lista = catalogo.productosFiltrados.value
-  if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
-  if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
-  if (mostrarSoloSucursal.value)
-    lista = lista.filter((p) => p.sucursalId === sucursalSeleccionada.value)
-  return lista
-})
 
 // ── Actions ────────────────────────────────────────────────────
 async function cargarCatalogo(): Promise<void> {
@@ -100,6 +134,7 @@ async function onCambioSucursal(): Promise<void> {
   catalogo.limpiarFiltros()
   mostrarSoloStockBajo.value = false
   mostrarSoloAgotados.value = false
+  //catalogo.sucursalFiltro.value = sucursalSeleccionada.value
   await cargarCatalogo()
 }
 
@@ -108,6 +143,20 @@ async function recargar(): Promise<void> {
     cataloStore.invalidateCache(sucursalSeleccionada.value)
     await cargarCatalogoForzado()
   }
+}
+
+function openDialogViewImage(p: ProductoCatalogo): void {
+  if (!p.imagenUrl) {
+    notifyWarning('Producto Sin Imagen', 'top')
+    return
+  }
+  productoQR.value = p
+  dialogViewImage.value = true
+}
+
+function closeDialogViewImage(): void {
+  productoQR.value = null
+  dialogViewImage.value = false
 }
 
 function verQR(producto: ProductoCatalogo): void {
@@ -227,7 +276,7 @@ function exportarExcel(): void {
 // ── Lifecycle ──────────────────────────────────────────────────
 onMounted(async () => {
   cataloStore.loading = true
-  //useLoading(true, 'Cargando Catalogo...')
+  //useLoading(true, 'Cargando Catalogo...---')
   /*await Promise.all([
     sucursalStore.items.length === 0 ? sucursalStore.fetchAll() : Promise.resolve(),
     categoriaStore.fetchAll(),
@@ -251,7 +300,7 @@ onMounted(async () => {
     !sucursalSeleccionada.value
   ) {
     sucursalSeleccionada.value = sucursalStore.activas[0].id
-    await cargarCatalogo()
+    //await cargarCatalogo()
   }
 })
 
@@ -260,6 +309,24 @@ watch(
   (movil) => {
     if (movil) {
       catalogo.vistaTabla.value = false
+    }
+  },
+  { immediate: true },
+)
+watch(
+  sucursalSeleccionada,
+  (sucursalId) => {
+    catalogo.sucursalFiltro.value = sucursalId
+  },
+  { immediate: true },
+)
+watch(
+  mostrarTodosProductos,
+  (mostrarTodo) => {
+    if (mostrarTodo) {
+      catalogo.sucursalFiltro.value = null
+    } else {
+      catalogo.sucursalFiltro.value = sucursalSeleccionada.value
     }
   },
   { immediate: true },
@@ -281,10 +348,13 @@ watch(
         </div>-->
       </div>
 
-      <div v-if="authStore.can('catalogo.ver_boton_exportar')" class="catalogo-hero__actions">
+      <div
+        v-if="productosMostrados.length > 0 && authStore.can('catalogo.ver_boton_exportar')"
+        class="catalogo-hero__actions"
+      >
         <q-btn
           outline
-          color="primary"
+          color="info"
           icon="picture_as_pdf"
           :label="esMovil ? 'PDF' : 'Exportar PDF'"
           size="sm"
@@ -366,6 +436,7 @@ watch(
               dense
               emit-value
               map-options
+              clearable
             />
           </div>
           <div class="catalogo-toolbar__field">
@@ -377,6 +448,7 @@ watch(
               dense
               emit-value
               map-options
+              clearable
             />
           </div>
 
@@ -405,47 +477,57 @@ watch(
           </div>
         </q-card-section>
         <q-card-section v-if="!esMovil" class="q-pt-none">
-          <div class="catalogo-summary q-mb-md">
-            <div v-for="chip in chipsResumen" :key="chip.label" class="catalogo-summary__item">
-              <div class="catalogo-summary__icon">
-                <q-icon :name="chip.icon" :color="chip.tone" size="18px" />
-              </div>
-              <div>
-                <div class="catalogo-summary__value">{{ chip.value }}</div>
-                <div class="catalogo-summary__label">{{ chip.label }}</div>
+          <div class="row q-col-gutter-xs">
+            <!-- Filtro rápido de stock -->
+            <div
+              class="col-12 col-md-5 catalogo-quick-filters justify-start"
+              style="border: 0px solid red"
+            >
+              <q-chip
+                v-model:selected="mostrarTodosProductos"
+                clickable
+                outline
+                :color="mostrarTodosProductos ? 'positive' : 'info'"
+                :text-color="mostrarTodosProductos ? 'black' : 'black'"
+                icon="store"
+                :label="!mostrarTodosProductos ? 'Ver Todo el Catalogo' : 'Ver Catalogo Sucursal'"
+                size="md"
+              />
+              <q-chip
+                v-if="productosStockBajo > 0"
+                v-model:selected="mostrarSoloStockBajo"
+                clickable
+                outline
+                color="warning"
+                icon="warning"
+                label="Ver solo stock bajo"
+                size="md"
+              />
+              <q-chip
+                v-if="productosAgotados > 0"
+                v-model:selected="mostrarSoloAgotados"
+                clickable
+                outline
+                color="grey"
+                icon="remove_circle_outline"
+                label="Ver solo agotados"
+                size="md"
+              />
+            </div>
+            <q-space class="col-12 col-md-2" style="border: 0px solid red" />
+            <div class="col-12 col-md-5 catalogo-summary q-mb-none" style="border: 0 solid red">
+              <div v-for="chip in chipsResumen" :key="chip.label">
+                <div v-if="chip.hidden" class="catalogo-summary__item">
+                  <div class="catalogo-summary__icon">
+                    <q-icon :name="chip.icon" :color="chip.tone" size="18px" />
+                  </div>
+                  <div>
+                    <div class="catalogo-summary__value">{{ chip.value }}</div>
+                    <div class="catalogo-summary__label">{{ chip.label }}</div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- Filtro rápido de stock -->
-          <div class="catalogo-quick-filters">
-            <q-chip
-              v-model:selected="mostrarSoloSucursal"
-              clickable
-              outline
-              color="info"
-              icon="store"
-              label="Ver solo productos de sucursal"
-              size="sm"
-            />
-            <q-chip
-              v-model:selected="mostrarSoloStockBajo"
-              clickable
-              outline
-              color="warning"
-              icon="warning"
-              label="Ver solo stock bajo"
-              size="sm"
-            />
-            <q-chip
-              v-model:selected="mostrarSoloAgotados"
-              clickable
-              outline
-              color="grey"
-              icon="remove_circle_outline"
-              label="Ver solo agotados"
-              size="sm"
-            />
           </div>
         </q-card-section>
       </q-expansion-item>
@@ -463,6 +545,7 @@ watch(
       v-else-if="vistaActivaEsTabla"
       :productos="productosMostrados"
       :loading="catalogo.loading.value"
+      @ver-image="openDialogViewImage"
       @ver-qr="verQR"
       @editar="abrirEdicion"
     />
@@ -472,8 +555,15 @@ watch(
       v-else
       :productos="productosMostrados"
       :loading="catalogo.loading.value"
+      @ver-image="openDialogViewImage"
       @ver-qr="verQR"
       @editar="abrirEdicion"
+    />
+
+    <ProductoViewImage
+      :is-open="dialogViewImage"
+      :producto="productoQR"
+      @cancelled="closeDialogViewImage"
     />
 
     <q-dialog v-model="dialogEditarProducto" persistent>
@@ -494,7 +584,7 @@ watch(
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
-        <q-separator/>
+        <q-separator />
         <q-card-section>
           <div class="text-caption text-muted product-name-with-ellipsis">
             {{ productoQR?.nombre }}
@@ -578,10 +668,10 @@ watch(
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 3px 16px;
   border: 1px solid var(--sgi-border);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--sgi-surface) 88%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sgi-surface-alt) 88%, transparent);
 }
 
 .catalogo-summary__icon {
@@ -608,6 +698,7 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
 }
 
 @media (max-width: 1270px) {

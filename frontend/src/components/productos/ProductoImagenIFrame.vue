@@ -9,12 +9,12 @@
         :src="imagenUrl"
         :width="width + ''"
         :height="height + ''"
-        style="border-radius: 3px"
+        style="border-radius: 5px; max-height: 80%"
         fit="contain"
         class="q-ma-xs-none"
         loading="lazy"
       >
-<!--        <q-tooltip>{{ imagenUrl }}</q-tooltip>-->
+        <!--        <q-tooltip>{{ imagenUrl }}</q-tooltip>-->
         <template #error>
           <div class="flex flex-center bg-grey-4 text-grey-7 q-card--bordered" :style="sizeStyle">
             <q-icon
@@ -22,7 +22,7 @@
               color="grey-6"
               size="md"
               class="absolute"
-              style="opacity: 0.9"
+              style="opacity: 0.9; max-height: 50px"
             />
             <span class="text-caption q-mt-none text-caption-error" style="font-size: 0.8rem">
               Sin imagen
@@ -34,20 +34,25 @@
 
       <div
         v-if="!props.imagenUrl || !imagenUrl"
-        class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered"
+        class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered justify-center q-mt-md"
         :style="sizeStyle"
       >
         <q-icon
           name="broken_image"
           color="grey-5"
           size="md"
-          class="absolute"
-          style="opacity: 0.5"
+          class="absolute q-mt-md"
+          style="opacity: 0.5; "
         />
-        <span class="text-caption q-mt-none text-caption-error" style="font-size: 0.8rem">
+        <span
+          class="text-caption q-mt-none text-caption-error"
+          style="font-size: 0.8rem; max-height: 100px"
+        >
+          <br />
+          <br />
           Sin imagen
         </span>
-        <q-tooltip>Sin imagen</q-tooltip>
+        <q-tooltip>Sin imagen err</q-tooltip>
       </div>
     </div>
   </div>
@@ -81,7 +86,10 @@ const imagenUrl =
       ? drivePreviewUrl(props.imagenUrl)
       : null
 
-const width = computed(() => (props.type === 'table' ? widthError.value : widthComputed.value + '%'))
+console.log('imagenUrl', props)
+const width = computed(() =>
+  props.type === 'table' ? widthError.value : widthComputed.value + '%',
+)
 const height = computed(() =>
   props.type === 'table' ? heightError.value : 100 - heightComputed.value + '%',
 )
@@ -98,7 +106,7 @@ const widthError = computed(() =>
 const heightError = computed(() =>
   props.type === 'table'
     ? heightComputed.value / 2 / 10 + 'rem'
-    : heightComputed.value / 2 / 10 + 'rem',
+    : heightComputed.value / 2 / 10 + 'rem !important',
 )
 
 const sizeStyle = computed(() =>
@@ -110,7 +118,7 @@ const sizeStyle = computed(() =>
       '; text-align: center; border-radius: 3px'
     : 'width: ' +
       widthError.value +
-      '; height: ' +
+      '; max-height: ' +
       heightError.value +
       '; text-align: center; border-radius: 3px',
 )

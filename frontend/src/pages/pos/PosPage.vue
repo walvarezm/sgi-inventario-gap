@@ -36,10 +36,35 @@
         </div>
 
         <q-card class="sgi-card" flat>
-          <q-card-section class="q-pb-sm">
+          <q-separator />
+
+          <q-scroll-area style="height: 420px" class="q-pa-sm">
+            <div
+              v-if="!pos.carrito.value.length"
+              class="full-width column flex-center q-pa-xl text-muted"
+            >
+              <q-icon name="shopping_cart" size="48px" style="opacity: 0.2" class="q-mb-sm" />
+              <span class="text-body2">Carrito vacío</span>
+              <span class="text-caption">Busca o toca un producto para agregarlo</span>
+            </div>
+
+            <CarritoItem
+              v-for="item in pos.carrito.value"
+              :key="item.productoId"
+              :item="item"
+              @quitar="quitarItem"
+              @cambiar-cantidad="pos.actualizarCantidad"
+              @cambiar-precio="pos.actualizarPrecio"
+              @cambiar-descuento="pos.actualizarDescuento"
+            />
+          </q-scroll-area>
+
+          <q-separator />
+
+          <q-card-section v-if="false" class="q-pb-sm">
             <div class="text-subtitle2 text-weight-bold">Acceso rápido</div>
           </q-card-section>
-          <q-card-section class="q-pt-none">
+          <q-card-section v-if="false" class="q-pt-none">
             <div v-if="cargandoCatalogo" class="flex flex-center q-pa-xl">
               <q-spinner color="primary" size="40px" />
             </div>
@@ -180,7 +205,7 @@
 
           <q-separator />
 
-          <q-scroll-area style="height: 320px" class="q-pa-sm">
+          <!--          <q-scroll-area style="height: 320px" class="q-pa-sm">
             <div
               v-if="!pos.carrito.value.length"
               class="full-width column flex-center q-pa-xl text-muted"
@@ -201,7 +226,7 @@
             />
           </q-scroll-area>
 
-          <q-separator />
+          <q-separator />-->
 
           <q-card-section class="q-gutter-sm">
             <div v-if="pos.requierePago.value" class="q-gutter-sm">
@@ -543,7 +568,7 @@ onMounted(async () => {
   }
   const firstOption = tiposDocumentoDisponibles.value[0]
   if (firstOption) pos.setTipoDocumento(firstOption.value)
-  await cargarCatalogo()
+  //await cargarCatalogo()
 })
 </script>
 
@@ -554,7 +579,7 @@ onMounted(async () => {
 }
 
 .producto-rapido-card {
-  border-radius: 5px;  /*var(--sgi-radius);*/
+  border-radius: 5px; /*var(--sgi-radius);*/
   background: var(--sgi-surface-alt);
   transition:
     box-shadow 0.15s,

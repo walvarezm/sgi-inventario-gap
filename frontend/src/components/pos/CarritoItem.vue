@@ -1,22 +1,26 @@
 <template>
   <div class="carrito-item q-pa-sm q-mb-sm">
     <div class="row items-start no-wrap">
-      <q-avatar size="42px" square rounded class="q-mr-sm">
+      <div class="col max-w-40 w-100 q-mr-xs text-center">
         <ProductoImagenIFrame
-          v-if="item.imagenUrl"
           :imagen-url="item.imagenUrl"
-          :width="42"
-          :height="42"
+          :width="100"
+          :height="100"
           :imagen-location="item.imagenLocation"
-        />
-        <q-icon v-else name="inventory_2" color="grey-4" size="28px" />
-      </q-avatar>
+          :type="'card'"
+        ></ProductoImagenIFrame>
+      </div>
 
-      <div class="col min-w-0">
+      <div class="col max-w-100">
         <div class="row items-start">
           <div class="col min-w-0">
-            <div class="text-weight-medium ellipsis">{{ item.nombre }}</div>
-            <div class="text-caption text-muted">{{ item.sku }} · {{ item.marca }}</div>
+            <div class="text-captions text-info text-weight-bold">
+              {{ item.marca }} - {{ item.sku }}
+            </div>
+            <div class="text-weight-medium ellipsis">
+              {{ item.nombre }}
+            </div>
+            <q-tooltip>{{ item.nombre }}</q-tooltip>
           </div>
           <q-btn
             flat
@@ -32,10 +36,10 @@
           </q-btn>
         </div>
 
-        <div class="row q-col-gutter-sm q-mt-sm">
-          <div class="col-12 col-sm-4">
+        <div class="row q-col-gutter-xs q-mt-sm">
+          <div class="col-12 col-sm-2 text-center" style="border: 0px solid red">
             <div class="text-caption text-muted q-mb-xs">Cantidad</div>
-            <div class="row items-center no-wrap" style="gap: 4px">
+            <div class="row items-center no-wrap justify-center" style="gap: 4px">
               <q-btn
                 round
                 unelevated
@@ -61,7 +65,12 @@
             </div>
           </div>
 
-          <div class="col-12 col-sm-4">
+          <div class="col-12 col-sm-2 text-center">
+            <div class="text-caption text-muted q-mb-none">Precio lista</div>
+            <div class="text-body2 text-weight-medium">{{ formatCurrency(item.precioLista) }}</div>
+          </div>
+
+          <div class="col-12 col-sm-2">
             <q-input
               :model-value="item.precioUnitario"
               label="Precio final"
@@ -70,19 +79,16 @@
               dense
               min="0"
               step="0.01"
+              input-class="text-right"
               :disable="!canEditarPrecio"
               @update:model-value="emit('cambiar-precio', item.productoId, Number($event) || 0)"
             />
           </div>
 
-          <div class="col-12 col-sm-4">
-            <div class="text-caption text-muted q-mb-xs">Precio lista</div>
-            <div class="text-body2 text-weight-medium">{{ formatCurrency(item.precioLista) }}</div>
-          </div>
-        </div>
+          <!--        </div>
 
-        <div class="row q-col-gutter-sm q-mt-xs">
-          <div class="col-12 col-sm-4">
+        <div class="row q-col-gutter-sm q-mt-xs">-->
+          <div class="col-12 col-sm-2">
             <q-select
               :model-value="item.descuentoTipo"
               :options="descuentoOptions"
@@ -95,7 +101,7 @@
               @update:model-value="onTipoDescuento"
             />
           </div>
-          <div class="col-12 col-sm-4">
+          <div class="col-12 col-sm-2">
             <q-input
               :model-value="item.descuentoValor"
               label="Valor desc."
@@ -104,17 +110,23 @@
               dense
               min="0"
               step="0.01"
+              input-class="text-right"
               :disable="!canAplicarDescuento || item.descuentoTipo === 'NINGUNO'"
-              @update:model-value="emit('cambiar-descuento', item.productoId, item.descuentoTipo, Number($event) || 0)"
+              @update:model-value="
+                emit('cambiar-descuento', item.productoId, item.descuentoTipo, Number($event) || 0)
+              "
             />
           </div>
-          <div class="col-12 col-sm-4">
-            <div class="text-caption text-muted q-mb-xs">Subtotal</div>
-            <div class="text-subtitle2 text-weight-bold text-positive">
+          <div class="col-12 col-sm-2 text-right">
+            <div class="text-caption text-muted q-mb-none q-mr-sm">Subtotal</div>
+            <div class="text-subtitle2 text-weight-bold text-positive q-mr-sm">
               {{ formatCurrency(item.subtotal) }}
             </div>
-            <div v-if="item.descuentoMonto > 0" class="text-caption text-warning">
-              Desc.: {{ formatCurrency(item.descuentoMonto) }}
+            <div
+              v-if="item.descuentoMonto > 0"
+              class="text-text-subtitle2 text-weight-bold text-warning q-mr-sm"
+            >
+              {{ formatCurrency(item.subtotal - item.descuentoMonto) }}
             </div>
           </div>
         </div>
@@ -149,7 +161,12 @@ const descuentoOptions = [
 ]
 
 function onTipoDescuento(value: TipoDescuento): void {
-  emit('cambiar-descuento', props.item.productoId, value, value === 'NINGUNO' ? 0 : props.item.descuentoValor)
+  emit(
+    'cambiar-descuento',
+    props.item.productoId,
+    value,
+    value === 'NINGUNO' ? 0 : props.item.descuentoValor,
+  )
 }
 </script>
 
@@ -166,5 +183,20 @@ function onTipoDescuento(value: TipoDescuento): void {
 
 .min-w-0 {
   min-width: 0;
+}
+.min-w-40 {
+  min-width: 40px;
+}
+.max-w-40 {
+  max-width: 150px;
+}
+.max-w-60 {
+  max-width: 480px;
+}
+.w-100 {
+  width: 100%;
+}
+.w-60 {
+  width: 60%;
 }
 </style>

@@ -16,7 +16,7 @@ export const useSucursalStore = defineStore('sucursal', () => {
 
   const activas = computed(() => items.value.filter((s) => s.activo))
   const options = computed(() =>
-    activas.value.map((s) => ({ label: `${s.nombre} — ${s.ciudad}`, value: s.id })),
+    activas.value.map((s) => ({ label: `${s.nombre}`, value: s.id })),
   )
 
   async function fetchAll(): Promise<void> {

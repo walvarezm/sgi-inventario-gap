@@ -1,0 +1,1 @@
+import{yt as e}from"./index-C01s81W-.js";import{t}from"./wrappers-D9HlqxXe.js";var n=t(async()=>{let t=e();t.sesion&&!t.isAuthenticated&&t.logout()});export{n as default};

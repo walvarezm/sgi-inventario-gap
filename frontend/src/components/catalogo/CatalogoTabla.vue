@@ -13,6 +13,7 @@ interface Props {
 withDefaults(defineProps<Props>(), { loading: false })
 
 const emit = defineEmits<{
+  'ver-image': [producto: ProductoCatalogo]
   'ver-qr': [producto: ProductoCatalogo]
   editar: [producto: ProductoCatalogo]
 }>()
@@ -80,17 +81,14 @@ const columnas = computed<QTableColumn[]>(() => {
     <!-- Imagen thumbnail -->
     <template #body-cell-imagenUrl="{ row }">
       <q-td>
-        <!--        <q-avatar size="40px" square rounded>-->
-        <!--          <img v-if="value" :src="value" loading="lazy" />-->
-        <ProductoImagenIFrame
-          v-if="true"
-          :imagen-url="row.imagenUrl"
-          :imagen-location="row.imagenLocation"
-          :width="30"
-          :height="30"
-        />
-        <q-icon v-else name="image" color="grey-4" size="40px" />
-        <!--        </q-avatar>-->
+        <span :style="row.imagenUrl ? 'cursor: pointer' : ''" @click="emit('ver-image', row)">
+          <ProductoImagenIFrame
+            :imagen-url="row.imagenUrl"
+            :imagen-location="row.imagenLocation"
+            :width="30"
+            :height="30"
+          />
+        </span>
       </q-td>
     </template>
 

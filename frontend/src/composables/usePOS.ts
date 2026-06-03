@@ -61,17 +61,36 @@ export function usePOS() {
   )
 
   const resultadosBusqueda = computed(() => {
+    let resultado
     if (!busqueda.value.trim()) return []
     const q = busqueda.value.toLowerCase()
     const cache = cataloStore.cache[sucursalActiva.value]
     if (!cache) return []
-    return cache.data
+
+    if (busqueda.value) {
+      // Busqueda avanzada
+      // Divide el criterio en tokens y exige que TODOS estén presentes en algún campo
+      const tokens = busqueda.value
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((t) => t.length > 0)
+
+      resultado = cache.data.filter((p) => {
+        if (!tokens.length) return false
+        const haystack = `${p.marca} ${p.sku} ${p.nombre}`.toLowerCase()
+        return tokens.every((t) => haystack.includes(t))
+      })
+    }
+
+    return resultado
+
+    /*return cache.data
       .filter((producto) =>
         producto.sku.toLowerCase().includes(q) ||
         producto.nombre.toLowerCase().includes(q) ||
         producto.marca.toLowerCase().includes(q),
       )
-      .slice(0, 8)
+      .slice(0, 8)*/
   })
 
   function normalizarPagos(): DocumentoVentaForm['pagos'] {

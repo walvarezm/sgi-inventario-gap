@@ -112,7 +112,6 @@ import { useNotify } from 'src/composables/useNotify'
 import {
   minLength,
   nonNegativeNumber,
-  positiveNumber,
   required,
   seleccionarTexto,
   seleccionarTextoRef,

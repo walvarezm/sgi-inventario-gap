@@ -1,0 +1,1 @@
+import{M as e}from"./event-Bgfn8laA.js";import{Bt as t}from"./index-C01s81W-.js";var n=t({name:`QSpace`,setup(){let t=e(`div`,{class:`q-space`});return()=>t}});export{n as t};

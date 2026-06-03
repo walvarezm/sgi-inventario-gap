@@ -130,10 +130,15 @@
           >
             <template #body-cell-imagenUrl="{ row }">
               <q-td>
-                <ProductoImagenIFrame
-                  :imagen-url="row.imagenUrl"
-                  :imagen-location="row.imagenLocation"
-                />
+                <span
+                  :style="row.imagenUrl ? 'cursor: pointer' : ''"
+                  @click="openDialogViewImage(row)"
+                >
+                  <ProductoImagenIFrame
+                    :imagen-url="row.imagenUrl"
+                    :imagen-location="row.imagenLocation"
+                  />
+                </span>
               </q-td>
             </template>
             <template #body-cell-nombre="{ value }">
@@ -256,7 +261,13 @@
         @cancelled="cerrarDialogs"
       />
     </q-dialog>
+
   </q-page>
+    <ProductoViewImage
+      :is-open="dialogViewImage"
+      :producto="productSelected"
+      @cancelled="cerrarDialogs"
+    />
 </template>
 
 <script setup lang="ts">
@@ -268,7 +279,7 @@ import { inventarioService } from 'src/services/inventarioService'
 import { useCategoriaStore } from 'src/stores/categoriaStore.ts'
 import { useMarcaStore } from 'src/stores/marcaStore.ts'
 import { truncate } from 'src/utils/formatters.ts'
-import type { InventarioItem, MovimientoCabecera } from 'src/types'
+import type { InventarioItem, MovimientoCabecera, Producto } from 'src/types'
 import MovimientosTable from 'src/components/inventario/MovimientosTable.vue'
 import EntradaForm from 'src/components/inventario/EntradaForm.vue'
 import SalidaForm from 'src/components/inventario/SalidaForm.vue'
@@ -276,6 +287,8 @@ import TransferenciaForm from 'src/components/inventario/TransferenciaForm.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
 import { useProductoStore } from 'src/stores/productoStore.ts'
 import { useLoading } from 'src/composables/useLoading.ts'
+import ProductoViewImage from 'src/components/productos/ProductoViewImage.vue'
+import { useNotify } from 'src/composables/useNotify.ts'
 
 type InventarioRow = InventarioItem & {
   stockMinimo: number
@@ -295,6 +308,7 @@ const sucursalStore = useSucursalStore()
 const categoriaStore = useCategoriaStore()
 const marcaStore = useMarcaStore()
 const productoStore = useProductoStore()
+const { notifyWarning } = useNotify()
 
 const sucursalActiva = ref(authStore.isGlobal ? '' : (authStore.sucursalId ?? ''))
 const busqueda = ref('')
@@ -309,12 +323,14 @@ const loadingMovimientos = ref(false)
 const dialogEntrada = ref(false)
 const dialogSalida = ref(false)
 const dialogTransferencia = ref(false)
+const dialogViewImage = ref(false)
 const movimientoEditando = ref<MovimientoCabecera | null>(null)
 const movimientoTipoFiltro = ref<string | null>(null)
 const movimientoModoFiltro = ref<string | null>(null)
 const referenciaTipoFiltro = ref<string | null>(null)
 const movimientoDesde = ref('')
 const movimientoHasta = ref('')
+const productSelected = ref<Producto | null>(null)
 
 const opcionesSucursal = computed(() =>
   authStore.isGlobal
@@ -350,21 +366,6 @@ const opcionesReferenciaTipo = [
 const stockFiltrado = computed(() => {
   let rows = stock.value
   if (busqueda.value) {
-
-/*    const q = busqueda.value.toLowerCase()
-    rows = rows.filter(
-      (row) =>
-        String(row.sku || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(row.nombre || '')
-          .toLowerCase()
-          .includes(q) ||
-        String(row.marca || '')
-          .toLowerCase()
-          .includes(q),
-    )*/
-
     // Busqueda avanzada
     // Divide el criterio en tokens y exige que TODOS estén presentes en algún campo
     const tokens = busqueda.value
@@ -403,11 +404,27 @@ function abrirDialog(tipo: 'entrada' | 'salida' | 'transferencia'): void {
   if (tipo === 'transferencia') dialogTransferencia.value = true
 }
 
+function openDialogViewImage(p: Producto): void {
+  if (!p.imagenUrl) {
+    notifyWarning('Producto Sin Imagen', 'top')
+    return
+  }
+  productSelected.value = p
+  dialogViewImage.value = true
+  console.log('p.imagenUrl', productSelected.value, dialogViewImage.value)
+}
+
+function closeDialogViewImage(): void {
+  productSelected.value = null
+  dialogViewImage.value = false
+}
+
 function cerrarDialogs(): void {
   dialogEntrada.value = false
   dialogSalida.value = false
   dialogTransferencia.value = false
   movimientoEditando.value = null
+  closeDialogViewImage()
 }
 
 async function cargarStock(): Promise<void> {
@@ -469,16 +486,12 @@ onMounted(async () => {
   if (!sucursalStore.items.length) await sucursalStore.fetchAll()
   if (!categoriaStore.items.length) await categoriaStore.fetchAll()
   if (!marcaStore.items.length) await marcaStore.fetchAll()
-
-  /*if (!categoriaStore.items.length || !marcaStore.items.length) {
-    await Promise.all([categoriaStore.fetchAll(), marcaStore.fetchAll()])
-  }*/
-
   if (!productoStore.items.length) await productoStore.fetchAll()
+
   if (!sucursalActiva.value && sucursalStore.activas.length > 0) {
     sucursalActiva.value = sucursalStore.activas[0].id
+    //await cargarDatos()
   }
-  await cargarDatos()
   //useLoading(false)
 })
 </script>

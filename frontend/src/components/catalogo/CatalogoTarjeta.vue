@@ -33,32 +33,19 @@
         <q-card class="sgi-card catalogo-card" flat>
           <!-- Imagen -->
           <div class="card-image-wrapper">
-            <ProductoImagenIFrame
-              v-if="!esMovil"
-              :imagen-url="producto.imagenUrl"
-              :width="40"
-              :height="40"
-              :imagen-location="producto.imagenLocation"
-              :type="'card'"
-            ></ProductoImagenIFrame>
-
-<!--            <div v-if="producto.imagenUrl && esMovil" class="placeholder-img"></div>-->
-
-            <!-- Badge stock bajo -->
-            <!--            <q-badge
-              v-if="producto.stockBajo && producto.stock > 0"
-              floating
-              color="orange"
-              label="Stock bajo"
-              style="top: 8px; right: 8px"
-            />
-            <q-badge
-              v-if="producto.stock === 0"
-              floating
-              color="grey"
-              label="Sin stock"
-              style="top: 8px; right: 8px"
-            />-->
+            <span
+              :style="producto.imagenUrl ? 'cursor: pointer' : ''"
+              @click="emit('ver-image', producto)"
+            >
+              <ProductoImagenIFrame
+                v-if="!esMovil"
+                :imagen-url="producto.imagenUrl"
+                :width="40"
+                :height="40"
+                :imagen-location="producto.imagenLocation"
+                :type="'card'"
+              ></ProductoImagenIFrame>
+            </span>
 
             <!-- QR button -->
             <div v-if="!esMovil" class="card-actions">
@@ -222,6 +209,7 @@ interface Props {
 withDefaults(defineProps<Props>(), { loading: false })
 
 const emit = defineEmits<{
+  'ver-image': [producto: ProductoCatalogo]
   'ver-qr': [producto: ProductoCatalogo]
   editar: [producto: ProductoCatalogo]
 }>()
