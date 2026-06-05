@@ -51,14 +51,14 @@ const MovimientoService = {
       String(m.sucursal_destino) === String(sucursalId)
     )
     if (tipo) movimientos = movimientos.filter(m => String(m.tipo || '').toUpperCase() === String(tipo).toUpperCase())
-    if (desde) movimientos = movimientos.filter(m => String(m.fecha_registro || m.fecha || '') >= String(desde))
-    if (hasta) movimientos = movimientos.filter(m => String(m.fecha_registro || m.fecha || '') <= String(hasta))
+    if (desde) movimientos = movimientos.filter(m => String(m.fecha || m.fecha_registro || '') >= String(desde))
+    if (hasta) movimientos = movimientos.filter(m => String(m.fecha || m.fecha_registro || '') <= String(hasta))
 
     const cabecerasById = this._cabecerasById()
     const productosById = this._productosById()
 
     return movimientos
-      .sort((a, b) => String(b.fecha_registro || b.fecha || '').localeCompare(String(a.fecha_registro || a.fecha || '')))
+      .sort((a, b) => String(b.fecha || b.fecha_registro || '').localeCompare(String(a.fecha || a.fecha_registro || '')))
       .map(movimiento => {
         const cabecera = cabecerasById[movimiento.cabecera_id] || {}
         const producto = productosById[movimiento.producto_id] || {}
@@ -70,6 +70,7 @@ const MovimientoService = {
           productoId: movimiento.producto_id,
           productoNombre: producto.nombre || movimiento.producto_id,
           productoSku: producto.sku || '',
+          productoMarca: producto.marca || '',
           sucursalOrigen: movimiento.sucursal_origen || null,
           sucursalDestino: movimiento.sucursal_destino || null,
           cantidad: Number(movimiento.cantidad) || 0,

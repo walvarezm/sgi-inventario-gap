@@ -4,8 +4,12 @@
       <div class="text-subtitle1 text-weight-bold">Reporte de Stock</div>
       <q-space />
       <q-btn
-        outline color="positive" icon="table_chart" label="Exportar CSV"
-        size="sm" @click="exportarCSV"
+        outline
+        color="positive"
+        icon="table_chart"
+        label="Exportar CSV"
+        size="sm"
+        @click="exportarCSV"
       />
     </q-card-section>
 
@@ -19,14 +23,18 @@
       <div class="col-auto">
         <q-chip
           v-model:selected="soloStockBajo"
-          clickable outline color="warning" icon="warning"
-          label="Solo stock bajo" size="sm"
+          clickable
+          outline
+          color="warning"
+          icon="warning"
+          label="Solo stock bajo"
+          size="sm"
         />
       </div>
       <q-space />
       <div class="text-caption text-muted">
-        {{ stockFiltrado.length }} ítems ·
-        Valor venta: <strong class="text-positive">{{ formatCurrency(totalValorVenta) }}</strong>
+        {{ stockFiltrado.length }} ítems · Valor venta:
+        <strong class="text-positive">{{ formatCurrency(totalValorVenta) }}</strong>
       </div>
     </q-card-section>
 
@@ -35,7 +43,8 @@
       :columns="columnas"
       :loading="loading"
       row-key="productoId"
-      flat class="sgi-table"
+      flat
+      class="sgi-table"
       :pagination="{ rowsPerPage: 5 }"
       no-data-label="Sin datos de stock"
     >
@@ -43,10 +52,17 @@
       <template #body-cell-stockActual="{ row }">
         <q-td class="text-center">
           <q-chip
-            dense size="sm"
+            dense
+            size="sm"
             :color="row.stockActual === 0 ? 'grey-3' : row.stockBajo ? 'orange-2' : 'green-2'"
             :text-color="row.stockActual === 0 ? 'grey-6' : row.stockBajo ? 'orange-9' : 'green-9'"
-            :icon="row.stockActual === 0 ? 'remove_circle_outline' : row.stockBajo ? 'warning' : 'check_circle'"
+            :icon="
+              row.stockActual === 0
+                ? 'remove_circle_outline'
+                : row.stockBajo
+                  ? 'warning'
+                  : 'check_circle'
+            "
           >
             {{ row.stockActual }} {{ row.unidad }}
           </q-chip>
@@ -67,7 +83,7 @@
 
       <template #no-data="{ message }">
         <div class="full-width column flex-center q-pa-xl text-muted">
-          <q-icon name="warehouse" size="48px" style="opacity:0.3" class="q-mb-md" />
+          <q-icon name="warehouse" size="48px" style="opacity: 0.3" class="q-mb-md" />
           <span>{{ message }}</span>
         </div>
       </template>
@@ -104,6 +120,17 @@ const stockFiltrado = computed(() => {
         s.categoria.toLowerCase().includes(q),
     )
   }
+  lista = lista.sort((a, b) => {
+    // 1. Ordenar por MARCA (A-Z)
+    const marcaCompare = a.marca.localeCompare(b.marca)
+    if (marcaCompare !== 0) return marcaCompare
+    // 2. Ordenar por SKU (A-Z)
+    const skuCompare = a.sku.localeCompare(b.sku)
+    if (skuCompare !== 0) return skuCompare
+    // 3. Ordenar por NOMBRE (A-Z)
+    return a.nombre.localeCompare(b.nombre)
+  })
+
   return lista
 })
 
@@ -112,12 +139,12 @@ const totalValorVenta = computed(() =>
 )
 
 const columnas: QTableColumn[] = [
+  { name: 'marca',        label: 'Marca',      field: 'marca',        align: 'left',  sortable: true },
   { name: 'sku',          label: 'SKU',        field: 'sku',          align: 'left',  sortable: true },
   { name: 'nombre',       label: 'Producto',   field: 'nombre',       align: 'left',  sortable: true },
-  { name: 'marca',        label: 'Marca',      field: 'marca',        align: 'left',  sortable: true },
   { name: 'categoria',    label: 'Categoría',  field: 'categoria',    align: 'left' },
   { name: 'stockActual',  label: 'Stock',      field: 'stockActual',  align: 'center', sortable: true },
-  { name: 'stockMinimo',  label: 'Mínimo',     field: 'stockMinimo',  align: 'center' },
+  //{ name: 'stockMinimo',  label: 'Mínimo',     field: 'stockMinimo',  align: 'center' },
   { name: 'valorCosto',   label: 'Val. Costo', field: 'valorCosto',   align: 'right', sortable: true },
   { name: 'valorVenta',   label: 'Val. Venta', field: 'valorVenta',   align: 'right', sortable: true },
 ]

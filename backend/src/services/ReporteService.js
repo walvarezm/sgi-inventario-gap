@@ -80,7 +80,7 @@ const ReporteService = {
       ventasMes: Math.round(ventasMes * 100) / 100,
       facturasCantidadHoy: facturasHoy.length,
       facturasCantidadMes: facturasMes.length,
-      productosActivos: productos.length,
+      productosActivos: inventario.length || productos.length,
       stockBajo: stockBajo,
       valorInventario: Math.round(valorInventario * 100) / 100,
       movimientosHoy: movimientos.length,

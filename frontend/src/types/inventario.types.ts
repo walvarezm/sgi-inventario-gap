@@ -45,6 +45,7 @@ export interface Movimiento {
   tipo: TipoMovimiento
   modo?: ModoMovimiento
   productoId: string
+  productoMarca?: string
   productoSku?: string
   productoNombre?: string
   sucursalOrigen: string | null
