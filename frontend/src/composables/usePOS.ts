@@ -63,7 +63,7 @@ export function usePOS() {
   const resultadosBusqueda = computed(() => {
     let resultado
     if (!busqueda.value.trim()) return []
-    const q = busqueda.value.toLowerCase()
+    //const q = busqueda.value.toLowerCase()
     const cache = cataloStore.cache[sucursalActiva.value]
     if (!cache) return []
 

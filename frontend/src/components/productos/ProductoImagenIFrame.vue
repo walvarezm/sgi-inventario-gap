@@ -1,6 +1,18 @@
 <template>
   <div class="producto-imagen-uploads">
     <!-- Preview -->
+    <div v-if="false">
+      type: {{ props.type }}
+      <br />
+      props: {{ props.width }} - {{ props.height }}
+      <br />
+      {{ width }} - {{ height }}
+      <br />
+      max: {{ maxWidthImg }} - {{ maxHeightImg }}
+      <br />
+      Computed: {{ widthComputed }} - {{ heightComputed }}
+      <br />
+    </div>
     <div class="imagen-preview">
       <q-img
         v-if="
@@ -9,14 +21,20 @@
         :src="imagenUrl"
         :width="width + ''"
         :height="height + ''"
-        style="border-radius: 5px; max-height: 80%"
+        :style="
+          'max-width: ' + maxWidthImg + ';max-height: ' + maxHeightImg + ';height: ' + maxHeightImg
+        "
         fit="contain"
-        class="q-ma-xs-none"
+        class="q-pa-md bg-img-custom"
         loading="lazy"
       >
+        <!--        "cover" | "fill" | "contain" | "none" | "scale-down"-->
         <!--        <q-tooltip>{{ imagenUrl }}</q-tooltip>-->
         <template #error>
-          <div class="flex flex-center bg-grey-4 text-grey-7 q-card--bordered" :style="sizeStyle">
+          <div
+            class="flex flex-center bg-grey-4 text-grey-7 q-card--bordered"
+            :style="sizeStyleError"
+          >
             <q-icon
               name="broken_image"
               color="grey-6"
@@ -27,32 +45,30 @@
             <span class="text-caption q-mt-none text-caption-error" style="font-size: 0.8rem">
               Sin imagen
             </span>
-            <q-tooltip>Sin imagen 1</q-tooltip>
+            <q-tooltip>Error al cargar imagen</q-tooltip>
           </div>
         </template>
       </q-img>
 
       <div
         v-if="!props.imagenUrl || !imagenUrl"
-        class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered justify-center q-mt-md"
-        :style="sizeStyle"
+        class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered justify-center q-my-none"
+        :style="sizeStyleError"
       >
         <q-icon
           name="broken_image"
           color="grey-5"
           size="md"
-          class="absolute q-mt-md"
-          style="opacity: 0.5; "
+          class="absolute q-mt-none"
+          style="opacity: 0.5"
         />
         <span
           class="text-caption q-mt-none text-caption-error"
           style="font-size: 0.8rem; max-height: 100px"
         >
-          <br />
-          <br />
           Sin imagen
         </span>
-        <q-tooltip>Sin imagen err</q-tooltip>
+        <q-tooltip>Producto Sin imagen</q-tooltip>
       </div>
     </div>
   </div>
@@ -86,22 +102,22 @@ const imagenUrl =
       ? drivePreviewUrl(props.imagenUrl)
       : null
 
-console.log('imagenUrl', props)
+//console.log('imagenUrl', props)
 const width = computed(() =>
   props.type === 'table' ? widthError.value : widthComputed.value + '%',
 )
-const height = computed(() =>
-  props.type === 'table' ? heightError.value : 100 - heightComputed.value + '%',
+const height = computed(
+  () => (props.type === 'table' ? heightError.value : heightComputed.value + '%'),
+  //props.type === 'table' ? heightError.value : 100 - heightComputed.value + '%',
 )
 
 const widthComputed = computed(() => (props.type === 'table' ? props.width : props.width))
-const heightComputed = computed(() => (props.type === 'table' ? props.height : 100 - props.height))
-//const height = computed(() => (props.height ? props.height - 20 + '%' : '50%'))
-//const widthError = computed(() => width.value ?? '50')
-const widthError = computed(() =>
-  props.type === 'table'
-    ? props.width / 2 / 10 + 'rem'
-    : widthComputed.value + (100 - widthComputed.value) + '%',
+const heightComputed = computed(() => (props.type === 'table' ? props.height : props.height))
+//const heightComputed = computed(() => (props.type === 'table' ? props.height : 100 - props.height))
+
+const widthError = computed(
+  () => (props.type === 'table' ? props.width / 2 / 10 + 'rem' : widthComputed.value + '%'),
+  //: widthComputed.value + (100 - widthComputed.value) + '%',
 )
 const heightError = computed(() =>
   props.type === 'table'
@@ -109,19 +125,38 @@ const heightError = computed(() =>
     : heightComputed.value / 2 / 10 + 'rem !important',
 )
 
-const sizeStyle = computed(() =>
+const sizeStyleError = computed(() =>
   props.type === 'table'
     ? 'width: ' +
       widthError.value +
       '; height: ' +
       heightError.value +
-      '; text-align: center; border-radius: 3px'
+      '; text-align: center; border-radius: 3px; margin: 0'
     : 'width: ' +
       widthError.value +
       '; max-height: ' +
       heightError.value +
-      '; text-align: center; border-radius: 3px',
+      '; text-align: left !important; border-radius: 13px; margin: 16px 0',
 )
+
+const maxHeightImg = computed(
+  //() => (props.type === 'view' ? '100rem' : '120px'),
+  () =>
+    props.type === 'view'
+      ? heightComputed.value + '%'
+      : props.type === 'card'
+        ? (heightComputed.value * 2) / 10 + 'rem'
+        : heightComputed.value + '%',
+)
+
+const maxWidthImg = computed(() =>
+  props.type === 'view'
+    ? widthComputed.value / 2 + '%'
+    : props.type === 'card'
+      ? '100%'
+      : widthComputed.value + '%',
+)
+const styleImg = props.type === 'view' ? 'max-width: 50%; max-heigh: 40rem' : 'max-heigh: 120px;'
 </script>
 
 <style scoped lang="scss">
@@ -130,5 +165,11 @@ const sizeStyle = computed(() =>
   border: 2px dashed var(--sgi-border);
   border-radius: 3px;
   background: var(--sgi-surface-alt);
+}
+.bg-img-custom {
+  border: 1px solid var(--sgi-border);
+  border-radius: 3px !important;
+  background: color-mix(in srgb, var(--sgi-surface-alt) 25%, transparent);
+  padding: 10px;
 }
 </style>

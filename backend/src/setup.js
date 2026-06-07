@@ -388,3 +388,37 @@ function _ensureSheetHeaders(ss, nombre, headers) {
     sheet.getRange(1, sheet.getLastColumn()).setValue(header)
   })
 }
+
+/**
+ * Install daily backup trigger
+ * Run once to enable automated backups
+ */
+function instalarTriggerBackup() {
+  var triggers = ScriptApp.getProjectTriggers()
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'hacerBackupDiario') {
+      Logger.log('Backup trigger already installed')
+      return
+    }
+  }
+
+  ScriptApp.newTrigger('hacerBackupDiario')
+      .timeBased()
+      .everyDays(1)
+      .atHour(2)
+      .create()
+
+  Logger.log('Backup trigger installed')
+}
+
+/**
+ * Daily backup function (called by trigger)
+ */
+function hacerBackupDiario() {
+  //var ss = SpreadsheetApp.getActiveSpreadsheet()
+  const ss = Sheets.getSpreadsheet()
+  var zona = 'America/La_Paz'
+  var fecha = Utilities.formatDate(new Date(), zona, 'yyyy-MM-dd')
+  var backup = ss.copy('SGI-Backup-Base-de-Datos-Dev_' + fecha)
+  Logger.log('Backup created: ' + fecha + ' - ' + backup.getUrl())
+}

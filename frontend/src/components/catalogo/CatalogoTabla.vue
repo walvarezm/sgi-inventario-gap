@@ -26,8 +26,8 @@ const paginacion = { rowsPerPage: 10 }
 const columnas = computed<QTableColumn[]>(() => {
   const cols: QTableColumn[] = [
     { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:60px' },
-    { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
     { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
+    { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
     { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
   ]
 
@@ -97,7 +97,7 @@ const columnas = computed<QTableColumn[]>(() => {
       <q-td>
         <div class="row items-center no-wrap q-gutter-xs">
           <span class="text-weight-bold text-mono text-body2">{{ row.sku }}</span>
-          <q-btn
+<!--          <q-btn
             flat
             round
             dense
@@ -107,7 +107,7 @@ const columnas = computed<QTableColumn[]>(() => {
             @click="emit('ver-qr', row)"
           >
             <q-tooltip>Ver código QR</q-tooltip>
-          </q-btn>
+          </q-btn>-->
         </div>
       </q-td>
     </template>
@@ -175,10 +175,30 @@ const columnas = computed<QTableColumn[]>(() => {
       </q-td>
     </template>
 
-    <template v-if="canEdit" #body-cell-acciones="{ row }">
+    <template #body-cell-acciones="{ row }">
       <q-td class="text-center">
-        <q-btn flat round dense size="sm" icon="edit" color="primary" @click="emit('editar', row)">
+        <q-btn
+          v-if="canEdit"
+          flat
+          round
+          dense
+          size="sm"
+          icon="edit"
+          color="warning"
+          @click="emit('editar', row)"
+        >
           <q-tooltip>Editar producto</q-tooltip>
+        </q-btn>
+        <q-btn
+          flat
+          round
+          dense
+          size="sm"
+          icon="qr_code"
+          color="primary"
+          @click="emit('ver-qr', row)"
+        >
+          <q-tooltip>Ver código QR</q-tooltip>
         </q-btn>
       </q-td>
     </template>

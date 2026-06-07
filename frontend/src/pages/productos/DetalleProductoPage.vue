@@ -51,12 +51,21 @@
         <!-- ── Detalle del producto ────────────────────────── -->
         <div v-else-if="estado === 'ok' && producto" class="detalle-contenido">
           <!-- Tarjeta principal -->
-          <q-card class="detalle-card" flat>
+          <q-card class="detalle-card" bordered>
             <div :class="producto.imagenUrl ? 'detalle-card__inner' : 'detalle-card__inner_flex'">
               <!-- Columna imagen -->
               <div class="detalle-imagen-col">
-                <div v-if="producto.imagenUrl" class="detalle-imagen-wrap">
-                  <q-img
+                <div v-if="producto.imagenUrl" class="detalle-imagen-wrap detalle-imagen">
+                  <ProductoImagenIFrame
+                    v-if="producto.imagenUrl"
+                    :imagen-url="String(producto?.imagenUrl)"
+                    :width="100"
+                    :height="100"
+                    :imagen-location="producto?.imagenLocation"
+                    :type="'card'"
+                  />
+
+                  <!--                  <q-img
                     v-if="producto.imagenUrl"
                     :src="imagenSrc"
                     :alt="producto.nombre"
@@ -70,7 +79,7 @@
                         <span class="text-caption text-muted q-mt-xs">Sin imagen</span>
                       </div>
                     </template>
-                  </q-img>
+                  </q-img>-->
                   <div v-else class="detalle-imagen-placeholder flex flex-center column">
                     <q-icon name="inventory_2" size="56px" color="grey-4" />
                     <span class="text-caption text-muted q-mt-xs">Sin imagen 2</span>
@@ -222,6 +231,7 @@ import { useQR } from 'src/composables/useQR'
 import { drivePreviewUrl } from 'src/utils/qrUtils'
 import { formatCurrency } from 'src/utils/formatters'
 import { useQuasar } from 'quasar'
+import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
 const $q = useQuasar()
 
 // ── Route ───────────────────────────────────────────────────
@@ -312,6 +322,7 @@ onMounted(cargar)
   padding: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 // ── Header público ──────────────────────────────────────────
@@ -356,10 +367,13 @@ onMounted(cargar)
 // ── Contenido principal ─────────────────────────────────────
 .detalle-contenido {
   flex: 1;
-  max-width: 960px;
-  width: 100%;
-  margin: 15px auto 40px auto;
-  padding: 0 24px 0 42px;
+  max-width: 100%;
+  /*max-height: 90px;*/
+  width: 75%;
+  /*height: 80% !important;*/
+  margin: 15px 10px 40px 10px;
+  padding: 0 24px 0 24px;
+  /*border: 2px solid var(--sgi-positive);*/
 }
 
 // ── Tarjeta ─────────────────────────────────────────────────
@@ -369,11 +383,13 @@ onMounted(cargar)
   border: 1px solid var(--sgi-border);
   box-shadow: var(--sgi-shadow);
   overflow: hidden;
+  /*    max-height: 100% !important;*/
 
   &__inner {
     display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 0;
+    grid-template-columns: 33% 1fr;
+    gap: 1px;
+    /*height: 100%;*/
   }
 
   &__inner_flex {
@@ -387,24 +403,28 @@ onMounted(cargar)
 .detalle-imagen-col {
   background: color-mix(in srgb, var(--sgi-surface-alt) 60%, transparent);
   border-right: 1px solid var(--sgi-border);
-  padding: 18px 20px;
+  padding: 10px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  text-align: center;
 }
 
 .detalle-imagen-wrap {
   width: 100%;
-  aspect-ratio: 1;
-  border-radius: 14px;
+  aspect-ratio: 0;
+  border-radius: 20px;
   overflow: hidden;
   background: var(--sgi-surface);
   border: 1px solid var(--sgi-border);
+  max-height: 100%;
 }
 
 .detalle-imagen {
   width: 100%;
   height: 100%;
+  /*height: 60vh;*/
 }
 
 .detalle-imagen-placeholder {
@@ -573,7 +593,7 @@ onMounted(cargar)
 }
 
 // ── Responsive ───────────────────────────────────────────────
-@media (max-width: 700px) {
+@media (max-width: 740px) {
   .detalle-card__inner {
     grid-template-columns: 1fr;
   }
@@ -584,11 +604,13 @@ onMounted(cargar)
     padding: 8px 0 8px 0;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 2px;
+    height: 100%;
   }
 
   .detalle-imagen-wrap {
-    width: 180px;
+    width: 95%;
+    height: 100%;
     flex-shrink: 0;
   }
 
@@ -606,6 +628,7 @@ onMounted(cargar)
   }
 
   .detalle-contenido {
+    width: 99%;
     padding: 0 0 32px 0;
     margin: 0;
   }
@@ -621,13 +644,20 @@ onMounted(cargar)
 }
 
 @media (max-width: 480px) {
+  .detalle-contenido {
+    width: 100%;
+    /*height: 80% !important;*/
+    /*margin: 15px 10px 40px 10px;*/
+    padding: 0 5px;
+    /*border: 2px solid var(--sgi-positive);*/
+  }
   .detalle-imagen-col {
     flex-direction: column;
     align-items: center;
   }
 
   .detalle-imagen-wrap {
-    width: 180px;
+    width: 100%;
   }
 }
 </style>

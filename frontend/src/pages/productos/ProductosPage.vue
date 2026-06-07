@@ -398,7 +398,7 @@ async function recargar(): Promise<void> {
   productoStore.forceReload()
   categoriaStore.forceReload()
   marcaStore.forceReload()
-  await Promise.all([productoStore.fetchAll(), categoriaStore.fetchAll(), marcaStore.fetchAll()])
+  await Promise.all([productoStore.fetchAll(true), categoriaStore.fetchAll(), marcaStore.fetchAll()])
 }
 
 async function cargar(): Promise<void> {

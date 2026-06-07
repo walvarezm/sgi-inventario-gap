@@ -40,10 +40,10 @@ const mostrarTodosProductos = ref(false)
 const exportandoPDF = ref(false)
 
 // ── Computed ───────────────────────────────────────────────────
-const opcionesSucursal = sucursalStore.options
-/*const opcionesSucursal = computed(() =>
-  sucursalStore.activas.map((s) => ({ label: `${s.nombre} — ${s.ciudad}`, value: s.id })),
-)*/
+//const opcionesSucursal = sucursalStore.options
+const opcionesSucursal = computed(() =>
+  sucursalStore.activas.map((s) => ({ label: `${s.nombre}`, value: s.id })),
+)
 
 const productosMostrados = computed(() => {
   //catalogo.sucursalFiltro.value = toRef(null)

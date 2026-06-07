@@ -1,77 +1,89 @@
 // =============================================================
-// categoriaStore.ts — Estado global de categorías
+// marcaStore.ts — Estado global de marcas
+// Optimizado con: useStoreCache (TTL + deduplicación) y
+// useDataSync (propagación de cambios).
 // =============================================================
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import type { Marca, MarcaForm } from 'src/types'
 import { marcaService } from 'src/services/marcaService'
-import { useLoading } from 'src/composables/useLoading.ts'
+import { useStoreCache } from 'src/composables/useStoreCache'
+import { useDataSync } from 'src/composables/useDataSync'
+import { useLoading } from 'src/composables/useLoading'
+
+const TTL = 20 * 60 * 1000 // 20 minutos (marcas son muy estáticas)
 
 export const useMarcaStore = defineStore('marca', () => {
-  const items = ref<Marca[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  // ── Caché ──────────────────────────────────────────────────
+  const cache = useStoreCache<Marca[]>({ ttl: TTL, name: 'marca' })
+  const sync = useDataSync()
 
+  // ── Alias de estado ────────────────────────────────────────
+  const items = computed(() => cache.data.value ?? [])
+  const loading = cache.loading
+  const error = cache.error
+
+  // ── Computed ───────────────────────────────────────────────
   const activas = computed(() =>
     items.value
       .filter((c) => c.activo)
-      .sort((a, b) => {
-        // Ordenar por NOMBRE (A-Z)
-        return a.nombre.localeCompare(b.nombre)
-      }),
+      .sort((a, b) => a.nombre.localeCompare(b.nombre)),
   )
-  const options = computed(() =>
-    activas.value.map((c) => ({ label: c.nombre, value: c.id })))
-  const optionsName = computed(() =>
-    activas.value.map((c) => ({ label: c.nombre, value: c.nombre })))
 
-  async function fetchAll(): Promise<void> {
-    if (items.value.length > 0) return
-    loading.value = true
-    error.value = null
+  const options = computed(() =>
+    activas.value.map((c) => ({ label: c.nombre, value: c.id })),
+  )
+
+  const optionsName = computed(() =>
+    activas.value.map((c) => ({ label: c.nombre, value: c.nombre })),
+  )
+
+  const cacheInfo = computed(() => ({
+    isValid: cache.isValid.value,
+    isStale: cache.isStale.value,
+    lastFetchedAt: cache.lastFetchedAt.value,
+  }))
+
+  // ── Actions ────────────────────────────────────────────────
+
+  async function fetchAll(force = false): Promise<void> {
     useLoading(true, 'Cargando Marcas...')
     try {
-      items.value = await marcaService.getAll()
-    } catch (e) {
-      error.value = (e as Error).message
+      await cache.fetch(force, () => marcaService.getAll())
     } finally {
-      loading.value = false
       useLoading(false)
     }
   }
 
   async function create(form: MarcaForm): Promise<Marca> {
     const nueva = await marcaService.create(form)
-    items.value.push(nueva)
+    cache.pushItem(nueva)
+    sync.emit('marca:created', nueva)
     return nueva
   }
 
   async function update(id: string, changes: Partial<MarcaForm>): Promise<Marca> {
     const actualizada = await marcaService.update(id, changes)
-    const idx = items.value.findIndex((c) => c.id === id)
-    if (idx !== -1) items.value[idx] = actualizada
+    cache.patchItem(id, 'id', actualizada)
+    sync.emit('marca:updated', actualizada)
     return actualizada
   }
 
+  // ── Helpers ────────────────────────────────────────────────
   function getById(id: string): Marca | undefined {
     return items.value.find((c) => c.id === id)
   }
 
+  function clearError(): void {
+    cache.error.value = null
+  }
+
   function forceReload(): void {
-    items.value = []
+    cache.invalidate()
   }
 
   return {
-    items,
-    loading,
-    error,
-    activas,
-    options,
-    fetchAll,
-    create,
-    update,
-    getById,
-    forceReload,
-    optionsName,
+    items, loading, error, activas, options, optionsName, cacheInfo,
+    fetchAll, create, update, getById, clearError, forceReload,
   }
 })

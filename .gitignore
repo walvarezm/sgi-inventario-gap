@@ -9,6 +9,8 @@ dist/
 .quasar/
 .nuxt/
 
+
+
 # Environment files
 .env.local
 .env.development.local
@@ -48,3 +50,5 @@ frontend/public/images/products/*
 # Misc
 *.zip
 *.tar.gz
+
+public/*

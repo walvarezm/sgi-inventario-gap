@@ -261,13 +261,12 @@
         @cancelled="cerrarDialogs"
       />
     </q-dialog>
-
   </q-page>
-    <ProductoViewImage
-      :is-open="dialogViewImage"
-      :producto="productSelected"
-      @cancelled="cerrarDialogs"
-    />
+  <ProductoViewImage
+    :is-open="dialogViewImage"
+    :producto="productSelected"
+    @cancelled="cerrarDialogs"
+  />
 </template>
 
 <script setup lang="ts">
@@ -389,10 +388,10 @@ const stockFiltrado = computed(() => {
 
 const columnasStock: QTableColumn[] = [
   { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:52px' },
+  { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
   { name: 'sku', label: 'Codigo', field: 'sku', align: 'left', sortable: true },
   { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
   { name: 'categoriaId', label: 'Categoría', field: 'categoriaId', align: 'left', sortable: true },
-  { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
   { name: 'stockActual', label: 'Stock', field: 'stockActual', align: 'center', sortable: true },
   { name: 'fechaActualizacion', label: 'Actualizado', field: 'fechaActualizacion', align: 'left' },
 ]
@@ -435,6 +434,13 @@ async function cargarStock(): Promise<void> {
     stock.value = (await inventarioService.getStockPorSucursal(
       sucursalActiva.value,
     )) as InventarioRow[]
+    stock.value.sort((a, b) => {
+      const marcaCompare = a.marca.localeCompare(b.marca)
+      if (marcaCompare !== 0) return marcaCompare
+      const skuCompare = a.sku.localeCompare(b.sku)
+      if (skuCompare !== 0) return skuCompare
+      return a.nombre.localeCompare(b.nombre)
+    })
     alertas.value = stock.value.filter((row) => row.stockBajo)
   } finally {
     loadingStock.value = false

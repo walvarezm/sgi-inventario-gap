@@ -1,34 +1,49 @@
 // =============================================================
 // sucursalStore.ts — Estado global de sucursales
+// Optimizado con: useStoreCache (TTL + deduplicación) y
+// useDataSync (propagación de cambios a otros stores).
 // =============================================================
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import type { Sucursal, SucursalForm } from 'src/types'
 import { sucursalService } from 'src/services/sucursalService'
-import { useLoading } from 'src/composables/useLoading.ts'
+import { useStoreCache } from 'src/composables/useStoreCache'
+import { useDataSync } from 'src/composables/useDataSync'
+import { useLoading } from 'src/composables/useLoading'
+
+const TTL = 15 * 60 * 1000 // 15 minutos (sucursales cambian poco)
 
 export const useSucursalStore = defineStore('sucursal', () => {
-  const items = ref<Sucursal[]>([])
-  const loading = ref(false)
-  const saving = ref(false)
-  const error = ref<string | null>(null)
-  const selected = ref<Sucursal | null>(null)
+  // ── Caché ──────────────────────────────────────────────────
+  const cache = useStoreCache<Sucursal[]>({ ttl: TTL, name: 'sucursal' })
+  const sync = useDataSync()
 
+  // ── Alias de estado ────────────────────────────────────────
+  const items = computed(() => cache.data.value ?? [])
+  const loading = cache.loading
+  const saving = cache.loading
+  const error = cache.error
+
+  // ── Computed ───────────────────────────────────────────────
   const activas = computed(() => items.value.filter((s) => s.activo))
+
   const options = computed(() =>
     activas.value.map((s) => ({ label: `${s.nombre}`, value: s.id })),
   )
 
-  async function fetchAll(): Promise<void> {
-    loading.value = true
-    error.value = null
+  const cacheInfo = computed(() => ({
+    isValid: cache.isValid.value,
+    isStale: cache.isStale.value,
+    lastFetchedAt: cache.lastFetchedAt.value,
+  }))
+
+  // ── Actions ────────────────────────────────────────────────
+
+  async function fetchAll(force = false): Promise<void> {
     useLoading(true, 'Cargando Sucursales...')
     try {
-      items.value = await sucursalService.getAll()
-    } catch (e) {
-      error.value = (e as Error).message
+      await cache.fetch(force, () => sucursalService.getAll())
     } finally {
-      loading.value = false
       useLoading(false)
     }
   }
@@ -38,7 +53,8 @@ export const useSucursalStore = defineStore('sucursal', () => {
     error.value = null
     try {
       const nueva = await sucursalService.create(form)
-      items.value.push(nueva)
+      cache.pushItem(nueva)
+      sync.emit('sucursal:created', nueva)
       return nueva
     } catch (e) {
       error.value = (e as Error).message
@@ -53,9 +69,8 @@ export const useSucursalStore = defineStore('sucursal', () => {
     error.value = null
     try {
       const actualizada = await sucursalService.update(id, changes)
-      const idx = items.value.findIndex((s) => s.id === id)
-      if (idx !== -1) items.value[idx] = actualizada
-      if (selected.value?.id === id) selected.value = actualizada
+      cache.patchItem(id, 'id', actualizada)
+      sync.emit('sucursal:updated', actualizada)
       return actualizada
     } catch (e) {
       error.value = (e as Error).message
@@ -70,8 +85,8 @@ export const useSucursalStore = defineStore('sucursal', () => {
     error.value = null
     try {
       await sucursalService.remove(id)
-      items.value = items.value.filter((s) => s.id !== id)
-      if (selected.value?.id === id) selected.value = null
+      cache.removeItem(id, 'id')
+      sync.emit('sucursal:deleted', { id })
     } catch (e) {
       error.value = (e as Error).message
       throw e
@@ -86,15 +101,26 @@ export const useSucursalStore = defineStore('sucursal', () => {
     await update(id, { activo: !sucursal.activo })
   }
 
+  // ── Helpers ────────────────────────────────────────────────
   function getById(id: string): Sucursal | undefined {
     return items.value.find((s) => s.id === id)
   }
 
-  function select(sucursal: Sucursal | null): void { selected.value = sucursal }
-  function clearError(): void { error.value = null }
+  function select(_sucursal: Sucursal | null): void {
+    // Compatibilidad; el selected se maneja localmente en pages
+  }
+
+  function clearError(): void {
+    cache.error.value = null
+  }
+
+  function forceReload(): void {
+    cache.invalidate()
+  }
 
   return {
-    items, loading, saving, error, selected, activas, options,
-    fetchAll, create, update, remove, toggleActivo, getById, select, clearError,
+    items, loading, saving, error, activas, options, cacheInfo,
+    fetchAll, create, update, remove, toggleActivo,
+    getById, select, clearError, forceReload,
   }
 })

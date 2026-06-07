@@ -8,7 +8,7 @@
         <q-toolbar-title class="sgi-logo">
           <q-icon name="inventory_2" size="15px" class="q-mr-xs" />
           <span>{{ appName }}</span>
-          <span class="sgi-logo-sub">  [ {{ appNameSub }} ]</span>
+          <span class="sgi-logo-sub">[ {{ appNameSub }} ]</span>
         </q-toolbar-title>
 
         <q-chip
@@ -105,7 +105,7 @@
             </q-item>
           </template>
         </q-list>
-        <div class="sgi-drawer-footer q-pa-md">
+        <div class="sgi-drawer-footers sgi-footer q-pa-md" ele>
           <div class="text-caption text-muted">{{ appVersion }}</div>
         </div>
       </q-scroll-area>
@@ -254,7 +254,7 @@ onMounted(async () => {
   }
   .sgi-drawer-footer {
     position: absolute;
-    bottom: 0;
+    bottom: 100px;
     width: 100%;
     border-top: 1px solid var(--sgi-border);
   }

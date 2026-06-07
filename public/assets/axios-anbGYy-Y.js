@@ -1,1 +1,0 @@
-import{t as e}from"./wrappers-D9HlqxXe.js";import{t}from"./api-BBKijxO8.js";var n=e(({app:e})=>{e.config.globalProperties.$api=t});export{t as api,n as default};

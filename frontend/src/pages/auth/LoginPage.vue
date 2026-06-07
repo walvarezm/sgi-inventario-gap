@@ -42,15 +42,33 @@
               </template>
             </q-input>
 
-            <q-banner v-if="authStore.error" class="text-negative bg-negative-1 rounded-borders" dense>
+            <q-banner
+              v-if="authStore.error"
+              class="text-negative bg-negative-1 rounded-borders"
+              dense
+            >
               <template #avatar><q-icon name="error" /></template>
               {{ authStore.error }}
             </q-banner>
 
+            <!-- Error no-bloqueante del bootstrap (warning, no impide el ingreso) -->
+            <q-banner
+              v-if="bootstrapError"
+              class="text-warning bg-warning-1 rounded-borders"
+              dense
+            >
+              <template #avatar><q-icon name="warning" color="warning" /></template>
+              Algunos datos no pudieron precargarse. Se cargarán al navegar.
+            </q-banner>
+
             <q-btn
-              type="submit" label="Ingresar" color="primary"
-              unelevated size="md" class="full-width q-mt-sm"
-              :loading="authStore.loading"
+              type="submit"
+              :label="bootstrapRunning ? 'Iniciando...' : 'Ingresar'"
+              color="primary"
+              unelevated
+              size="md"
+              class="full-width q-mt-sm"
+              :loading="authStore.loading || bootstrapRunning"
             />
           </q-form>
         </q-card-section>
@@ -67,17 +85,27 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from 'src/stores/authStore'
+import { useBootstrap } from 'src/composables/useBootstrap'
 import { required, emailValid } from 'src/utils/validators'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const { run: runBootstrap, bootstrapRunning, bootstrapError } = useBootstrap()
+
 const form = ref({ email: '', password: '' })
 const showPass = ref(false)
 const appVersion = computed(() => import.meta.env.VITE_APP_VERSION)
 
 async function handleLogin(): Promise<void> {
+  // 1. Autenticar
   await authStore.login(form.value)
+
+  // 2. Bootstrap en paralelo (no bloquea la navegación si falla)
+  //    Los stores ya tienen TTL; si hay caché válida retorna inmediatamente.
+  void runBootstrap()
+
+  // 3. Navegar
   const redirect = (route.query.redirect as string) || '/dashboard'
   await router.push(redirect)
 }
@@ -87,7 +115,11 @@ async function handleLogin(): Promise<void> {
 .login-page {
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.18), transparent 24%),
-    linear-gradient(180deg, color-mix(in srgb, var(--sgi-surface-alt) 82%, transparent), var(--sgi-surface-alt));
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sgi-surface-alt) 82%, transparent),
+      var(--sgi-surface-alt)
+    );
   min-height: 100vh;
 }
 
@@ -126,6 +158,11 @@ async function handleLogin(): Promise<void> {
 .bg-negative-1 {
   background: rgba(198, 40, 40, 0.08);
   border: 1px solid rgba(198, 40, 40, 0.3);
+}
+
+.bg-warning-1 {
+  background: rgba(245, 127, 23, 0.08);
+  border: 1px solid rgba(245, 127, 23, 0.3);
 }
 
 @media (max-width: 600px) {
