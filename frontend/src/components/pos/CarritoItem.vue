@@ -5,7 +5,7 @@
         <ProductoImagenIFrame
           :imagen-url="item.imagenUrl"
           :width="100"
-          :height="100"
+          :height="30"
           :imagen-location="item.imagenLocation"
           :type="'card'"
         ></ProductoImagenIFrame>
@@ -14,7 +14,7 @@
       <div class="col max-w-100">
         <div class="row items-start">
           <div class="col min-w-0">
-            <div class="text-captions text-info text-weight-bold">
+            <div class="text-captions text-warning text-weight-bold">
               {{ item.marca }} - {{ item.sku }}
             </div>
             <div class="text-weight-medium ellipsis">
@@ -26,7 +26,7 @@
             flat
             round
             dense
-            size="xs"
+            size="sm"
             icon="close"
             color="negative"
             class="q-ml-sm"
@@ -65,15 +65,26 @@
             </div>
           </div>
 
-          <div class="col-12 col-sm-2 text-center">
-            <div class="text-caption text-muted q-mb-none">Precio lista</div>
-            <div class="text-body2 text-weight-medium">{{ formatCurrency(item.precioLista) }}</div>
+          <div class="col-12 col-sm-2">
+<!--            <div class="text-caption text-muted q-mb-none">Precio lista</div>
+            <div class="text-body2 text-weight-medium">{{ formatCurrency(item.precioLista) }}</div>-->
+            <q-input
+              :model-value="item.precioLista"
+              label="Precio Catalogo"
+              type="number"
+              outlined
+              dense
+              min="0"
+              step="0.01"
+              input-class="text-right"
+              :disable="true"
+            />
           </div>
 
           <div class="col-12 col-sm-2">
             <q-input
               :model-value="item.precioUnitario"
-              label="Precio final"
+              label="Precio Venta"
               type="number"
               outlined
               dense
@@ -126,7 +137,7 @@
               v-if="item.descuentoMonto > 0"
               class="text-text-subtitle2 text-weight-bold text-warning q-mr-sm"
             >
-              {{ formatCurrency(item.subtotal - item.descuentoMonto) }}
+              c/Desc: {{ formatCurrency(item.subtotal - item.descuentoMonto) }}
             </div>
           </div>
         </div>
@@ -189,6 +200,7 @@ function onTipoDescuento(value: TipoDescuento): void {
 }
 .max-w-40 {
   max-width: 150px;
+  max-height: 100%;
 }
 .max-w-60 {
   max-width: 480px;

@@ -15,6 +15,7 @@ export function useCatalogo() {
   const categoriaFiltro = ref<string | null>(null)
   const marcaFiltro = ref<string | null>(null)
   const vistaTabla = ref(true)
+  const PRODUCTOS_SIN_RESTRICCION = new Set<string>(['f14fe181-7896-4c19-8a92-b87bc8511d09'])
 
   const productosFiltrados = computed( () => {
 
@@ -22,7 +23,9 @@ export function useCatalogo() {
     //useLoading(true, 'Cargando Catalogo Filtrado...')
 
     let lista = productos.value
- /*   if (busqueda.value) {
+      .filter((p) => !PRODUCTOS_SIN_RESTRICCION.has(p.id))
+
+    /*   if (busqueda.value) {
       const q = busqueda.value.toLowerCase()
       lista = lista.filter(
         (p) =>

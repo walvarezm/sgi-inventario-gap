@@ -237,24 +237,50 @@
               input-class="text-center"
             />
           </div>
-          <!-- Búsqueda de producto -->
+          <!-- Búsqueda de producto + botón crear rápido -->
           <div class="col-12 col-sm-6" style="width: 50%">
-            <q-select
-              ref="nuevaLineaProductoIdRef"
-              v-model="nuevaLinea.productoId"
-              :options="opcionesProducto"
-              label="Producto"
-              outlined
-              dense
-              use-input
-              input-debounce="200"
-              emit-value
-              map-options
-              clearable
-              autofocus
-              @filter="filtrarProductos"
-              @update:model-value="onNuevaLineaProductoChange"
-            />
+            <div class="row no-wrap items-center q-gutter-xs">
+              <div class="col">
+                <q-select
+                  ref="nuevaLineaProductoIdRef"
+                  v-model="nuevaLinea.productoId"
+                  :options="opcionesProducto"
+                  label="Producto"
+                  outlined
+                  dense
+                  use-input
+                  input-debounce="200"
+                  emit-value
+                  map-options
+                  clearable
+                  autofocus
+                  @filter="filtrarProductos"
+                  @update:model-value="onNuevaLineaProductoChange"
+                >
+                  <template #selected-item="scope">
+                    <span class="product-name-with-ellipsis">
+                      {{ scope.opt?.label ?? productoLabel(nuevaLinea.productoId) }}
+                    </span>
+                    <q-tooltip>
+                      {{ scope.opt?.label ?? productoLabel(nuevaLinea.productoId) }}
+                    </q-tooltip>
+                  </template>
+                </q-select>
+              </div>
+              <div class="col-auto">
+                <q-btn
+                  round
+                  dense
+                  flat
+                  color="primary"
+                  icon="add_box"
+                  size="sm"
+                  @click="dialogCrearProducto = true"
+                >
+                  <q-tooltip>Crear nuevo producto</q-tooltip>
+                </q-btn>
+              </div>
+            </div>
           </div>
 
           <!-- Cantidad -->
@@ -496,6 +522,17 @@
           <template #body-cell-acciones="{ row, rowIndex }">
             <q-td class="text-center" style="width: 4%">
               <q-btn
+                flat
+                round
+                dense
+                icon="edit"
+                color="primary"
+                size="sm"
+                @click="editProduct(row)"
+              >
+                <q-tooltip>Editar</q-tooltip>
+              </q-btn>
+              <q-btn
                 round
                 dense
                 size="xs"
@@ -537,6 +574,18 @@
       />
     </q-card-actions>
   </q-card>
+
+  <!-- Diálogo de creación rápida de producto (dentro del modal de movimiento) -->
+  <ProductoQuickCreateDialog v-model="dialogCrearProducto" @created="onProductoCreado" />
+
+  <!-- Dialog Formulario -->
+  <q-dialog v-model="dialogEditProduct" persistent>
+    <ProductoForm
+      :producto="productoEditar"
+      @saved="onProductoEditado"
+      @cancelled="dialogEditProduct = false"
+    />
+  </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -553,6 +602,7 @@ import type {
   ReferenciaMovimientoTemplate,
   TipoMovimiento,
   MovimientoUpdatePayload,
+  Producto,
 } from 'src/types'
 import { useNotify } from 'src/composables/useNotify'
 import { truncate } from 'src/utils/formatters.ts'
@@ -560,6 +610,8 @@ import { useInventario } from 'src/composables/useInventario.ts'
 import { nonNegativeNumber, seleccionarTexto, setInputFocusRef } from 'src/utils/validators.ts'
 import { useMovimientoDraft } from 'src/composables/useMovimientoDraft'
 import { useProduct } from 'src/composables/useProducto.ts'
+import ProductoQuickCreateDialog from 'src/components/productos/ProductoQuickCreateDialog.vue'
+import ProductoForm from 'src/components/productos/ProductoForm.vue'
 
 // ── Tipos locales ────────────────────────────────────────────
 type LocalItem = MovimientoDetalleItem & { localId: string }
@@ -593,6 +645,45 @@ const { getMovimientoPlantillasReferencia } = useInventario()
 ///const producto = useProduct()
 const { opcionesProducto, filtrarProductos } = useProduct()
 
+// ── Creación rápida de producto desde el modal ────────────────
+const dialogCrearProducto = ref(false)
+const dialogEditProduct = ref(false)
+
+/**
+ * Callback cuando se crea un producto desde el diálogo rápido.
+ * Agrega el nuevo producto a las opciones disponibles y lo
+ * selecciona automáticamente en el panel de ingreso, sin cerrar
+ * el modal de movimiento.
+ */
+function onProductoCreado(nuevoProducto: {
+  id: string
+  sku: string
+  marca: string
+  nombre: string
+  precioOfrecido: number
+  precioFinal: number
+}): void {
+  // Añadir a opciones del select si aún no está
+  const yaExiste = opcionesProducto.value.some((o) => o.value === nuevoProducto.id)
+  if (!yaExiste) {
+    opcionesProducto.value = [
+      {
+        label: `[${nuevoProducto.marca}] - [${nuevoProducto.sku}] — ${nuevoProducto.nombre}`,
+        value: nuevoProducto.id,
+      },
+      ...opcionesProducto.value,
+    ]
+  }
+  // Seleccionarlo automáticamente en el panel de ingreso
+  nuevaLinea.value.productoId = nuevoProducto.id
+  nuevaLinea.value.precioOfrecido = Number(nuevoProducto.precioOfrecido) || 0
+  nuevaLinea.value.precioFinal = Number(nuevoProducto.precioFinal) || 0
+}
+
+function onProductoEditado(_p: Producto): void {
+  dialogEditProduct.value = false
+}
+
 //useProducto.opcionesProducto.value
 // ── Estado reactivo ──────────────────────────────────────────
 const formRef = ref<InstanceType<typeof QForm> | null>(null)
@@ -617,6 +708,7 @@ const nuevaLineaPrecioOfrecidoRef = ref(null)
 const nuevaLineaPrecioFinalRef = ref(null)
 const nuevaLineaDetalleAccionRef = ref(null)
 const btnAgregarDesdePanelRef = ref(null)
+const productoEditar = ref<Producto | null>(null)
 
 const ultimoNumeroSecuencial = computed<number>(() => {
   if (!items.value.length) return 1
@@ -847,6 +939,13 @@ function agregarDesdePanel(): void {
 function agregarFila(seed?: Partial<LocalItem>): void {
   if (modo.value === 'UNITARIO' && items.value.length) return
   items.value.push({ ...createEmptyItem(), ...seed, localId: `${Date.now()}-${Math.random()}` })
+}
+
+function editProduct(item: LocalItem): void {
+  const producto = productoStore.getById(item.productoId)
+  if (!producto) return
+  productoEditar.value = producto ?? null
+  dialogEditProduct.value = true
 }
 
 function duplicarFila(index: number): void {

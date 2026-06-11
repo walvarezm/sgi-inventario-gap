@@ -196,7 +196,7 @@
     </q-card-section>
 
     <q-card-actions align="right" class="q-px-md q-pb-md">
-      <q-btn label="Cancelar"  color="negative" v-close-popup />
+      <q-btn label="Cancelar" color="negative" v-close-popup />
       <q-btn
         :label="isEdit ? 'Guardar cambios' : 'Crear producto'"
         color="primary"
@@ -214,12 +214,7 @@ import { QForm } from 'quasar'
 import type { Producto, ProductoForm } from 'src/types'
 import { useProductoStore } from 'src/stores/productoStore'
 import { useCategoriaStore } from 'src/stores/categoriaStore'
-import {
-  minLength,
-  nonNegativeNumber,
-  required,
-  skuFormat,
-} from 'src/utils/validators'
+import { minLength, nonNegativeNumber, required, skuFormat } from 'src/utils/validators'
 import { useNotify } from 'src/composables/useNotify'
 import ProductoImagen from './ProductoImagen.vue'
 import ProductoQR from './ProductoQR.vue'
@@ -248,6 +243,7 @@ const editId = ref('')
 
 const unidades = [
   { label: 'Unidad', value: 'Unidad' },
+  { label: 'Pieza', value: 'Pieza' },
   { label: 'Par', value: 'Par' },
   { label: 'Caja', value: 'Caja' },
   { label: 'Docena', value: 'Docena' },
@@ -264,7 +260,7 @@ const defaultForm = (): ProductoForm => ({
   nombre: '',
   descripcion: '',
   categoriaId: '',
-  unidad: 'Unidad',
+  unidad: 'Pieza',
   precioCompra: 0,
   precioOfrecido: 0,
   precioFinal: 0,

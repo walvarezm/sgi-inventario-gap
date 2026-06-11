@@ -383,6 +383,15 @@ const stockFiltrado = computed(() => {
     rows = rows.filter(
       (row) => row.marca === marcaFiltro.value || row.marcaId === marcaFiltro.value,
     )
+
+  rows.sort((a, b) => {
+    const marcaCompare = a.marca.localeCompare(b.marca)
+    if (marcaCompare !== 0) return marcaCompare
+    const skuCompare = a.sku.localeCompare(b.sku)
+    if (skuCompare !== 0) return skuCompare
+    return a.nombre.localeCompare(b.nombre)
+  })
+
   return rows
 })
 

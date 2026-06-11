@@ -80,7 +80,7 @@ export const useCataloStore = defineStore('catalogo', () => {
 
     loading.value = true
     error.value = null
-    useLoading(true, 'Cargando Catálogo por Sucursal...')
+    useLoading(true, 'Cargando Catálogo de Sucursal Seleccionada...')
 
     try {
       const dataResult = await cataloService.getBySucursal(sucursalId)

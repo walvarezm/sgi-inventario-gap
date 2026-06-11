@@ -78,7 +78,7 @@ export function usePOS() {
       resultado = cache.data.filter((p) => {
         if (!tokens.length) return false
         const haystack = `${p.marca} ${p.sku} ${p.nombre}`.toLowerCase()
-        return tokens.every((t) => haystack.includes(t))
+        return tokens.every((t) => haystack.includes(t)) && p.stock > 0
       })
     }
 

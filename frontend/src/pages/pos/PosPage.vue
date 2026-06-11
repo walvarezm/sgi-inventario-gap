@@ -25,7 +25,7 @@
     </div>
 
     <div class="row q-col-gutter-md">
-      <div class="col-12 col-lg-7">
+      <div class="col-12 col-lg-8">
         <div class="q-mb-md" style="position: relative">
           <ProductoBuscador
             v-model="pos.busqueda.value"
@@ -35,10 +35,31 @@
           />
         </div>
 
-        <q-card class="sgi-card" flat>
+        <q-card class="sgi-card carrito-card" flat>
+          <q-card-section class="row items-center q-pb-sm">
+            <div class="text-subtitle1 text-weight-bold">
+              <q-icon name="shopping_cart" class="q-mr-xs" />
+              Carrito (Productos)
+              <q-badge v-if="pos.cantidadItems.value" color="primary" floating>
+                {{ pos.cantidadItems.value }}
+              </q-badge>
+            </div>
+            <q-space />
+            <q-btn
+              v-if="pos.carrito.value.length"
+              flat
+              dense
+              color="negative"
+              icon="delete_sweep"
+              label="Vaciar"
+              size="sm"
+              @click="confirmarVaciar"
+            />
+          </q-card-section>
+
           <q-separator />
 
-          <q-scroll-area style="height: 420px" class="q-pa-sm">
+          <q-scroll-area style="height: 520px" class="q-pa-sm">
             <div
               v-if="!pos.carrito.value.length"
               class="full-width column flex-center q-pa-xl text-muted"
@@ -137,9 +158,9 @@
         </q-card>
       </div>
 
-      <div class="col-12 col-lg-5">
-        <q-card class="sgi-card carrito-card" flat>
-          <q-card-section class="row items-center q-pb-sm">
+      <div class="col-12 col-lg-4">
+        <q-card class="sgi-card" flat>
+          <!--          <q-card-section class="row items-center q-pb-sm">
             <div class="text-subtitle1 text-weight-bold">
               <q-icon name="shopping_cart" class="q-mr-xs" />
               Carrito
@@ -158,7 +179,7 @@
               size="sm"
               @click="confirmarVaciar"
             />
-          </q-card-section>
+          </q-card-section>-->
 
           <q-separator />
 
@@ -175,7 +196,7 @@
             >
               <template #prepend><q-icon name="receipt_long" /></template>
             </q-select>
-
+            <q-separator />
             <div class="row q-col-gutter-sm">
               <div class="col-12 col-sm-8">
                 <q-input v-model="pos.cliente.value.nombre" label="Cliente" outlined dense>
@@ -232,7 +253,7 @@
             <div v-if="pos.requierePago.value" class="q-gutter-sm">
               <div class="text-subtitle2 text-weight-medium">Pago</div>
               <div class="row q-col-gutter-sm">
-                <div class="col-12 col-sm-6">
+                <div class="col-12 col-sm-8 q-pb-xs">
                   <q-select
                     :model-value="metodoPagoActual"
                     :options="opcionesPago"
@@ -244,10 +265,10 @@
                     @update:model-value="onMetodoPago"
                   />
                 </div>
-                <div class="col-12 col-sm-6">
+                <div class="col-12 col-sm-4">
                   <q-btn
                     v-if="metodoPagoActual === 'MIXTO'"
-                    flat
+                    outline
                     dense
                     color="primary"
                     icon="add"
@@ -260,7 +281,7 @@
               <div
                 v-for="(pago, index) in pos.pagos.value"
                 :key="`${pago.metodoPago}-${index}`"
-                class="row q-col-gutter-sm items-center"
+                class="row q-col-gutter-sm items-center q-pb-xs"
               >
                 <div class="col-12 col-sm-4">
                   <q-select
@@ -309,7 +330,7 @@
                 </div>
               </div>
             </div>
-
+            <q-separator />
             <div class="row q-col-gutter-sm">
               <div class="col-12">
                 <q-input
@@ -419,6 +440,7 @@ import { TIPO_DOCUMENTO_LABELS } from 'src/types'
 import ProductoBuscador from 'src/components/pos/ProductoBuscador.vue'
 import CarritoItem from 'src/components/pos/CarritoItem.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
@@ -529,6 +551,7 @@ function quitarItem(productoId: string): void {
 
 async function procesar(): Promise<void> {
   if (!sucursalActiva.value) return
+  useLoading(true, 'Procesando Venta...')
   try {
     const resultado = await pos.procesarVenta(sucursalActiva.value)
     ultimoDocumentoId.value = resultado.id
@@ -539,11 +562,17 @@ async function procesar(): Promise<void> {
     await cargarCatalogo()
   } catch (e) {
     $q.notify({ type: 'negative', message: (e as Error).message, timeout: 5000 })
+  } finally {
+    useLoading(false)
   }
 }
 
 async function imprimirUltimoDocumento(): Promise<void> {
-  if (ultimoDocumentoId.value) await facturaStore.imprimirFactura(ultimoDocumentoId.value)
+  if (ultimoDocumentoId.value) {
+    useLoading(true, 'Imprimiendo...')
+    await facturaStore.imprimirFactura(ultimoDocumentoId.value)
+    useLoading(false)
+  }
 }
 
 async function cargarCatalogo(): Promise<void> {

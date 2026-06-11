@@ -38,6 +38,7 @@ const mostrarSoloStockBajo = ref(false)
 const mostrarSoloAgotados = ref(false)
 const mostrarTodosProductos = ref(false)
 const exportandoPDF = ref(false)
+//const PRODUCTOS_SIN_RESTRICCION = new Set<string>(['f14fe181-7896-4c19-8a92-b87bc8511d09'])
 
 // ── Computed ───────────────────────────────────────────────────
 //const opcionesSucursal = sucursalStore.options
@@ -48,12 +49,14 @@ const opcionesSucursal = computed(() =>
 const productosMostrados = computed(() => {
   //catalogo.sucursalFiltro.value = toRef(null)
   let lista = catalogo.productosFiltrados.value
+    //.filter((p) => !PRODUCTOS_SIN_RESTRICCION.has(p.id))
+
   if (!mostrarTodosProductos.value) {
     //sucursalSeleccionada.value
     //catalogo.sucursalFiltro.value = null
     lista = lista.filter((p) => p.sucursalId === sucursalSeleccionada.value)
   }
-  if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock > 0)
+  if (mostrarSoloStockBajo.value) lista = lista.filter((p) => p.stockBajo && p.stock >= 0)
   if (mostrarSoloAgotados.value) lista = lista.filter((p) => p.stock === 0)
   //useLoading(false)
   return lista
@@ -348,11 +351,9 @@ watch(
         </div>-->
       </div>
 
-      <div
-        v-if="productosMostrados.length > 0 && authStore.can('catalogo.ver_boton_exportar')"
-        class="catalogo-hero__actions"
-      >
+      <div class="catalogo-hero__actions">
         <q-btn
+          v-if="productosMostrados.length > 0 && authStore.can('catalogo.ver_boton_exportar')"
           outline
           color="info"
           icon="picture_as_pdf"
@@ -362,6 +363,7 @@ watch(
           @click="exportarPDF"
         />
         <q-btn
+          v-if="productosMostrados.length > 0 && authStore.can('catalogo.ver_boton_exportar')"
           outline
           color="positive"
           icon="table_chart"
@@ -369,6 +371,36 @@ watch(
           size="sm"
           @click="exportarExcel"
         />
+
+        <!-- Selector de sucursal (solo Admin/Supervisor) -->
+        <div class="catalogo-hero__sucursal">
+          <q-select
+            v-model="sucursalSeleccionada"
+            :options="opcionesSucursal"
+            :label="authStore.isGlobal ? 'Sucursal' : 'Su sucursal'"
+            outlined
+            dense
+            emit-value
+            map-options
+            :disable="!authStore.isGlobal"
+            @update:model-value="onCambioSucursal"
+          >
+            <template #prepend><q-icon name="store" /></template>
+            <template #after>
+              <q-btn
+                flat
+                round
+                dense
+                icon="refresh"
+                color="primary"
+                :loading="catalogo.loading.value"
+                @click="recargar"
+              >
+                <q-tooltip>Recargar catálogo</q-tooltip>
+              </q-btn>
+            </template>
+          </q-select>
+        </div>
       </div>
     </section>
 
@@ -384,7 +416,7 @@ watch(
       >
         <q-card-section class="catalogo-toolbar sgi-filter-body">
           <!-- Selector de sucursal (solo Admin/Supervisor) -->
-          <div class="catalogo-toolbar__field catalogo-toolbar__field--sucursal">
+          <!--          <div class="catalogo-toolbar__field catalogo-toolbar__field&#45;&#45;sucursal">
             <q-select
               v-model="sucursalSeleccionada"
               :options="opcionesSucursal"
@@ -411,7 +443,7 @@ watch(
                 </q-btn>
               </template>
             </q-select>
-          </div>
+          </div>-->
 
           <!-- Búsqueda -->
           <div class="catalogo-toolbar__field catalogo-toolbar__field--search">
@@ -638,6 +670,10 @@ watch(
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.catalogo-hero__sucursal {
+  width: 220px;
 }
 
 .catalogo-panel {

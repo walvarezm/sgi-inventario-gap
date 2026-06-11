@@ -412,13 +412,38 @@ function instalarTriggerBackup() {
 }
 
 /**
- * Daily backup function (called by trigger)
+ * Daily backup function (called by trigger).
+ * Moves the backup copy to the folder configured in
+ * DRIVE_FOLDER_BACKUPS script property.
+ * Falls back to Drive root if the property is not set.
  */
 function hacerBackupDiario() {
-  //var ss = SpreadsheetApp.getActiveSpreadsheet()
   const ss = Sheets.getSpreadsheet()
   var zona = 'America/La_Paz'
   var fecha = Utilities.formatDate(new Date(), zona, 'yyyy-MM-dd')
-  var backup = ss.copy('SGI-Backup-Base-de-Datos-Dev_' + fecha)
-  Logger.log('Backup created: ' + fecha + ' - ' + backup.getUrl())
+  var nombre = 'SGI-Backup-Base-de-Datos-Dev_' + fecha
+
+  // 1. Create the copy (GAS always places copies in Drive root)
+  var backup = ss.copy(nombre)
+  var backupFile = DriveApp.getFileById(backup.getId())
+
+  // 2. Move to target folder if configured
+  var backupFolderId = CONFIG.DRIVE_BACKUPS
+  if (backupFolderId) {
+    try {
+      var targetFolder = DriveApp.getFolderById(backupFolderId)
+
+      // Add to target folder first, then remove from root
+      targetFolder.addFile(backupFile)
+      DriveApp.getRootFolder().removeFile(backupFile)
+
+      Logger.log('Backup created and moved to folder [' + targetFolder.getName() + ']: ' + fecha + ' - ' + backup.getUrl())
+    } catch (folderErr) {
+      // Folder not accessible — backup stays in root, log warning
+      Logger.log('⚠️  Backup created in Drive root (folder error): ' + folderErr.message)
+      Logger.log('Backup URL: ' + backup.getUrl())
+    }
+  } else {
+    Logger.log('ℹ️  DRIVE_FOLDER_BACKUPS not configured. Backup saved to Drive root: ' + fecha + ' - ' + backup.getUrl())
+  }
 }

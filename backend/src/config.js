@@ -21,6 +21,7 @@ const CONFIG = {
   get ADMIN_EMAIL()     { return getProperty('ADMIN_EMAIL', false) },
   get DRIVE_IMAGENES()  { return getProperty('DRIVE_FOLDER_IMAGENES', false) },
   get DRIVE_FACTURAS()  { return getProperty('DRIVE_FOLDER_FACTURAS', false) },
+  get DRIVE_BACKUPS()   { return getProperty('DRIVE_FOLDER_BACKUPS', false) },
   get ENV()             { return getProperty('ENV', false) || 'development' },
   get IS_PROD()         { return CONFIG.ENV === 'production' },
 }

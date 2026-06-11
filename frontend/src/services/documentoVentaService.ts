@@ -3,6 +3,7 @@
 // =============================================================
 import { api } from './api'
 import type { ApiResponse, DocumentoVenta, DocumentoVentaForm } from 'src/types'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 export const documentoVentaService = {
   async getAll(filtros?: {
@@ -61,10 +62,12 @@ export const documentoVentaService = {
   },
 
   async generarHtml(id: string): Promise<string> {
+    useLoading(true, 'Generando documento...')
     const { data } = await api.post<ApiResponse<string>>('', {
       action: 'generarHtmlDocumentoVenta',
       payload: { id },
     })
+    useLoading(false)
     if (!data.success) throw new Error(data.message)
     return data.result
   },

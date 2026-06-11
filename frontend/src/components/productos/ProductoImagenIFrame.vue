@@ -6,11 +6,15 @@
       <br />
       props: {{ props.width }} - {{ props.height }}
       <br />
-      {{ width }} - {{ height }}
+      width / height: {{ width }} - {{ height }}
       <br />
       max: {{ maxWidthImg }} - {{ maxHeightImg }}
       <br />
       Computed: {{ widthComputed }} - {{ heightComputed }}
+      <br />
+      imagenLocation: {{ props.imagenLocation }}
+      <br />
+      imagenUrl: {{ props.imagenUrl }} - {{ imagenUrl }}
       <br />
     </div>
     <div class="imagen-preview">

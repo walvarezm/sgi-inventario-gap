@@ -27,7 +27,7 @@
         header-class="sgi-filter-toggle"
       >
         <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
-          <div class="col-12 col-sm-3">
+          <div class="col-12 col-sm-2">
             <q-select
               v-model="filtroSucursal"
               :options="[{ label: 'Todas las sucursales', value: null }, ...opcionesSucursal]"
@@ -179,7 +179,7 @@
     </q-card>
 
     <q-dialog v-model="dialogDetalle">
-      <q-card class="sgi-card" style="min-width: 480px; max-width: 700px">
+      <q-card class="sgi-card" style="min-width: 680px; max-width: 850px">
         <q-card-section class="row items-center q-pb-none">
           <div>
             <div class="text-h6 text-weight-bold">{{ documentoDetalle?.numero }}</div>
@@ -413,7 +413,7 @@ function puedeConvertir(documento: DocumentoVenta): boolean {
 
 async function cargar(): Promise<void> {
   store.loading = true
-  useLoading(true)
+  useLoading(true, 'Obteniendo Documentos de Venta...')
   try {
     documentos.value = await facturaService.getAll({
       sucursalId: filtroSucursal.value ?? undefined,
@@ -437,6 +437,7 @@ async function imprimir(id: string): Promise<void> {
 
 async function verDetalle(documento: DocumentoVenta): Promise<void> {
   store.loading = true
+  useLoading(true, 'Generando detalle factura...')
   try {
     documentoDetalle.value = await facturaService.getById(documento.id)
     dialogDetalle.value = true
@@ -444,6 +445,7 @@ async function verDetalle(documento: DocumentoVenta): Promise<void> {
     notifyError((e as Error).message)
   } finally {
     store.loading = false
+    useLoading(false)
   }
 }
 

@@ -11,6 +11,7 @@ import type {
   TipoDescuento,
 } from 'src/types'
 import { facturaService } from 'src/services/facturaService'
+//import { useLoading } from 'src/composables/useLoading.ts'
 
 function round2(value: number): number {
   return Math.round((Number(value) || 0) * 100) / 100
@@ -136,11 +137,14 @@ export const useFacturaStore = defineStore('factura', () => {
 
   async function imprimirFactura(id: string): Promise<void> {
     const html = await facturaService.generarHtml(id)
-    const ventana = window.open('', '_blank')
+    const ventana = window.open('', '_blank','popup')
     if (ventana) {
       ventana.document.write(html)
       ventana.document.close()
-      setTimeout(() => ventana.print(), 400)
+      setTimeout(() => {
+        ventana.print()
+        ventana.close()
+      }, 400)
     }
   }
 
