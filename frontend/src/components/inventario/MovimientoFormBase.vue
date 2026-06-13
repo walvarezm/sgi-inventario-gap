@@ -57,14 +57,31 @@
               @update:model-value="onModoChange"
             />
           </div>
+
           <div class="col-12 col-sm-2">
             <q-input
               v-model="fechaRegistro"
               label="Fecha del registro"
-              outlined
+              filled
               dense
-              type="datetime-local"
+              type="date"
+              clearable
             />
+<!--            <div class="q-pa-md" style="max-width: 300px">
+              <q-input filled v-model="fechaRegistro" mask="##/##/####">
+                <template v-slot:append>
+                  <q-icon name="event" class="cursor-pointer">
+                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                      <q-date v-model="fechaRegistro" today-btn mask="DD/MM/YYYY HH:mm">
+                        <div class="row items-center justify-end">
+                          <q-btn v-close-popup label="Cerrar" color="primary" flat />
+                        </div>
+                      </q-date>
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
+            </div>-->
           </div>
           <div class="col-12 col-sm-1"></div>
           <div class="col-12 col-sm-6">
@@ -605,7 +622,7 @@ import type {
   Producto,
 } from 'src/types'
 import { useNotify } from 'src/composables/useNotify'
-import { truncate } from 'src/utils/formatters.ts'
+import { formatDate, formatDateTime, formatMomentDate, truncate } from 'src/utils/formatters.ts'
 import { useInventario } from 'src/composables/useInventario.ts'
 import { nonNegativeNumber, seleccionarTexto, setInputFocusRef } from 'src/utils/validators.ts'
 import { useMovimientoDraft } from 'src/composables/useMovimientoDraft'
@@ -691,7 +708,10 @@ const draftRestoredBanner = ref(false)
 //const productoSelec = ref<InstanceType<typeof QSelect> | null>(null)
 const loading = ref(false)
 const modo = ref<'UNITARIO' | 'MASIVO'>('UNITARIO')
-const fechaRegistro = ref(new Date().toISOString().slice(0, 16))
+const fechaRegistro = ref(new Date().toISOString().slice(0, 10))
+//const fechaRegistro = ref(
+//  (String(new Date().toLocaleDateString('es-BO'))) + ' ' + new Date().toLocaleTimeString('es-BO').slice(0, 5),
+//)
 const sucursalId = ref(authStore.sucursalId ?? '')
 const sucursalOrigen = ref(authStore.sucursalId ?? '')
 const sucursalDestino = ref('')
@@ -1068,7 +1088,14 @@ function fillFromInitialData(): void {
   }
   console.log('fillFromInitialData-222', items.value)
   modo.value = props.initialData.modo || 'UNITARIO'
-  fechaRegistro.value = String(props.initialData.fechaRegistro || '').slice(0, 16)
+  //fechaRegistro.value = String(props.initialData.fechaRegistro || '').slice(0, 10)
+  fechaRegistro.value = formatMomentDate(
+    String(props.initialData.fechaRegistro || ''),
+    'yyyy-MM-DD',
+  )
+  //fechaRegistro.value =
+  // formatDate(String(props.initialData.fechaRegistro || ''))
+  //+ ' ' + formatTime(String(props.initialData.fechaRegistro || ''))
   sucursalId.value =
     props.initialData.sucursalOrigen ||
     props.initialData.sucursalDestino ||

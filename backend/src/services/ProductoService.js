@@ -84,7 +84,17 @@ const ProductoService = {
     if (payload.imagenUrl !== undefined) {
       this._eliminarImagenAnteriorSiCorresponde(existente.imagen_url, payload.imagenUrl)
     }
-    //this._invalidarCachesCatalogo()
+    // Si cambiaron los precios base, propagar a sucursales con precio_usa_base = TRUE
+    const cambioDePrecios =
+      payload.precioOfrecido !== undefined || payload.precioFinal !== undefined
+    if (cambioDePrecios) {
+      const productoActualizado = Sheets.getBy('Productos', 'id', payload.id) || {}
+      InventarioService.sincronizarPreciosBase(
+        payload.id,
+        Number(productoActualizado.precio_ofrecido) || 0,
+        Number(productoActualizado.precio_final) || 0
+      )
+    }
     LogService.registrar(session.userId, 'UPDATE', 'Productos', null, 'ID: ' + payload.id)
     return this._mapear(actualizado)
   },

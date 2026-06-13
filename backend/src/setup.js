@@ -19,6 +19,8 @@ function seedDatosIniciales() {
     Logger.log('✅ Categorias y Marcas creados')
     ensureMovimientoSchema()
     Logger.log('✅ Esquema de movimientos verificado')
+    ensureInventarioSchema()
+    Logger.log('✅ Esquema de inventario verificado')
     ensureDocumentoVentaSchema()
     Logger.log('✅ Esquema documental verificado')
     seedSeguridadBase()
@@ -356,6 +358,15 @@ function ensureDocumentoVentaSchema() {
   ])
 }
 
+function ensureInventarioSchema() {
+  const ss = Sheets.getSpreadsheet()
+  _ensureSheetHeaders(ss, 'Inventario', [
+    'id', 'producto_id', 'sucursal_id', 'stock_actual',
+    'precio_ofrecido', 'precio_final', 'precio_usa_base',
+    'fecha_precio', 'fecha_actualizacion',
+  ])
+}
+
 function ensureMovimientoSchema() {
   const ss = Sheets.getSpreadsheet()
   _ensureSheetHeaders(ss, 'MovimientoCabecera', [
@@ -387,6 +398,84 @@ function _ensureSheetHeaders(ss, nombre, headers) {
     sheet.insertColumnAfter(sheet.getLastColumn())
     sheet.getRange(1, sheet.getLastColumn()).setValue(header)
   })
+}
+
+/**
+ * Migra precios desde Movimientos al Inventario (modo preview / dry-run).
+ * Ejecutar desde el editor GAS para revisar qué se va a migrar antes de aplicar.
+ * No escribe ningún dato — solo muestra el plan en el log.
+ */
+function previewMigracionPreciosDesdeMovimientos() {
+  const session = { userId: 'SISTEMA', rol: 'ADMINISTRADOR', permissions: ['*'] }
+  try {
+    const resultado = MigracionPreciosService.preview({}, session)
+    Logger.log('=== PREVIEW MIGRACIÓN DE PRECIOS (dry-run) ===')
+    Logger.log('Movimientos analizados : ' + resultado.resumen.totalMovimientosAnalizados)
+    Logger.log('Combinaciones halladas : ' + resultado.resumen.combinacionesEncontradas)
+    Logger.log('Se actualizarían       : ' + resultado.resumen.filasActualizadas)
+    Logger.log('Se crearían            : ' + resultado.resumen.filasCreadas)
+    Logger.log('Se omitirían           : ' + resultado.resumen.filasOmitidas)
+    if (resultado.resumen.warnings.length) {
+      Logger.log('Advertencias:')
+      resultado.resumen.warnings.forEach(function(w) { Logger.log('  ⚠️  ' + w) })
+    }
+    Logger.log('--- Detalle (primeros 20 ítems) ---')
+    resultado.detalle.slice(0, 20).forEach(function(d) {
+      Logger.log(
+        '[' + d.accion + '] producto=' + d.productoId +
+        ' | sucursal=' + d.sucursalId +
+        ' | precioFinal=' + d.precioFinal +
+        ' | usaBase=' + d.precioUsaBase +
+        (d.razon ? ' | ' + d.razon : '')
+      )
+    })
+  } catch (e) {
+    Logger.log('❌ Error en preview: ' + e.message)
+  }
+}
+
+/**
+ * Migra precios desde Movimientos al Inventario (ejecución REAL).
+ * Solo actualiza filas con columnas de precio vacías (force = false).
+ * Ejecutar desde el editor GAS una única vez después del preview.
+ */
+function migrarPreciosDesdeMovimientos() {
+  const session = { userId: 'SISTEMA', rol: 'ADMINISTRADOR', permissions: ['*'] }
+  try {
+    Logger.log('=== INICIANDO MIGRACIÓN DE PRECIOS ===')
+    const resultado = MigracionPreciosService.ejecutar({ force: false }, session)
+    Logger.log('✅ Migración completada')
+    Logger.log('Movimientos analizados : ' + resultado.resumen.totalMovimientosAnalizados)
+    Logger.log('Combinaciones halladas : ' + resultado.resumen.combinacionesEncontradas)
+    Logger.log('Filas actualizadas     : ' + resultado.resumen.filasActualizadas)
+    Logger.log('Filas creadas          : ' + resultado.resumen.filasCreadas)
+    Logger.log('Filas omitidas         : ' + resultado.resumen.filasOmitidas)
+    if (resultado.resumen.warnings.length) {
+      Logger.log('Advertencias:')
+      resultado.resumen.warnings.forEach(function(w) { Logger.log('  ⚠️  ' + w) })
+    }
+  } catch (e) {
+    Logger.log('❌ Error en migración: ' + e.message)
+  }
+}
+
+/**
+ * Igual que migrarPreciosDesdeMovimientos pero con force = true.
+ * Sobreescribe TAMBIÉN las filas que ya tienen precio explícito.
+ * Usar solo si se quiere reimportar todo desde cero.
+ */
+function migrarPreciosDesdeMovimientosForzado() {
+  const session = { userId: 'SISTEMA', rol: 'ADMINISTRADOR', permissions: ['*'] }
+  try {
+    Logger.log('=== MIGRACIÓN FORZADA DE PRECIOS (force=true) ===')
+    const resultado = MigracionPreciosService.ejecutar({ force: true }, session)
+    Logger.log('✅ Migración forzada completada')
+    Logger.log('Filas actualizadas     : ' + resultado.resumen.filasActualizadas)
+    Logger.log('Filas creadas          : ' + resultado.resumen.filasCreadas)
+    Logger.log('Filas omitidas         : ' + resultado.resumen.filasOmitidas)
+  } catch (e) {
+    Logger.log('❌ Error en migración forzada: ' + e.message)
+  }
 }
 
 /**

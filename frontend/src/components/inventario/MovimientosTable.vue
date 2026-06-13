@@ -159,8 +159,10 @@
 
             <!-- Fecha -->
             <template v-else-if="col.name === 'fechaRegistro'">
-              <div>{{ formatDate(col.value) }}</div>
-              <div class="text-caption text-muted">{{ formatTime(col.value) }}</div>
+              <div>
+                {{ formatDate(col.value) }}
+                <span class="text-caption text-muted">{{ formatTime(col.value) }}</span>
+              </div>
             </template>
 
             <!-- Referencia -->
@@ -330,6 +332,7 @@ import { useAuthStore } from 'src/stores/authStore'
 import { inventarioService } from 'src/services/inventarioService'
 import { useNotify } from 'src/composables/useNotify'
 import MovimientoDetalleRow from './MovimientoDetalleRow.vue'
+import { formatDate, formatDateTime, formatTime } from 'src/utils/formatters.ts'
 
 const { getNombre } = useSucursal()
 const authStore = useAuthStore()
@@ -438,7 +441,7 @@ function colorTipo(tipo: TipoMovimiento): string {
   return map[tipo] ?? 'grey'
 }
 
-function formatDate(iso: string): string {
+/*function formatDate(iso: string): string {
   if (!iso) return '—'
   return new Intl.DateTimeFormat('es-BO', {
     year: 'numeric',
@@ -449,10 +452,12 @@ function formatDate(iso: string): string {
 
 function formatTime(iso: string): string {
   if (!iso) return ''
-  return new Intl.DateTimeFormat('es-BO', { hour: '2-digit', minute: '2-digit' }).format(
-    new Date(iso),
-  )
-}
+  return new Intl.DateTimeFormat('es-BO', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(iso))
+}*/
 
 // ── Expand / detalle ──────────────────────────────────────────────────────────
 async function toggleExpand(row: MovimientoCabecera): Promise<void> {

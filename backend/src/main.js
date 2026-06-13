@@ -80,10 +80,14 @@ function doPost(e) {
       'importarStockInicial':    () => ProductoService.importarStockInicial(payload, session),
       'previewMigracionProductosSpreadsheet': () => MigracionProductoService.previewDesdeSpreadsheet(payload, session),
       'importarProductosSpreadsheet': () => MigracionProductoService.importarDesdeSpreadsheet(payload, session),
+      // Migración de precios desde movimientos
+      'previewMigracionPrecios':   () => MigracionPreciosService.preview(payload, session),
+      'ejecutarMigracionPrecios':  () => MigracionPreciosService.ejecutar(payload, session),
       // Inventario
       'getStockPorSucursal':     () => InventarioService.getStockPorSucursal(payload, session),
       'getStockProducto':        () => InventarioService.getStockProducto(payload),
       'getAlertasStock':         () => InventarioService.getAlertasStock(payload, session),
+      'updatePreciosSucursal':   () => InventarioService.updatePreciosSucursal(payload, session),
       // Movimientos
       'getMovimientos':          () => MovimientoService.getMovimientos(payload, session),
       'getMovimientosCabecera':  () => MovimientoService.getMovimientosCabecera(payload, session),

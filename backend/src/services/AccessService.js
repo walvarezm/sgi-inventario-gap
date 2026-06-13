@@ -26,6 +26,7 @@ const AccessService = {
       'inventario.ver', 'inventario.entrada', 'inventario.salida', 'inventario.transferencia', 'inventario.alertas.ver',
       'inventario.editar_movimientos', 'inventario.crear_masivo', 'inventario.editar_fecha_movimiento',
       'inventario.editar_precios_movimiento', 'inventario.usar_plantillas_referencia',
+      'inventario.editar_precios',
       'catalogo.ver', 'catalogo.ver_boton_exportar',
       'proveedores.ver', 'proveedores.crear', 'proveedores.editar', 'proveedores.desactivar',
       'ordenes_compra.ver', 'ordenes_compra.crear', 'ordenes_compra.recibir', 'ordenes_compra.cancelar',

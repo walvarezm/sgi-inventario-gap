@@ -71,6 +71,13 @@ export interface ProductoCatalogo extends Producto{
   /** true cuando stock <= stockMinimo */
   stockBajo: boolean
   sucursalId: string
+  /**
+   * true  → precio heredado del producto base.
+   * false → precio independiente para esta sucursal.
+   */
+  precioUsaBase: boolean
+  /** Fecha en que se registraron los precios en el inventario de la sucursal */
+  fechaPrecio: string
 }
 
 /** Payload para subida de imagen al backend */

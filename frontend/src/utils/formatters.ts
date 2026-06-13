@@ -2,8 +2,18 @@
 // formatters.ts — Formateo de datos para la UI
 // =============================================================
 
+import moment from 'moment'
+import 'moment/locale/es'
+import 'moment/dist/locale/es'
+moment.locale('es')
+
 export function formatCurrency(amount: number, currency = 'BOB'): string {
   return new Intl.NumberFormat('es-BO', { style: 'currency', currency, minimumFractionDigits: 2 }).format(amount)
+}
+
+export function formatMomentDate(isoString: string, format?: string): string {
+  if (!isoString) return '—'
+  return moment(isoString).format(format ?? 'YYYY-MM-DD HH:mm')
 }
 
 export function formatDate(isoString: string): string {
@@ -12,9 +22,23 @@ export function formatDate(isoString: string): string {
 }
 
 export function formatDateTime(isoString: string): string {
-  if (!isoString) return '—'
+  if (!isoString) return ''
   return new Intl.DateTimeFormat('es-BO', {
-    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(isoString))
+}
+
+export function formatTime(isoString: string): string {
+  if (!isoString) return ''
+  return new Intl.DateTimeFormat('es-BO', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
   }).format(new Date(isoString))
 }
 

@@ -23,6 +23,17 @@ export interface InventarioItem {
   productoId: string
   sucursalId: string
   stockActual: number
+  /** Precio de catálogo vigente para esta sucursal */
+  precioOfrecido: number
+  /** Precio de venta vigente para esta sucursal */
+  precioFinal: number
+  /**
+   * true  → sigue los precios del producto base (se sincroniza automáticamente).
+   * false → precio independiente definido para esta sucursal.
+   */
+  precioUsaBase: boolean
+  /** Fecha en que se registraron o actualizaron los precios de esta fila */
+  fechaPrecio: string
   fechaActualizacion: string
 }
 
@@ -154,6 +165,26 @@ export interface StockResumen {
   stockActual: number
   stockMinimo: number
   stockBajo: boolean
+}
+
+/** Payload para actualizar precios de un producto en una sucursal específica */
+export interface PreciosSucursalPayload {
+  productoId: string
+  sucursalId: string
+  precioOfrecido: number
+  precioFinal: number
+  /** Si true, sincronizar con el producto base; si false, precio independiente */
+  precioUsaBase: boolean
+}
+
+/** Respuesta del endpoint updatePreciosSucursal */
+export interface PreciosSucursalResult {
+  productoId: string
+  sucursalId: string
+  precioOfrecido: number
+  precioFinal: number
+  precioUsaBase: boolean
+  fechaPrecio: string
 }
 
 export interface ReferenciaMovimientoTemplate {

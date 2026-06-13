@@ -555,20 +555,33 @@ const MovimientoService = {
     })
   },
 
+  /**
+   * Actualiza los precios en el ítem de inventario de la sucursal involucrada.
+   * Si el movimiento trae precios distintos al producto base, la fila queda
+   * con precio_usa_base = FALSE (precio independiente por sucursal).
+   * Ya NO sobreescribe el producto base.
+   */
   _syncProductPrices(normalized, session) {
-    const productos = {}
     normalized.items.forEach(item => {
       const precioOfrecido = Number(item.precioOfrecido) || 0
-      const precioFinal = Number(item.precioFinal) || 0
-      productos[item.productoId] = {
-        precioOfrecido: precioOfrecido,
-        precioFinal: precioFinal,
-      }
-    })
-    Object.keys(productos).forEach(productoId => {
-      Sheets.update('Productos', productoId, {
-        precio_ofrecido: productos[productoId].precioOfrecido,
-        precio_final: productos[productoId].precioFinal,
+      const precioFinal    = Number(item.precioFinal) || 0
+      if (!precioOfrecido && !precioFinal) return
+
+      const sucursalId = normalized.sucursalOrigen || normalized.sucursalId ||
+                         normalized.sucursalDestino || ''
+      if (!sucursalId) return
+
+      // Determinar si los precios difieren del producto base
+      const producto = Sheets.getBy('Productos', 'id', item.productoId) || {}
+      const baseOfrecido = Number(producto.precio_ofrecido) || 0
+      const baseFinal    = Number(producto.precio_final) || 0
+      const sonDistintos = precioOfrecido !== baseOfrecido || precioFinal !== baseFinal
+
+      // precioUsaBase = false si el operador explicitó precios distintos al base
+      InventarioService._ajustarStock(item.productoId, sucursalId, 0, {
+        precioOfrecido: precioOfrecido || baseOfrecido,
+        precioFinal:    precioFinal || baseFinal,
+        precioUsaBase:  !sonDistintos,
       })
     })
   },
@@ -730,7 +743,9 @@ const MovimientoService = {
 
     // 5. Sincronizar precios del producto si se cambiaron
     if (Number(precioOfrecido) > 0 || Number(precioFinal) > 0) {
-      this._syncProductPrices({ items: [{ productoId, precioOfrecido: Number(precioOfrecido) || 0, precioFinal: Number(precioFinal) || 0 }] }, session)
+      this._syncProductPrices({
+        sucursalId: sucOrigen || sucDestino || '',
+        items: [{ productoId, precioOfrecido: Number(precioOfrecido) || 0, precioFinal: Number(precioFinal) || 0 }] }, session)
     }
     this._invalidateCatalogCaches({ sucursalOrigen: sucOrigen, sucursalDestino: sucDestino })
 

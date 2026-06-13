@@ -11,49 +11,48 @@ const CatalogoService = {
 
     const puedeEditarProductos = AccessService.can(session, 'productos.editar')
 
-    // Usar cache de 5 minutos para mejorar performance
-    /*const cacheKey = 'catalogo_' + sucursalId + '_' + (puedeEditarProductos ? 'edit' : 'view')
-    const cache = CacheService.getScriptCache()
-    const cached = cache.get(cacheKey)
-    if (cached) return JSON.parse(cached)*/
-
     const productos = Sheets.getAll('Productos').filter(p =>
       p.activo === true || p.activo === 'TRUE' || p.activo === 1
     )
     const inventario = Sheets.getAll('Inventario')
 
-    // Construir mapa de stock por producto para la sucursal
-    const stockMap = {}
-    const productoSucursalMap = {}
+    // Construir mapa de filas de inventario por producto para la sucursal
+    const inventarioMap = {}
     inventario
       .filter(i => String(i.sucursal_id) === String(sucursalId))
-      .forEach(i => {
-        stockMap[i.producto_id] = Number(i.stock_actual) || 0
-        productoSucursalMap[i.producto_id] = i || {}
-      })
+      .forEach(i => { inventarioMap[i.producto_id] = i })
 
-    const resultado = productos.map(p => ({
-      id: p.id,
-      sku: p.sku,
-      marcaId: p.marca_id || '',
-      marca: p.marca || '',
-      nombre: p.nombre,
-      descripcion: p.descripcion || '',
-      categoriaId: p.categoria_id || '',
-      precioCompra: puedeEditarProductos ? (Number(p.precio_compra) || 0) : undefined,
-      precioOfrecido: Number(p.precio_ofrecido) || 0,
-      precioFinal: Number(p.precio_final) || 0,
-      stock: stockMap[p.id] !== undefined ? stockMap[p.id] : 0,
-      imagenUrl: p.imagen_url || '',
-      imagenLocation: p.imagen_url ? 'drive' : 'local',
-      qrCode: p.qr_code || p.sku,
-      stockBajo: (stockMap[p.id] || 0) <= Number(p.stock_minimo || 0),
-      stockMinimo: p.stock_minimo || 0,
-      sucursalId: stockMap[p.id] !== undefined ? sucursalId : '',
-      productoSucursal: productoSucursalMap[p.id] !== undefined ? productoSucursalMap[p.id] : {},
-    }))
+    const resultado = productos.map(p => {
+      const invItem = inventarioMap[p.id] || {}
+      const stock   = Number(invItem.stock_actual) || 0
 
-    //cache.put(cacheKey, JSON.stringify(resultado), 600) // 5 minutos
+      // Resolver precios: propios de la sucursal o del producto base
+      const precios = InventarioService._resolverPrecios(invItem, p)
+
+      return {
+        id:           p.id,
+        sku:          p.sku,
+        marcaId:      p.marca_id || '',
+        marca:        p.marca || '',
+        nombre:       p.nombre,
+        descripcion:  p.descripcion || '',
+        categoriaId:  p.categoria_id || '',
+        precioCompra: puedeEditarProductos ? (Number(p.precio_compra) || 0) : undefined,
+        precioOfrecido: precios.precioOfrecido,
+        precioFinal:    precios.precioFinal,
+        precioUsaBase:  precios.precioUsaBase,
+        fechaPrecio:    invItem.fecha_precio || '',
+        stock:          stock,
+        imagenUrl:      p.imagen_url || '',
+        imagenLocation: p.imagen_url ? 'drive' : 'local',
+        qrCode:         p.qr_code || p.sku,
+        stockBajo:      stock <= Number(p.stock_minimo || 0),
+        stockMinimo:    p.stock_minimo || 0,
+        sucursalId:     Object.keys(invItem).length ? sucursalId : '',
+        productoSucursal: invItem,
+      }
+    })
+
     return resultado
   },
 
