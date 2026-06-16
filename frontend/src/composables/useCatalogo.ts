@@ -9,7 +9,7 @@ import { useCataloStore } from 'src/stores/cataloStore'
 export function useCatalogo() {
   const cataloStore = useCataloStore()
 
-  const productos = ref<ProductoCatalogo[]>([])
+  const productosSucursal = ref<ProductoCatalogo[]>([])
   const busqueda = ref('')
   const sucursalFiltro = ref<string | null>(null)
   const categoriaFiltro = ref<string | null>(null)
@@ -22,7 +22,7 @@ export function useCatalogo() {
     cataloStore.loading = true
     //useLoading(true, 'Cargando Catalogo Filtrado...')
 
-    let lista = productos.value
+    let lista = productosSucursal.value
       .filter((p) => !PRODUCTOS_SIN_RESTRICCION.has(p.id))
 
     /*   if (busqueda.value) {
@@ -58,11 +58,11 @@ export function useCatalogo() {
     if (marcaFiltro.value) {
       lista = lista.filter((p) => p.marca === marcaFiltro.value || p.marcaId === marcaFiltro.value)
     }
-    console.log('sucursalFiltro.value', sucursalFiltro.value)
+    /*console.log('sucursalFiltro.value', sucursalFiltro.value)
     console.log('categoriaFiltro.value', categoriaFiltro.value)
     console.log('marcaFiltro.value', marcaFiltro.value)
-    console.log('productos.value', productos.value)
-    console.log('productosFiltrados', lista)
+    console.log('productos.value', productosSucursal.value)
+    console.log('productosFiltrados', lista)*/
 
     cataloStore.loading = false
    // useLoading(false)
@@ -71,12 +71,12 @@ export function useCatalogo() {
   })
 
   const conStockBajo = computed(() =>
-    productos.value.filter((p) => p.stockBajo)
+    productosSucursal.value.filter((p) => p.stockBajo)
   )
-  const totalProductos = computed(() => productos.value.length)
+  const totalProductos = computed(() => productosSucursal.value.length)
 
   async function cargarCatalogo(sucursalId: string, force = false): Promise<void> {
-    productos.value = await cataloStore.getCatalogo(sucursalId, force)
+    productosSucursal.value = await cataloStore.getCatalogo(sucursalId, force)
   }
 
   function limpiarFiltros(): void {
@@ -88,7 +88,7 @@ export function useCatalogo() {
   function toggleVista(): void { vistaTabla.value = !vistaTabla.value }
 
   return {
-    productos, busqueda, sucursalFiltro, categoriaFiltro, marcaFiltro, vistaTabla,
+    productos: productosSucursal, busqueda, sucursalFiltro, categoriaFiltro, marcaFiltro, vistaTabla,
     productosFiltrados, conStockBajo, totalProductos,
     loading: computed(() => cataloStore.loading),
     error: computed(() => cataloStore.error),

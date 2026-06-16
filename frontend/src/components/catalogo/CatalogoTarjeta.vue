@@ -11,7 +11,7 @@
 
     <!-- Skeleton loader -->
     <div v-if="loading" class="row q-col-gutter-md">
-      <div v-for="n in 8" :key="n" class="col-12 col-sm-6 col-md-4 col-xl-3">
+      <div v-for="n in 8" :key="n" class="col-12 col-sm-6 col-md-4">
         <q-card class="sgi-card" flat>
           <q-skeleton height="160px" square />
           <q-card-section class="q-gutter-xs">
@@ -25,11 +25,7 @@
 
     <!-- Grid de tarjetas -->
     <div v-else class="row q-col-gutter-md">
-      <div
-        v-for="producto in productos"
-        :key="producto.id"
-        class="col-12 col-sm-6 col-md-4 col-xl-3"
-      >
+      <div v-for="producto in productos" :key="producto.id" class="col-12 col-sm-6 col-md-3">
         <q-card class="sgi-card catalogo-card" flat>
           <!-- Imagen -->
           <div class="card-image-wrapper">
@@ -38,10 +34,10 @@
               @click="emit('ver-image', producto)"
             >
               <ProductoImagenIFrame
-                v-if="!esMovil"
+                v-if="true"
                 :imagen-url="producto.imagenUrl"
-                :width="40"
-                :height="40"
+                :width="100"
+                :height="60"
                 :imagen-location="producto.imagenLocation"
                 :type="'card'"
               ></ProductoImagenIFrame>
@@ -53,8 +49,8 @@
                 round
                 unelevated
                 size="sm"
-                color="white"
-                text-color="primary"
+                color="primary"
+                text-color="white"
                 icon="qr_code"
                 class="qr-fab"
                 @click="emit('ver-qr', producto)"
@@ -66,8 +62,8 @@
                 round
                 unelevated
                 size="sm"
-                color="white"
-                text-color="secondary"
+                color="purple"
+                text-color="white"
                 icon="edit"
                 class="edit-fab"
                 @click="emit('editar', producto)"
@@ -79,14 +75,19 @@
 
           <q-card-section class="q-pb-xs">
             <!-- SKU | Marca-->
-            <div class="text-caption text-weight-bold text-muted text-mono q-mb-xs">
-              {{ producto.sku }} | {{ producto.marca }}
+            <div
+              class="row text-captions text-weight-bold text-muted text-mono q-mb-xs catalogo-card__sku"
+            >
+              <span>{{ producto.marca }}</span>
+              <q-space></q-space>
+              <strong>{{ producto.sku }}</strong>
             </div>
 
             <!-- Nombre -->
-            <div class="text-subtitle2 text-weight-bold ellipsis-2-lines" style="min-height: 2.8em">
+            <div class="text-subtitle1 text-weight-bold ellipsis-2-lines" style="max-height: 5em">
               {{ producto.nombre }}
             </div>
+            <q-tooltip>{{ producto.nombre }}</q-tooltip>
             <div
               v-if="producto.descripcion && producto.nombre !== producto.descripcion"
               class="catalogo-card__description text-caption text-muted ellipsis-2-lines q-mt-xs"
@@ -165,8 +166,8 @@
                 round
                 unelevated
                 size="sm"
-                color="white"
-                text-color="secondary"
+                color="purple"
+                text-color="white"
                 icon="edit"
                 class="edit-fabs"
                 @click="emit('editar', producto)"
@@ -177,8 +178,8 @@
                 round
                 unelevated
                 size="sm"
-                color="white"
-                text-color="primary"
+                color="purple"
+                text-color="white"
                 icon="qr_code"
                 class="qr-fabs q-ml-sm"
                 @click="emit('ver-qr', producto)"
@@ -283,7 +284,7 @@ const canViewPurchasePrice = computed(() => authStore.can('productos.editar'))
 
 .catalogo-card__price-label {
   color: var(--sgi-text-muted);
-  font-size: 0.72em;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -297,12 +298,20 @@ const canViewPurchasePrice = computed(() => authStore.can('productos.editar'))
 .catalogo-card__price--list strong {
   color: var(--sgi-primary);
   text-align: right;
+  font-weight: 800;
 }
 
 .catalogo-card__price--final strong {
   color: var(--sgi-positive);
   font-size: 0.95rem;
   text-align: right;
+  font-weight: 800;
+}
+
+.catalogo-card__sku {
+  color: var(--sgi-warning);
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
 .text-mono {
@@ -310,7 +319,7 @@ const canViewPurchasePrice = computed(() => authStore.can('productos.editar'))
 }
 .ellipsis-2-lines {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

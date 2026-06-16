@@ -49,7 +49,7 @@ const opcionesSucursal = computed(() =>
 const productosMostrados = computed(() => {
   //catalogo.sucursalFiltro.value = toRef(null)
   let lista = catalogo.productosFiltrados.value
-    //.filter((p) => !PRODUCTOS_SIN_RESTRICCION.has(p.id))
+  //.filter((p) => !PRODUCTOS_SIN_RESTRICCION.has(p.id))
 
   if (!mostrarTodosProductos.value) {
     //sucursalSeleccionada.value
@@ -302,7 +302,8 @@ onMounted(async () => {
     sucursalStore.activas.length > 0 &&
     !sucursalSeleccionada.value
   ) {
-    sucursalSeleccionada.value = sucursalStore.activas[0].id
+    sucursalSeleccionada.value = ''
+    //sucursalSeleccionada.value = sucursalStore.activas[0].id
     //await cargarCatalogo()
   }
 })
@@ -355,10 +356,10 @@ watch(
         <q-btn
           v-if="productosMostrados.length > 0 && authStore.can('catalogo.ver_boton_exportar')"
           outline
-          color="info"
+          color="negative"
           icon="picture_as_pdf"
           :label="esMovil ? 'PDF' : 'Exportar PDF'"
-          size="sm"
+          :size="esMovil ? 'xs' : 'sm'"
           :loading="exportandoPDF"
           @click="exportarPDF"
         />
@@ -367,17 +368,25 @@ watch(
           outline
           color="positive"
           icon="table_chart"
-          :label="esMovil ? 'Excel' : 'Exportar Excel'"
-          size="sm"
+          :label="esMovil ? 'XLS' : 'Exportar Excel'"
+          :size="esMovil ? 'xs' : 'sm'"
           @click="exportarExcel"
         />
 
         <!-- Selector de sucursal (solo Admin/Supervisor) -->
-        <div class="catalogo-hero__sucursal">
+        <span
+          :class="sucursalSeleccionada? 'catalogo-hero__sucursal' : 'catalogo-hero__seleccione-sucursal'"
+        >
           <q-select
             v-model="sucursalSeleccionada"
             :options="opcionesSucursal"
-            :label="authStore.isGlobal ? 'Sucursal' : 'Su sucursal'"
+            :label="
+              !sucursalSeleccionada
+                ? 'Seleccione Sucursal'
+                : authStore.isGlobal
+                  ? 'Sucursal'
+                  : 'Su sucursal'
+            "
             outlined
             dense
             emit-value
@@ -388,9 +397,9 @@ watch(
             <template #prepend><q-icon name="store" /></template>
             <template #after>
               <q-btn
-                flat
-                round
-                dense
+                v-if="sucursalSeleccionada"
+                label=""
+                size="md"
                 icon="refresh"
                 color="primary"
                 :loading="catalogo.loading.value"
@@ -400,12 +409,12 @@ watch(
               </q-btn>
             </template>
           </q-select>
-        </div>
+        </span>
       </div>
     </section>
 
     <!-- ── Controles / Filtros ──────────────────────────────── -->
-    <q-card class="sgi-card q-mb-md catalogo-panel" flat>
+    <q-card v-if="productosMostrados.length > 0" class="sgi-card q-mb-md catalogo-panel" flat>
       <q-expansion-item
         icon="tune"
         label="Filtros y búsqueda"
@@ -669,11 +678,15 @@ watch(
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 5px;
 }
 
 .catalogo-hero__sucursal {
-  width: 220px;
+  width: auto;
+}
+
+.catalogo-hero__seleccione-sucursal {
+  width: 15rem;
 }
 
 .catalogo-panel {
@@ -754,7 +767,7 @@ watch(
 
   .catalogo-hero__actions {
     width: 100%;
-    justify-content: stretch;
+    justify-content: center;
   }
 
   .catalogo-hero__actions :deep(.q-btn) {

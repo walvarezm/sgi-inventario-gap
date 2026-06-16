@@ -2,7 +2,7 @@
 // inventarioService.ts — Movimientos e inventario por sucursal
 // =============================================================
 import { api } from './api'
-import type {
+import {
   ApiResponse,
   InventarioItem,
   Movimiento,
@@ -16,6 +16,7 @@ import type {
   TransferenciaPayload,
   StockResumen,
   TipoMovimiento,
+  PreciosSucursalPayload, PreciosSucursalResult,
 } from 'src/types'
 import { useLoading } from 'src/composables/useLoading.ts'
 
@@ -64,11 +65,7 @@ export const inventarioService = {
     return data.result
   },
 
-  async getMovimientos(
-    sucursalId: string,
-    desde?: string,
-    hasta?: string,
-  ): Promise<Movimiento[]> {
+  async getMovimientos(sucursalId: string, desde?: string, hasta?: string): Promise<Movimiento[]> {
     const { data } = await api.post<ApiResponse<Movimiento[]>>('', {
       action: 'getMovimientos',
       payload: { sucursalId, desde, hasta },
@@ -204,6 +201,17 @@ export const inventarioService = {
     const { data } = await api.post<ApiResponse<StockResumen[]>>('', {
       action: 'getAlertasStock',
       payload: { sucursalId },
+    })
+    if (!data.success) throw new Error(data.message)
+    return data.result
+  },
+
+  async updatePreciosSucursal(
+    payload: PreciosSucursalPayload,
+  ): Promise<PreciosSucursalResult> {
+    const { data } = await api.post<ApiResponse<PreciosSucursalResult>>('', {
+      action: 'updatePreciosSucursal',
+      payload: payload,
     })
     if (!data.success) throw new Error(data.message)
     return data.result

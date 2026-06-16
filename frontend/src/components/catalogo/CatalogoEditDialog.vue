@@ -1,12 +1,13 @@
 <template>
   <q-card class="sgi-card catalogo-edit-card" style="width: 760px; max-width: 96vw">
     <q-card-section class="row items-center q-pb-none">
-      <div class="text-h6 text-weight-bold">Editar Producto desde catálogo</div>
+      <div class="text-h6 text-weight-bold">Editar Producto</div>
       <q-space />
       <q-btn icon="close" flat round dense v-close-popup />
     </q-card-section>
 
     <q-card-section>
+      {{ form.id }} - {{ form.sucursalId }}
       <q-form ref="formRef" @submit.prevent="handleSubmit">
         <div class="row q-col-gutter-sm">
           <div class="col-12 col-md-6">
@@ -107,7 +108,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { QForm } from 'quasar'
-import type { Producto, ProductoCatalogo } from 'src/types'
+import { inventarioService } from 'src/services/inventarioService'
+import type { Producto, ProductoCatalogo, ProductoForm } from 'src/types'
 import { useNotify } from 'src/composables/useNotify'
 import {
   minLength,
@@ -124,6 +126,7 @@ interface Props {
 }
 
 interface CatalogoEditableForm {
+  id: string
   sku: string
   marca: string
   nombre: string
@@ -131,10 +134,11 @@ interface CatalogoEditableForm {
   precioCompra: number
   precioOfrecido: number
   precioFinal: number
+  sucursalId: string
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{ saved: [producto: Producto]; cancelled: [] }>()
+const emit = defineEmits<{ saved: [producto: Producto | null]; cancelled: [] }>()
 const productoStore = useProductoStore()
 const { notifyError, notifySuccess } = useNotify()
 const formRef = ref<InstanceType<typeof QForm> | null>(null)
@@ -142,6 +146,7 @@ const formPrecioOfrecidoRef = ref(null)
 const formPrecioFinalRef = ref(null)
 
 const form = ref<CatalogoEditableForm>({
+  id: '',
   sku: '',
   marca: '',
   nombre: '',
@@ -149,6 +154,7 @@ const form = ref<CatalogoEditableForm>({
   precioCompra: 0,
   precioOfrecido: 0,
   precioFinal: 0,
+  sucursalId: '',
 })
 
 watch(
@@ -156,6 +162,7 @@ watch(
   (producto) => {
     form.value = producto
       ? {
+          id: producto.id,
           sku: producto.sku,
           marca: producto.marca,
           nombre: producto.nombre,
@@ -163,8 +170,10 @@ watch(
           precioCompra: Number(producto.precioCompra) || 0,
           precioOfrecido: Number(producto.precioOfrecido) || 0,
           precioFinal: Number(producto.precioFinal) || 0,
+          sucursalId: producto.sucursalId || '',
         }
       : {
+          id: '',
           sku: '',
           marca: '',
           nombre: '',
@@ -172,6 +181,7 @@ watch(
           precioCompra: 0,
           precioOfrecido: 0,
           precioFinal: 0,
+          sucursalId: '',
         }
   },
   { immediate: true },
@@ -182,15 +192,27 @@ async function handleSubmit(): Promise<void> {
   if (!valid || !props.producto) return
 
   try {
-    const actualizado = await productoStore.update(props.producto.id, {
-      nombre: form.value.nombre,
-      descripcion: form.value.descripcion,
-      precioCompra: form.value.precioCompra,
-      precioOfrecido: form.value.precioOfrecido,
-      precioFinal: form.value.precioFinal,
-    })
-    notifySuccess(`Producto "${actualizado.nombre}" actualizado`)
-    emit('saved', actualizado)
+    if (props.producto.precioUsaBase) {
+      const actualizado = await productoStore.update(props.producto.id, {
+        nombre: form.value.nombre,
+        descripcion: form.value.descripcion,
+        precioCompra: form.value.precioCompra,
+        precioOfrecido: form.value.precioOfrecido,
+        precioFinal: form.value.precioFinal,
+      })
+      notifySuccess(`Producto "${actualizado.nombre}" actualizado`)
+      emit('saved', actualizado)
+    } else {
+      const actualizado = await inventarioService.updatePreciosSucursal({
+        productoId: props.producto.id,
+        sucursalId: props.producto.sucursalId,
+        precioOfrecido: form.value.precioOfrecido,
+        precioFinal: form.value.precioFinal,
+        precioUsaBase: props.producto.precioUsaBase,
+      })
+      notifySuccess(`Producto de Inventario "${actualizado.productoId}" actualizado`)
+      emit('saved', null)
+    }
   } catch (e) {
     notifyError((e as Error).message)
   }

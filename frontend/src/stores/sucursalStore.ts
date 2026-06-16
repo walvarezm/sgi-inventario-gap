@@ -11,7 +11,7 @@ import { useStoreCache } from 'src/composables/useStoreCache'
 import { useDataSync } from 'src/composables/useDataSync'
 import { useLoading } from 'src/composables/useLoading'
 
-const TTL = 15 * 60 * 1000 // 15 minutos (sucursales cambian poco)
+const TTL = 6 * 60 * 60 * 1000 // 6 horas (sucursales cambian poco)
 
 export const useSucursalStore = defineStore('sucursal', () => {
   // ── Caché ──────────────────────────────────────────────────

@@ -29,6 +29,13 @@ const columnas = computed<QTableColumn[]>(() => {
     { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
     { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
     { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
+    {
+      name: 'precioUsaBase',
+      label: 'Precio Origen',
+      field: 'precioUsaBase',
+      align: 'center',
+      sortable: true,
+    },
   ]
 
   if (canViewPurchasePrice.value) {
@@ -97,7 +104,7 @@ const columnas = computed<QTableColumn[]>(() => {
       <q-td>
         <div class="row items-center no-wrap q-gutter-xs">
           <span class="text-weight-bold text-mono text-body2">{{ row.sku }}</span>
-<!--          <q-btn
+          <!--          <q-btn
             flat
             round
             dense
@@ -134,6 +141,14 @@ const columnas = computed<QTableColumn[]>(() => {
       </q-td>
     </template>
 
+    <template #body-cell-precioUsaBase="{ row }">
+      <q-td class="text-center">
+        <div class="text-weight-medium product-name-with-ellipsis">
+          {{ row.precioUsaBase ? 'P-Producto' : 'P-Inventario' }}
+        </div>
+      </q-td>
+    </template>
+
     <!-- Precio Compra -->
     <template #body-cell-precioCompra="{ value }">
       <q-td class="text-right">
@@ -146,7 +161,7 @@ const columnas = computed<QTableColumn[]>(() => {
     <!-- Precio ofrecido (tachado) -->
     <template #body-cell-precioOfrecido="{ value }">
       <q-td class="text-right">
-        <span class="text-muted" style="text-decoration: line-through; font-size: 1em">
+        <span class="text-muted" style="font-size: 1em">
           {{ formatCurrency(value) }}
         </span>
       </q-td>

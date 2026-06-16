@@ -11,7 +11,7 @@ import { useStoreCache } from 'src/composables/useStoreCache'
 import { useDataSync } from 'src/composables/useDataSync'
 import { useLoading } from 'src/composables/useLoading'
 
-const TTL = 20 * 60 * 1000 // 20 minutos (categorías son muy estáticas)
+const TTL = 6 * 60 * 60 * 1000 // 6 horas (categorías son muy estáticas)
 
 export const useCategoriaStore = defineStore('categoria', () => {
   // ── Caché ──────────────────────────────────────────────────

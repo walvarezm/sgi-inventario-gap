@@ -1,39 +1,34 @@
 <template>
   <div class="producto-imagen-uploads">
-    <!-- Preview -->
     <div v-if="false">
       type: {{ props.type }}
       <br />
       props: {{ props.width }} - {{ props.height }}
       <br />
-      width / height: {{ width }} - {{ height }}
+      widthPx/heightPx: {{ widthPx }} - {{ heightPx }}
       <br />
-      max: {{ maxWidthImg }} - {{ maxHeightImg }}
-      <br />
-      Computed: {{ widthComputed }} - {{ heightComputed }}
+      maxWidthImg/maxHeightImg: {{ maxWidthImg }} - {{ maxHeightImg }}
       <br />
       imagenLocation: {{ props.imagenLocation }}
       <br />
       imagenUrl: {{ props.imagenUrl }} - {{ imagenUrl }}
       <br />
+      imgStyle: {{ imgStyle }}
+      <br />
+      sizeStyleError: {{ sizeStyleError }}
+      <br />
     </div>
+<!--    <div v-if="imagenUrl">imagenUrl: {{ imagenUrl }}</div>-->
+
     <div class="imagen-preview">
       <q-img
-        v-if="
-          (props.imagenLocation === 'drive' || props.imagenLocation === 'local') && props.imagenUrl
-        "
+        v-if="imagenUrl && (props.imagenLocation === 'drive' || props.imagenLocation === 'local')"
         :src="imagenUrl"
-        :width="width + ''"
-        :height="height + ''"
-        :style="
-          'max-width: ' + maxWidthImg + ';max-height: ' + maxHeightImg + ';height: ' + maxHeightImg
-        "
-        fit="contain"
+        :style="imgStyle"
+        :fit="props.type === 'view' ? 'contain' : 'cover'"
         class="q-pa-md bg-img-custom"
         loading="lazy"
       >
-        <!--        "cover" | "fill" | "contain" | "none" | "scale-down"-->
-        <!--        <q-tooltip>{{ imagenUrl }}</q-tooltip>-->
         <template #error>
           <div
             class="flex flex-center bg-grey-4 text-grey-7 q-card--bordered"
@@ -55,7 +50,7 @@
       </q-img>
 
       <div
-        v-if="!props.imagenUrl || !imagenUrl"
+        v-else
         class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered justify-center q-my-none"
         :style="sizeStyleError"
       >
@@ -89,7 +84,7 @@ interface Props {
   imagenLocation?: string
   width?: number
   height?: number
-  type?: string // 'table' | 'card'
+  type?: string // 'table' | 'card' | 'view'
 }
 const props = withDefaults(defineProps<Props>(), {
   imagenUrl: '',
@@ -99,68 +94,57 @@ const props = withDefaults(defineProps<Props>(), {
   type: 'table',
 })
 
-const imagenUrl =
-  props.imagenLocation === 'local'
-    ? URL_BASE_LOCAL + props.imagenUrl + '.jpg'
-    : props.imagenLocation === 'drive'
-      ? drivePreviewUrl(props.imagenUrl)
-      : null
+/**
+ * URL efectiva de la imagen — DEBE ser computed para ser reactiva.
+ * Si se asigna como const simple, no se actualiza cuando cambian las props.
+ */
+const imagenUrl = computed(() => {
+  if (!props.imagenUrl) return null
+  if (props.imagenLocation === 'local') {
+    return URL_BASE_LOCAL + props.imagenUrl + '.jpg'
+  }
+  if (props.imagenLocation === 'drive') {
+    return drivePreviewUrl(props.imagenUrl)
+  }
+  return null
+})
 
-//console.log('imagenUrl', props)
-const width = computed(() =>
-  props.type === 'table' ? widthError.value : widthComputed.value + '%',
-)
-const height = computed(
-  () => (props.type === 'table' ? heightError.value : heightComputed.value + '%'),
-  //props.type === 'table' ? heightError.value : 100 - heightComputed.value + '%',
-)
+// ── Dimensiones por tipo de uso ──────────────────────────────────────────────
 
-const widthComputed = computed(() => (props.type === 'table' ? props.width : props.width))
-const heightComputed = computed(() => (props.type === 'table' ? props.height : props.height))
-//const heightComputed = computed(() => (props.type === 'table' ? props.height : 100 - props.height))
+const widthPx = computed(() => {
+  if (props.type === 'table') return props.width / 2 / 10 + 'rem'
+  if (props.type === 'card') return '50%'
+  return props.width / 2 + '%' // 'view'
+})
 
-const widthError = computed(
-  () => (props.type === 'table' ? props.width / 2 / 10 + 'rem' : widthComputed.value + '%'),
-  //: widthComputed.value + (100 - widthComputed.value) + '%',
-)
-const heightError = computed(() =>
-  props.type === 'table'
-    ? heightComputed.value / 2 / 10 + 'rem'
-    : heightComputed.value / 2 / 10 + 'rem !important',
-)
+const heightPx = computed(() => {
+  if (props.type === 'table') return props.height / 2 / 10 + 'rem'
+  return props.height / 2 / 10 + 'rem'
+})
 
-const sizeStyleError = computed(() =>
-  props.type === 'table'
-    ? 'width: ' +
-      widthError.value +
-      '; height: ' +
-      heightError.value +
-      '; text-align: center; border-radius: 3px; margin: 0'
-    : 'width: ' +
-      widthError.value +
-      '; max-height: ' +
-      heightError.value +
-      '; text-align: left !important; border-radius: 13px; margin: 16px 0',
-)
+const maxWidthImg = computed(() => {
+  if (props.type === 'view') return props.width / 1 + '%'
+  if (props.type === 'card') return '100%'
+  return props.width + '%'
+})
 
-const maxHeightImg = computed(
-  //() => (props.type === 'view' ? '100rem' : '120px'),
+const maxHeightImg = computed(() => {
+  if (props.type === 'view') return props.height + 'vh'
+  if (props.type === 'card') return (props.height * 2) / 10 + 'rem'
+  return props.height + '%'
+})
+
+const imgStyle = computed(
   () =>
-    props.type === 'view'
-      ? heightComputed.value + '%'
-      : props.type === 'card'
-        ? (heightComputed.value * 2) / 10 + 'rem'
-        : heightComputed.value + '%',
+    `max-width: ${maxWidthImg.value}; max-height: ${maxHeightImg.value}; height: ${maxHeightImg.value}; `,
 )
 
-const maxWidthImg = computed(() =>
-  props.type === 'view'
-    ? widthComputed.value / 2 + '%'
-    : props.type === 'card'
-      ? '100%'
-      : widthComputed.value + '%',
-)
-const styleImg = props.type === 'view' ? 'max-width: 50%; max-heigh: 40rem' : 'max-heigh: 120px;'
+const sizeStyleError = computed(() => {
+  if (props.type === 'table') {
+    return `width: ${widthPx.value}; height: ${heightPx.value}; text-align: center; border-radius: 3px; margin: 0`
+  }
+  return `width: ${widthPx.value}; max-height: ${heightPx.value}; text-align: left !important; border-radius: 13px; margin: 16px 0`
+})
 </script>
 
 <style scoped lang="scss">

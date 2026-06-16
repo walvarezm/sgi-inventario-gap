@@ -14,7 +14,7 @@
 import { ref, computed } from 'vue'
 
 export interface StoreCacheOptions {
-  /** Tiempo de vida en milisegundos. Default: 10 minutos */
+  /** Tiempo de vida en milisegundos. Default: 30 minutos */
   ttl?: number
   /** Nombre del store para logs de debug */
   name?: string
@@ -37,7 +37,7 @@ export interface StoreCacheState<T> {
  * ```
  */
 export function useStoreCache<T>(options: StoreCacheOptions = {}) {
-  const { ttl = 10 * 60 * 1000, name = 'store' } = options
+  const { ttl = 30 * 60 * 1000, name = 'store' } = options
 
   // ── Estado interno ──────────────────────────────────────────
   const _data = ref<T | null>(null) as ReturnType<typeof ref<T | null>>

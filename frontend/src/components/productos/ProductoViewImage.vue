@@ -1,9 +1,9 @@
 <template>
   <!-- Dialog IMG -->
-  <q-dialog v-model="isOpen" persistent>
+  <q-dialog v-model="isOpen">
     <q-card
       class="sgi-card q-pa-md text-center"
-      style="width: 700px; max-width: 80vw; max-height: 90vh"
+      style="width: 100%; max-width: 50%; max-height: 95%; position: absolute"
     >
       <q-card-section class="row items-center q-pt-none q-pb-md">
         <div class="text-subtitle1 text-weight-bold">Código producto: {{ producto?.sku }}</div>
@@ -14,17 +14,17 @@
       <q-card-section>
         <ProductoImagenIFrame
           :imagen-url="String(producto?.imagenUrl)"
-          :width="90"
-          :height="80"
+          :width="100"
+          :height="70"
           :imagen-location="producto?.imagenLocation"
           :type="'view'"
         />
         <div class="text-caption text-muted q-mt-md">{{ producto?.nombre }}</div>
       </q-card-section>
 
-      <q-card-actions align="right" class="q-pt-none q-pb-none card-footer">
+      <!--      <q-card-actions align="right" class="q-pt-none q-pb-none card-footer">
         <q-btn label="Cerrar" color="primary" v-close-popup @click="emit('cancelled')" />
-      </q-card-actions>
+      </q-card-actions>-->
     </q-card>
   </q-dialog>
 </template>

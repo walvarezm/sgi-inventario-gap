@@ -115,6 +115,12 @@
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <q-page-scroller position="bottom-right" :scroll-offset="160" :offset="scrollTopButtonOffset">
+      <q-btn fab icon="keyboard_arrow_up" color="primary" class="sgi-scroll-top-btn" aria-label="Subir al inicio">
+        <q-tooltip>Subir al inicio</q-tooltip>
+      </q-btn>
+    </q-page-scroller>
   </q-layout>
 </template>
 
@@ -151,6 +157,7 @@ const avatarLetra = computed(() =>
 )
 const rolLabel = computed(() => (authStore.rol ? ROL_LABELS[authStore.rol as Rol] : ''))
 const appVersion = computed(() => import.meta.env.VITE_APP_VERSION)
+const scrollTopButtonOffset = computed<[number, number]>(() => [18, isMobile.value ? 18 : 64])
 const selectedThemeModel = computed({
   get: () => themeStore.selectedTheme,
   set: (value: AppTheme) => themeStore.setTheme(value),
@@ -294,6 +301,9 @@ onMounted(async () => {
 
 .sgi-header :deep(.q-toolbar__title) {
   color: var(--sgi-text);
+}
+.sgi-scroll-top-btn {
+  box-shadow: 0 10px 24px rgba(15, 23, 40, 0.18);
 }
 .sgi-theme-toggle {
   width: 240px;

@@ -11,7 +11,7 @@ import { useStoreCache } from 'src/composables/useStoreCache'
 import { useDataSync } from 'src/composables/useDataSync'
 import { useLoading } from 'src/composables/useLoading'
 
-const TTL = 10 * 60 * 1000 // 10 minutos
+const TTL = 60 * 60 * 1000 // 10 minutos
 
 export const useProductoStore = defineStore('producto', () => {
   // ── Caché ──────────────────────────────────────────────────
