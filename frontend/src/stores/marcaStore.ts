@@ -69,6 +69,12 @@ export const useMarcaStore = defineStore('marca', () => {
     return actualizada
   }
 
+  async function remove(id: string): Promise<void> {
+    await marcaService.remove(id)
+    cache.removeItem(id, 'id')
+    sync.emit('marca:deleted', id)
+  }
+
   // ── Helpers ────────────────────────────────────────────────
   function getById(id: string): Marca | undefined {
     return items.value.find((c) => c.id === id)
@@ -84,6 +90,6 @@ export const useMarcaStore = defineStore('marca', () => {
 
   return {
     items, loading, error, activas, options, optionsName, cacheInfo,
-    fetchAll, create, update, getById, clearError, forceReload,
+    fetchAll, create, update, remove, getById, clearError, forceReload,
   }
 })

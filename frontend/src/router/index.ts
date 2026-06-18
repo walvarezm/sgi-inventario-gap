@@ -48,6 +48,18 @@ const routes: RouteRecordRaw[] = [
         beforeEnter: permissionGuard('sucursales.ver'),
       },
       {
+        path: 'marcas', name: 'marcas',
+        component: () => import('src/pages/marcas/MarcasPage.vue'),
+        meta: { title: 'Marcas', icon: 'copyright' },
+        beforeEnter: permissionGuard('productos.ver'),
+      },
+      {
+        path: 'categorias', name: 'categorias',
+        component: () => import('src/pages/categorias/CategoriasPage.vue'),
+        meta: { title: 'Categorías', icon: 'category' },
+        beforeEnter: permissionGuard('productos.ver'),
+      },
+      {
         path: 'productos', name: 'productos',
         component: () => import('src/pages/productos/ProductosPage.vue'),
         meta: { title: 'Productos', icon: 'inventory_2' },

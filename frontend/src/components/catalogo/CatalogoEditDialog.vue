@@ -1,5 +1,9 @@
 <template>
-  <q-card class="sgi-card catalogo-edit-card" style="width: 760px; max-width: 96vw">
+  <!--  style="width: 760px; max-width: 96vw"-->
+  <q-card
+    class="sgi-card catalogo-edit-card"
+    style="width: 100%; max-width: 50%; max-height: 95%; position: absolute"
+  >
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6 text-weight-bold">Editar Producto</div>
       <q-space />
@@ -7,11 +11,13 @@
     </q-card-section>
 
     <q-card-section>
-      {{ form.id }} - {{ form.sucursalId }}
       <q-form ref="formRef" @submit.prevent="handleSubmit">
         <div class="row q-col-gutter-sm">
           <div class="col-12 col-md-6">
-            <q-input v-model="form.sku" label="Código" outlined dense disable />
+            <q-input v-model="form.sku" label="Código" outlined dense disable></q-input>
+            <q-tooltip
+              v-html="'IdProd: ' + form.id + '<br>' + 'IdSuc: ' + form.sucursalId"
+            ></q-tooltip>
           </div>
           <div class="col-12 col-md-6">
             <q-input v-model="form.marca" label="Marca" outlined dense disable />
@@ -93,11 +99,12 @@
     </q-card-section>
 
     <q-card-actions align="right" class="q-px-md q-pb-md catalogo-edit-card__actions">
-      <q-btn label="Cancelar" flat color="grey" v-close-popup />
+      <q-btn label="Cancelar" color="negative" unelevated v-close-popup />
       <q-btn
         label="Guardar cambios"
         color="primary"
         unelevated
+        size="md"
         :loading="productoStore.saving"
         @click="handleSubmit"
       />
@@ -224,9 +231,12 @@ async function handleSubmit(): Promise<void> {
   gap: 8px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .catalogo-edit-card__actions :deep(.q-btn) {
     width: 100%;
+  }
+  .catalogo-edit-card__actions {
+    justify-items: end;
   }
 }
 </style>

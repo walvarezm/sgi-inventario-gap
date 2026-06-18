@@ -11,6 +11,10 @@ export function formatCurrency(amount: number, currency = 'BOB'): string {
   return new Intl.NumberFormat('es-BO', { style: 'currency', currency, minimumFractionDigits: 2 }).format(amount)
 }
 
+export function formatNotCurrency(amount: number): string {
+  return new Intl.NumberFormat('es-BO', {  minimumFractionDigits: 2 }).format(amount)
+}
+
 export function formatMomentDate(isoString: string, format?: string): string {
   if (!isoString) return '—'
   return moment(isoString).format(format ?? 'YYYY-MM-DD HH:mm')

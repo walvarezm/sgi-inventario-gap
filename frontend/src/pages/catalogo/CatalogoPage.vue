@@ -94,8 +94,8 @@ const productosAgotados = computed(() => {
   }*/
   return productos.length
 })
-
 const esMovil = computed(() => $q.screen.lt.md)
+//const vistaActivaEsTabla = computed(() => !esMovil.value)
 const vistaActivaEsTabla = computed(() => !esMovil.value && catalogo.vistaTabla.value)
 const puedeCambiarVista = computed(() => !esMovil.value)
 const chipsResumen = computed(() => [
@@ -345,7 +345,7 @@ watch(
         <!--        <q-chip dense outline color="primary" icon="flash_on" class="q-mb-sm">
           Consulta rápida
         </q-chip>-->
-        <div class="sgi-page-title">Catálogo de Productos</div>
+        <div class="sgi-page-title ellipsis">Catálogo de Productos</div>
         <!--        <div class="text-body2 sgi-page-subtitle q-mt-xs">
           Visualiza precios y stock de forma ágil, especialmente desde celular para consulta en piso
           de venta.
@@ -375,7 +375,9 @@ watch(
 
         <!-- Selector de sucursal (solo Admin/Supervisor) -->
         <span
-          :class="sucursalSeleccionada? 'catalogo-hero__sucursal' : 'catalogo-hero__seleccione-sucursal'"
+          :class="
+            sucursalSeleccionada ? 'catalogo-hero__sucursal' : 'catalogo-hero__seleccione-sucursal'
+          "
         >
           <q-select
             v-model="sucursalSeleccionada"
@@ -394,12 +396,12 @@ watch(
             :disable="!authStore.isGlobal"
             @update:model-value="onCambioSucursal"
           >
-            <template #prepend><q-icon name="store" /></template>
+            <template v-if="!esMovil" #prepend><q-icon name="store" /></template>
             <template #after>
               <q-btn
                 v-if="sucursalSeleccionada"
                 label=""
-                size="md"
+                :size="esMovil ? 'md' : 'md'"
                 icon="refresh"
                 color="primary"
                 :loading="catalogo.loading.value"
@@ -616,8 +618,12 @@ watch(
     </q-dialog>
 
     <!-- ── Dialog QR ────────────────────────────────────────── -->
+    <!--        style="min-width: 300px; max-width: 560px"-->
     <q-dialog v-model="dialogQR">
-      <q-card class="sgi-card q-pa-md text-center" style="min-width: 300px; max-width: 560px">
+      <q-card
+        class="sgi-card q-pa-md text-center"
+        style="width: 100%; max-width: 50%; max-height: 95%; position: absolute"
+      >
         <q-card-section class="row items-center q-pb-none">
           <div>
             <div class="text-subtitle1 text-weight-bold">{{ productoQR?.sku }}</div>

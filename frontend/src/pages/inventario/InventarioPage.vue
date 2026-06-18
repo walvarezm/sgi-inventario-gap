@@ -152,6 +152,18 @@
             <template #body-cell-categoriaId="{ value }">
               <q-td>{{ categoriaStore.getById(value)?.nombre || '—' }}</q-td>
             </template>
+            <template #body-cell-precioCompra="{ value }">
+              <q-td class="text-right text-weight-medium">{{ formatCurrency(value) }}</q-td>
+            </template>
+            <template #body-cell-precioOfrecido="{ value }">
+              <q-td class="text-right">{{ formatCurrency(value) }}</q-td>
+            </template>
+            <template #body-cell-precioFinal="{ value }">
+              <q-td class="text-right text-weight-bold text-primary">{{ formatCurrency(value) }}</q-td>
+            </template>
+            <template #body-cell-fechaPrecio="{ value }">
+              <q-td class="text-caption">{{ formatDate(value) }}</q-td>
+            </template>
             <template #body-cell-stockActual="{ row }">
               <q-td class="text-center">
                 <q-chip
@@ -162,6 +174,20 @@
                 >
                   {{ row.stockActual }} {{ row.stockActual > 1 ? row.unidad + 'es' : row.unidad }}
                 </q-chip>
+              </q-td>
+            </template>
+            <template #body-cell-acciones="{ row }">
+              <q-td class="text-center">
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="visibility"
+                  color="primary"
+                  @click="openDialogDetalle(row)"
+                >
+                  <q-tooltip>Ver / editar detalle y precios</q-tooltip>
+                </q-btn>
               </q-td>
             </template>
           </q-table>
@@ -261,6 +287,12 @@
         @cancelled="cerrarDialogs"
       />
     </q-dialog>
+    <q-dialog v-model="dialogDetalle" position="standard">
+      <InventarioProductoDetalle
+        :row="productoDetalleRow"
+        @saved="onDetalleGuardado"
+      />
+    </q-dialog>
   </q-page>
   <ProductoViewImage
     :is-open="dialogViewImage"
@@ -277,7 +309,7 @@ import { useSucursalStore } from 'src/stores/sucursalStore'
 import { inventarioService } from 'src/services/inventarioService'
 import { useCategoriaStore } from 'src/stores/categoriaStore.ts'
 import { useMarcaStore } from 'src/stores/marcaStore.ts'
-import { truncate } from 'src/utils/formatters.ts'
+import { truncate, formatDate, formatCurrency } from 'src/utils/formatters.ts'
 import type { InventarioItem, MovimientoCabecera, Producto } from 'src/types'
 import MovimientosTable from 'src/components/inventario/MovimientosTable.vue'
 import EntradaForm from 'src/components/inventario/EntradaForm.vue'
@@ -288,6 +320,7 @@ import { useProductoStore } from 'src/stores/productoStore.ts'
 import { useLoading } from 'src/composables/useLoading.ts'
 import ProductoViewImage from 'src/components/productos/ProductoViewImage.vue'
 import { useNotify } from 'src/composables/useNotify.ts'
+import InventarioProductoDetalle from 'src/components/inventario/InventarioProductoDetalle.vue'
 
 type InventarioRow = InventarioItem & {
   stockMinimo: number
@@ -324,6 +357,8 @@ const dialogSalida = ref(false)
 const dialogTransferencia = ref(false)
 const dialogViewImage = ref(false)
 const movimientoEditando = ref<MovimientoCabecera | null>(null)
+const dialogDetalle = ref(false)
+const productoDetalleRow = ref<InventarioRow | null>(null)
 const movimientoTipoFiltro = ref<string | null>(null)
 const movimientoModoFiltro = ref<string | null>(null)
 const referenciaTipoFiltro = ref<string | null>(null)
@@ -402,7 +437,12 @@ const columnasStock: QTableColumn[] = [
   { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
   { name: 'categoriaId', label: 'Categoría', field: 'categoriaId', align: 'left', sortable: true },
   { name: 'stockActual', label: 'Stock', field: 'stockActual', align: 'center', sortable: true },
+  { name: 'precioCompra', label: 'P. Compra', field: 'precioCompra', align: 'right', sortable: true },
+  { name: 'precioOfrecido', label: 'P. Lista', field: 'precioOfrecido', align: 'right', sortable: true },
+  { name: 'precioFinal', label: 'P. Venta', field: 'precioFinal', align: 'right', sortable: true },
+  { name: 'fechaPrecio', label: 'Fecha Precio', field: 'fechaPrecio', align: 'center', sortable: true },
   { name: 'fechaActualizacion', label: 'Actualizado', field: 'fechaActualizacion', align: 'left' },
+  { name: 'acciones', label: 'Acciones', field: '', align: 'center', style: 'width:80px' },
 ]
 
 function abrirDialog(tipo: 'entrada' | 'salida' | 'transferencia'): void {
@@ -425,6 +465,17 @@ function openDialogViewImage(p: Producto): void {
 function closeDialogViewImage(): void {
   productSelected.value = null
   dialogViewImage.value = false
+}
+
+function openDialogDetalle(row: InventarioRow): void {
+  productoDetalleRow.value = row
+  dialogDetalle.value = true
+}
+
+function onDetalleGuardado(): void {
+  dialogDetalle.value = false
+  productoDetalleRow.value = null
+  void cargarStock()
 }
 
 function cerrarDialogs(): void {

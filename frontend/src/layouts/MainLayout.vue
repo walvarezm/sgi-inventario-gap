@@ -84,8 +84,8 @@
     <q-drawer v-model="drawerOpen" show-if-above :width="260" :breakpoint="768" class="sgi-drawer">
       <q-scroll-area class="fit">
         <div class="sgi-drawer-brand q-pa-md">
-          <div class="text-body1 text-weight-bolder text-grey-6">
-            <q-icon name="inventory_2" class="q-mr-sm" />
+          <div class="text-body1 text-weight-bolder text-grey-3 text-left q-mt-xs">
+            <q-icon name="inventory_2" class="q-mr-md" />
             <span>{{ appName }}</span>
           </div>
         </div>
@@ -117,7 +117,13 @@
     </q-page-container>
 
     <q-page-scroller position="bottom-right" :scroll-offset="160" :offset="scrollTopButtonOffset">
-      <q-btn fab icon="keyboard_arrow_up" color="primary" class="sgi-scroll-top-btn" aria-label="Subir al inicio">
+      <q-btn
+        fab
+        icon="keyboard_arrow_up"
+        color="primary"
+        class="sgi-scroll-top-btn"
+        aria-label="Subir al inicio"
+      >
         <q-tooltip>Subir al inicio</q-tooltip>
       </q-btn>
     </q-page-scroller>
@@ -182,6 +188,8 @@ const navItems = [
     anyPermissions: ['usuarios.ver', 'roles.ver'],
   },
   { name: 'sucursales', label: 'Sucursales', icon: 'store', permission: 'sucursales.ver' },
+  { name: 'marcas', label: 'Marcas', icon: 'copyright', permission: 'productos.ver' },
+  { name: 'categorias', label: 'Categorías', icon: 'category', permission: 'productos.ver' },
   { name: 'productos', label: 'Productos', icon: 'inventory_2', permission: 'productos.ver' },
   { name: 'inventario', label: 'Inventario', icon: 'warehouse', permission: 'inventario.ver' },
   { name: 'catalogo', label: 'Catálogo', icon: 'menu_book', permission: 'catalogo.ver' },
@@ -249,7 +257,7 @@ onMounted(async () => {
 .sgi-logo-sub {
   color: var(--sgi-text-muted);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   margin-left: 4px;
   opacity: 0.72;
 }
@@ -346,6 +354,15 @@ onMounted(async () => {
   font-weight: 600;
   .q-icon {
     color: var(--sgi-primary) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .sgi-logo {
+    font-size: 1rem;
+  }
+  .sgi-logo-sub {
+    display: none;
   }
 }
 

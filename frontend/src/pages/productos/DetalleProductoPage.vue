@@ -1,43 +1,38 @@
+
 <template>
-  <!-- ── Layout público: sin sidebar, sin header de sesión ── -->
   <q-layout view="lHh lpr lFf" class="detalle-layout">
     <q-page-container>
       <q-page class="detalle-page">
-        <!-- ── Header público minimalista ─────────────────── -->
-        <q-header elevated class="detalle-header">
+        <!-- Header público minimalista -->
+        <header class="detalle-header">
           <div class="detalle-header__brand">
             <q-icon name="inventory_2" size="20px" class="q-mr-xs" />
             <span>{{ appName }}</span>
-            <span v-if="!isMobile" class="sgi-logo-sub">{{ appNameSub }}</span>
+            <span v-if="!isMobile" class="detalle-header__sub">{{ appNameSub }}</span>
           </div>
-          <!--          <q-chip dense outline color="grey-6" icon="public" label="Consulta pública" size="sm" />-->
-        </q-header>
+        </header>
 
-        <!-- ── Estado: cargando ────────────────────────────── -->
+        <!-- Loading -->
         <div
           v-if="estado === 'cargando'"
-          class="detalle-estado flex flex-center column q-gutter-md"
+          class="detalle-estado"
         >
-          <q-spinner color="primary" size="52px" />
-          <div class="text-body2 text-muted">
-            Buscando producto
-            <strong>{{ skuParam }}</strong>
-            …
-          </div>
+          <q-spinner color="primary" size="48px" />
+          <p class="detalle-estado__text">
+            Buscando producto <strong>{{ skuParam }}</strong>…
+          </p>
         </div>
 
-        <!-- ── Estado: error / no encontrado ──────────────── -->
+        <!-- Error -->
         <div
           v-else-if="estado === 'error'"
-          class="detalle-estado flex flex-center column q-gutter-sm text-center"
+          class="detalle-estado"
         >
-          <q-icon name="search_off" size="72px" color="grey-4" />
-          <div class="text-h6 text-weight-bold q-mt-md">Producto no encontrado</div>
-          <div class="text-body2 text-muted">
-            El código
-            <code class="detalle-code">{{ skuParam }}</code>
-            no corresponde a ningún producto activo en el catálogo.
-          </div>
+          <q-icon name="search_off" size="64px" color="grey-4" />
+          <div class="detalle-estado__title">Producto no encontrado</div>
+          <p class="detalle-estado__text">
+            El código <code class="detalle-code">{{ skuParam }}</code> no corresponde a ningún producto activo.
+          </p>
           <q-btn
             outline
             color="primary"
@@ -48,174 +43,129 @@
           />
         </div>
 
-        <!-- ── Detalle del producto ────────────────────────── -->
+        <!-- Producto -->
         <div v-else-if="estado === 'ok' && producto" class="detalle-contenido">
-          <!-- Tarjeta principal -->
-          <q-card class="detalle-card" bordered>
-            <div :class="producto.imagenUrl ? 'detalle-card__inner' : 'detalle-card__inner_flex'">
-              <!-- Columna imagen -->
-              <div class="detalle-imagen-col">
-                <div v-if="producto.imagenUrl" class="detalle-imagen-wrap detalle-imagen">
-                  <ProductoImagenIFrame
-                    v-if="producto.imagenUrl"
-                    :imagen-url="String(producto?.imagenUrl)"
-                    :width="100"
-                    :height="100"
-                    :imagen-location="producto?.imagenLocation"
-                    :type="'card'"
-                  />
-
-                  <!--                  <q-img
-                    v-if="producto.imagenUrl"
-                    :src="imagenSrc"
-                    :alt="producto.nombre"
-                    fit="contain"
-                    class="detalle-imagen"
-                    loading="lazy"
-                  >
-                    <template #error>
-                      <div class="detalle-imagen-placeholder flex flex-center column">
-                        <q-icon name="image_not_supported" size="48px" color="grey-4" />
-                        <span class="text-caption text-muted q-mt-xs">Sin imagen</span>
-                      </div>
-                    </template>
-                  </q-img>-->
-                  <div v-else class="detalle-imagen-placeholder flex flex-center column">
-                    <q-icon name="inventory_2" size="56px" color="grey-4" />
-                    <span class="text-caption text-muted q-mt-xs">Sin imagen 2</span>
-                  </div>
-                </div>
-
-                <!-- QR -->
-                <div v-if="mostrarCampo && qrDataUrl" class="detalle-qr-wrap q-mt-md text-center">
-                  <div class="text-caption text-muted q-mb-xs">Código QR</div>
-                  <img
-                    v-if="qrDataUrl"
-                    :src="qrDataUrl"
-                    :alt="`QR ${producto.sku}`"
-                    class="detalle-qr-img"
-                  />
-                  <q-spinner v-else-if="generandoQr" color="grey" size="32px" />
-                  <div
-                    class="text-caption text-muted q-mt-xs"
-                    style="word-break: break-all; max-width: 200px; margin: 0 auto"
-                  >
-                    {{ producto.sku }}
-                  </div>
-                </div>
+          <article class="detalle-card">
+            <!-- Imagen -->
+            <div class="detalle-card__image">
+              <div v-if="producto.imagenUrl" class="detalle-img-wrap">
+                <ProductoImagenIFrame
+                  :imagen-url="producto.imagenUrl"
+                  :imagen-location="producto.imagenLocation"
+                  type="card"
+                  :width="100"
+                  :height="100"
+                />
+              </div>
+              <div v-else class="detalle-img-placeholder">
+                <q-icon name="inventory_2" size="48px" color="grey-4" />
+                <span class="text-caption text-grey-5">Sin imagen</span>
               </div>
 
-              <!-- Columna datos -->
-              <div class="detalle-datos-col">
-                <!-- Badges -->
-                <div v-if="mostrarCampo" class="detalle-badges q-mb-sm">
-                  <q-chip
-                    dense
-                    :color="producto.activo ? 'positive' : 'grey'"
-                    text-color="white"
-                    icon="circle"
-                    size="sm"
-                  >
-                    {{ producto.activo ? 'Activo' : 'Inactivo' }}
-                  </q-chip>
-                  <!--                  <q-chip
-                    v-if="producto.categoriaId"
-                    dense
-                    outline
-                    color="primary"
-                    icon="category"
-                    size="sm"
-                  >
-                    {{ nombreCategoria }}
-                  </q-chip>-->
-                </div>
-
-                <!-- Marca y nombre -->
-                <div class="detalle-marcas text-muteds q-mb-xs">
-                  <div class="row">
-                    <span class="detalle-marca">{{ producto.marca }}</span>
-                    <q-space />
-                    <span class="detalle-code">{{ producto.sku }}</span>
-                  </div>
-                </div>
-                <h1 class="detalle-nombre">{{ producto.nombre }}</h1>
-
-                <!-- SKU -->
-                <!--                <div class="detalle-sku-row q-mb-md">
-                  <q-icon name="qr_code" size="16px" class="q-mr-xs text-muted" />
-                  <code class="detalle-code">{{ producto.sku }}</code>
-                </div>-->
-
-                <!-- Descripción -->
-                <div
-                  v-if="producto.descripcion && producto.descripcion !== producto.nombre"
-                  class="detalle-descripcion q-mb-lg"
-                >
-                  {{ producto.descripcion }}
-                </div>
-
-                <q-separator class="q-mb-lg" />
-
-                <!-- Precios -->
-                <div class="detalle-precios">
-                  <div class="detalle-precio-item detalle-precio-item--final">
-                    <div class="detalle-precio-label">Precio de venta</div>
-                    <div class="detalle-precio-valor detalle-precio-valor--principal">
-                      {{ formatCurrency(producto.precioOfrecido) }}
-                    </div>
-                  </div>
-                  <div
-                    v-if="mostrarCampo && producto.precioOfrecido !== producto.precioFinal"
-                    class="detalle-precio-item"
-                  >
-                    <div class="detalle-precio-label">Precio final</div>
-                    <div class="detalle-precio-valor detalle-precio-valor--lista">
-                      {{ formatCurrency(producto.precioFinal) }}
-                    </div>
-                  </div>
-                </div>
-
-                <q-separator class="q-my-lg" />
-
-                <!-- Propiedades adicionales -->
-                <div v-if="mostrarCampo" class="detalle-props">
-                  <div v-if="producto.unidad" class="detalle-prop">
-                    <q-icon name="straighten" size="16px" class="text-muted" />
-                    <span class="detalle-prop-label">Unidad</span>
-                    <span class="detalle-prop-valor">{{ producto.unidad }}</span>
-                  </div>
-                </div>
-
-                <!-- Nota de acceso restringido -->
-                <q-banner
-                  v-if="mostrarCampo"
-                  dense
-                  rounded
-                  class="detalle-nota q-mt-lg bg-blue-1 text-blue-9"
-                >
-                  <template #avatar>
-                    <q-icon name="info" color="blue" />
-                  </template>
-                  El stock disponible y el precio de compra son visibles solo para usuarios
-                  autorizados del sistema.
-                </q-banner>
+              <!-- QR -->
+              <div v-if="qrDataUrl" class="detalle-qr-wrap">
+                <div class="detalle-qr-label">Código QR</div>
+                <img
+                  :src="qrDataUrl"
+                  :alt="`QR ${producto.sku}`"
+                  class="detalle-qr-img"
+                />
+                <div class="detalle-qr-sku">{{ producto.sku }}</div>
               </div>
             </div>
-          </q-card>
 
-          <!-- Footer de la tarjeta -->
-          <!--          <div class="detalle-footer text-center text-caption text-muted">
-            <q-icon name="inventory_2" size="14px" class="q-mr-xs" />
-            {{ appName }}
-          </div>-->
-          <!--          <div class="sgi-drawer-footer q-pa-md">
-            <div class="text-caption text-muted">v{{ appVersion }}</div>
-          </div>-->
+            <!-- Datos -->
+            <div class="detalle-card__data">
+              <!-- Badges -->
+              <div class="detalle-badges">
+                <q-chip
+                  dense
+                  :color="producto.activo ? 'positive' : 'grey'"
+                  text-color="white"
+                  icon="circle"
+                  size="sm"
+                >
+                  {{ producto.activo ? 'Activo' : 'Inactivo' }}
+                </q-chip>
+                <q-chip
+                  v-if="categoriaNombre"
+                  dense
+                  outline
+                  color="primary"
+                  icon="category"
+                  size="sm"
+                >
+                  {{ categoriaNombre }}
+                </q-chip>
+              </div>
+
+              <!-- Marca + SKU -->
+              <div class="detalle-head-row">
+                <span class="detalle-marca">{{ producto.marca }}</span>
+                <code class="detalle-code">{{ producto.sku }}</code>
+              </div>
+
+              <!-- Nombre -->
+              <h1 class="detalle-nombre">{{ producto.nombre }}</h1>
+
+              <!-- Descripción -->
+              <p
+                v-if="producto.descripcion && producto.descripcion !== producto.nombre"
+                class="detalle-descripcion"
+              >
+                {{ producto.descripcion }}
+              </p>
+
+              <q-separator class="q-my-lg" />
+
+              <!-- Precios -->
+              <section class="detalle-precios">
+                <div class="detalle-precio-item">
+                  <span class="detalle-precio-label">Precio compra</span>
+                  <span class="detalle-precio-valor detalle-precio-valor--muted">
+                    {{ formatCurrency(producto.precioCompra ?? 0) }}
+                  </span>
+                </div>
+                <div class="detalle-precio-item">
+                  <span class="detalle-precio-label">Precio lista</span>
+                  <span class="detalle-precio-valor">
+                    {{ formatCurrency(producto.precioOfrecido) }}
+                  </span>
+                </div>
+                <div class="detalle-precio-item detalle-precio-item--featured">
+                  <span class="detalle-precio-label">Precio venta</span>
+                  <span class="detalle-precio-valor detalle-precio-valor--principal">
+                    {{ formatCurrency(producto.precioFinal) }}
+                  </span>
+                </div>
+              </section>
+
+              <q-separator class="q-my-lg" />
+
+              <!-- Props -->
+              <div v-if="producto.unidad" class="detalle-props">
+                <div class="detalle-prop">
+                  <q-icon name="straighten" size="16px" class="text-grey-5" />
+                  <span class="detalle-prop__label">Unidad</span>
+                  <span class="detalle-prop__value">{{ producto.unidad }}</span>
+                </div>
+              </div>
+
+              <!-- Banner informativo -->
+              <q-banner dense rounded class="detalle-banner">
+                <template #avatar>
+                  <q-icon name="info" color="blue" />
+                </template>
+                El stock disponible y el precio de compra son visibles solo para usuarios autorizados del sistema.
+              </q-banner>
+            </div>
+          </article>
+
+          <footer class="detalle-footer">
+            <q-icon name="copyright" size="12px" class="q-mr-xs" />
+            {{ appAuthor }}
+          </footer>
         </div>
-        <q-footer elevated class="detalle-footer">
-          <q-icon name="copyright" size="14px" class="q-mr-xs" />
-          {{ appAuthor }}
-        </q-footer>
       </q-page>
     </q-page-container>
   </q-layout>
@@ -224,76 +174,51 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useQuasar } from 'quasar'
 import type { Producto } from 'src/types'
 import { productoService } from 'src/services/productoService'
+import { useCategoriaStore } from 'src/stores/categoriaStore'
 import { useQR } from 'src/composables/useQR'
-//import { useCategoriaStore } from 'src/stores/categoriaStore'
-import { drivePreviewUrl } from 'src/utils/qrUtils'
 import { formatCurrency } from 'src/utils/formatters'
-import { useQuasar } from 'quasar'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
-const $q = useQuasar()
 
-// ── Route ───────────────────────────────────────────────────
+const $q = useQuasar()
 const route = useRoute()
+const categoriaStore = useCategoriaStore()
+const { generarDataUrl, buildQrEnlace } = useQR()
+
 const skuParam = computed(() => (route.params.sku as string) ?? '')
 const isMobile = computed(() => $q.screen.lt.md)
 
-// ── Config ──────────────────────────────────────────────────
 const appName = computed(() =>
   !isMobile.value ? (import.meta.env.VITE_APP_NAME ?? 'SGI') : 'SGI - MAXEL',
 )
 const appNameSub = computed(() => (!isMobile.value ? import.meta.env.VITE_APP_NAME_SUBTITLE : ''))
-const appAuthor = computed(
-  () => import.meta.env.VITE_APP_AUTHOR ?? 'AlvareX',
-  //!isMobile.value ? (import.meta.env.VITE_APP_AUTHOR ?? 'AlvareX') : '',
-)
+const appAuthor = computed(() => import.meta.env.VITE_APP_AUTHOR ?? 'AlvareX')
 
-// ── Estado ──────────────────────────────────────────────────
 type Estado = 'cargando' | 'ok' | 'error'
 const estado = ref<Estado>('cargando')
 const producto = ref<Producto | null>(null)
-const mostrarCampo = ref<boolean>(false)
-
-// ── Stores y composables ────────────────────────────────────
-//const categoriaStore = useCategoriaStore()
-const { generarDataUrl, buildQrEnlace } = useQR()
-
-// ── QR ──────────────────────────────────────────────────────
 const qrDataUrl = ref('')
-const generandoQr = ref(false)
+
+const categoriaNombre = computed(() => {
+  if (!producto.value?.categoriaId) return ''
+  return categoriaStore.getById(producto.value.categoriaId)?.nombre ?? ''
+})
 
 async function generarQR(sku: string): Promise<void> {
-  generandoQr.value = true
   try {
     const contenido = buildQrEnlace(sku)
     qrDataUrl.value = await generarDataUrl(contenido, 160)
-  } finally {
-    generandoQr.value = false
+  } catch {
+    // QR no crítico
   }
 }
 
-// ── Imagen ──────────────────────────────────────────────────
-const imagenSrc = computed(() => {
-  if (!producto.value?.imagenUrl) return ''
-  const url = producto.value.imagenUrl
-  // Si es un ID de Drive (no comienza con http), construir URL de preview
-  if (!url.startsWith('http')) return drivePreviewUrl(url)
-  return url
-})
-
-// ── Categoría ───────────────────────────────────────────────
-/*const nombreCategoria = computed(() => {
-  if (!producto.value?.categoriaId) return ''
-  const cat = categoriaStore.items.find((c) => c.id === producto.value!.categoriaId)
-  return cat?.nombre ?? producto.value.categoriaId
-})*/
-
-// ── Carga principal ─────────────────────────────────────────
 async function cargar(): Promise<void> {
   estado.value = 'cargando'
   try {
-    //await categoriaStore.fetchAll()
+    await categoriaStore.fetchAll()
     const p = await productoService.getBySku(skuParam.value)
     if (!p || !p.activo) {
       estado.value = 'error'
@@ -301,7 +226,7 @@ async function cargar(): Promise<void> {
     }
     producto.value = p
     estado.value = 'ok'
-    //await generarQR(p.sku)
+    await generarQR(p.sku)
   } catch {
     estado.value = 'error'
   }
@@ -311,7 +236,7 @@ onMounted(cargar)
 </script>
 
 <style scoped lang="scss">
-// ── Layout ──────────────────────────────────────────────────
+// ── Layout ────────────────────────────────────────────────────
 .detalle-layout {
   background: var(--sgi-surface-alt);
   min-height: 100vh;
@@ -319,25 +244,21 @@ onMounted(cargar)
 
 .detalle-page {
   min-height: 100vh;
-  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-// ── Header público ──────────────────────────────────────────
+// ── Header ────────────────────────────────────────────────────
 .detalle-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 28px 1px 28px;
-  margin: 0;
-  /*background: var(--sgi-surface);*/
+  width: 100%;
+  padding: 0 28px;
+  height: var(--sgi-header-height);
   background: var(--sgi-header-bg);
   border-bottom: 1px solid var(--sgi-border);
-  /*height: var(--sgi-header-height);*/
-  /*height: auto !important;*/
-  height: var(--sgi-header-height);
 
   &__brand {
     display: flex;
@@ -347,204 +268,238 @@ onMounted(cargar)
     color: var(--sgi-text);
     opacity: 0.8;
   }
+
+  &__sub {
+    color: var(--sgi-text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-left: 4px;
+    opacity: 0.72;
+  }
 }
 
-.sgi-logo-sub {
-  color: var(--sgi-text-muted);
-  font-weight: 600;
-  font-size: 0.95rem;
-  margin-left: 4px;
-  opacity: 0.72;
-}
-
-// ── Estados ─────────────────────────────────────────────────
+// ── Estados ───────────────────────────────────────────────────
 .detalle-estado {
   flex: 1;
-  padding: 64px 24px;
-  color: var(--sgi-text-muted);
-}
-
-// ── Contenido principal ─────────────────────────────────────
-.detalle-contenido {
-  flex: 1;
-  max-width: 100%;
-  /*max-height: 90px;*/
-  width: 75%;
-  /*height: 80% !important;*/
-  margin: 15px 10px 40px 10px;
-  padding: 0 24px 0 24px;
-  /*border: 2px solid var(--sgi-positive);*/
-}
-
-// ── Tarjeta ─────────────────────────────────────────────────
-.detalle-card {
-  border-radius: var(--sgi-radius-lg);
-  background: var(--sgi-surface);
-  border: 1px solid var(--sgi-border);
-  box-shadow: var(--sgi-shadow);
-  overflow: hidden;
-  /*    max-height: 100% !important;*/
-
-  &__inner {
-    display: grid;
-    grid-template-columns: 33% 1fr;
-    gap: 1px;
-    /*height: 100%;*/
-  }
-
-  &__inner_flex {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-}
-
-// ── Columna imagen ───────────────────────────────────────────
-.detalle-imagen-col {
-  background: color-mix(in srgb, var(--sgi-surface-alt) 60%, transparent);
-  border-right: 1px solid var(--sgi-border);
-  padding: 10px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-  text-align: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  color: var(--sgi-text-muted);
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--sgi-text);
+  }
+
+  &__text {
+    font-size: 0.95rem;
+    margin: 0;
+    text-align: center;
+  }
 }
 
-.detalle-imagen-wrap {
+// ── Contenido ─────────────────────────────────────────────────
+.detalle-contenido {
+  flex: 1;
+  width: min(820px, 95vw);
+  padding: 24px 0 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+// ── Card ───────────────────────────────────────────────────────
+.detalle-card {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  border-radius: 16px;
+  background: var(--sgi-surface);
+  border: 1px solid var(--sgi-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: cardIn 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ── Columna imagen ────────────────────────────────────────────
+.detalle-card__image {
+  background: color-mix(in srgb, var(--sgi-surface-alt) 60%, transparent);
+  border-right: 1px solid var(--sgi-border);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.detalle-img-wrap {
   width: 100%;
-  aspect-ratio: 0;
-  border-radius: 20px;
+  aspect-ratio: 1;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--sgi-surface);
   border: 1px solid var(--sgi-border);
-  max-height: 100%;
 }
 
-.detalle-imagen {
+.detalle-img-placeholder {
   width: 100%;
-  height: 100%;
-  /*height: 60vh;*/
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--sgi-surface);
+  border: 1px dashed var(--sgi-border);
 }
 
-.detalle-imagen-placeholder {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
+.detalle-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.detalle-qr-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sgi-text-muted);
+  font-weight: 600;
 }
 
 .detalle-qr-img {
-  width: 160px;
-  height: 160px;
+  width: 120px;
+  height: 120px;
   border-radius: 8px;
   border: 1px solid var(--sgi-border);
 }
 
-.detalle-qr-wrap {
-  width: 100%;
+.detalle-qr-sku {
+  font-size: 0.72rem;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  color: var(--sgi-text-muted);
+  word-break: break-all;
+  text-align: center;
+  max-width: 140px;
 }
 
-// ── Columna datos ────────────────────────────────────────────
-.detalle-datos-col {
-  padding: 32px 36px;
+// ── Columna datos ─────────────────────────────────────────────
+.detalle-card__data {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
 }
 
 .detalle-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin-bottom: 16px;
+}
+
+.detalle-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .detalle-marca {
-  background: color-mix(in srgb, var(--sgi-info) 75%, transparent) !important;
+  background: color-mix(in srgb, var(--sgi-info) 75%, transparent);
   color: var(--sgi-chip-text);
-  padding: 2px 8px;
+  padding: 2px 10px;
   border-radius: 4px;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.detalle-nombre {
-  font-size: clamp(1.2rem, 2.5vw, 1.9rem);
-  font-weight: 800;
-  color: var(--sgi-text);
-  margin: 10px 0;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-.detalle-sku-row {
-  display: flex;
-  align-items: center;
-}
-
 .detalle-code {
-  background: color-mix(in srgb, var(--sgi-warning) 75%, transparent) !important;
+  background: color-mix(in srgb, var(--sgi-warning) 75%, transparent);
   color: var(--sgi-chip-text);
   border-radius: 4px;
   padding: 2px 8px;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   font-weight: 600;
   letter-spacing: 0.04em;
+}
+
+.detalle-nombre {
+  font-size: clamp(1.3rem, 2.5vw, 1.9rem);
+  font-weight: 800;
+  color: var(--sgi-text);
+  margin: 0 0 8px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .detalle-descripcion {
   font-size: 0.95rem;
   color: var(--sgi-text-muted);
   line-height: 1.6;
+  margin: 0;
 }
 
-// ── Precios ──────────────────────────────────────────────────
+// ── Precios ───────────────────────────────────────────────────
 .detalle-precios {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 20px;
 }
 
 .detalle-precio-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  min-width: 120px;
 
-  &--final {
-    border-left: 3px solid var(--sgi-warning);
-    padding-left: 14px;
+  &--featured {
+    border-left: 3px solid var(--sgi-primary);
+    padding-left: 16px;
   }
 }
 
 .detalle-precio-label {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--sgi-text-muted);
   font-weight: 600;
 }
 
 .detalle-precio-valor {
-  font-weight: 800;
-  border-radius: 6px;
-  padding: 2px 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  letter-spacing: -0.02em;
+  color: var(--sgi-text);
 
   &--principal {
-    background: color-mix(in srgb, var(--sgi-info) 95%, transparent) !important;
     font-size: 1.5rem;
-    color: var(--sgi-surface-alt);
-    letter-spacing: -0.03em;
+    font-weight: 800;
+    color: var(--sgi-primary);
   }
 
-  &--lista {
-    font-size: 1.5rem;
+  &--muted {
     color: var(--sgi-text-muted);
-    /*text-decoration: line-through;*/
-    font-weight: 600;
+    font-weight: 500;
   }
 }
 
-// ── Propiedades ──────────────────────────────────────────────
+// ── Props ─────────────────────────────────────────────────────
 .detalle-props {
   display: flex;
   flex-direction: column;
@@ -557,107 +512,107 @@ onMounted(cargar)
   gap: 8px;
   font-size: 0.9rem;
   color: var(--sgi-text);
+
+  &__label {
+    color: var(--sgi-text-muted);
+    min-width: 80px;
+  }
+
+  &__value {
+    font-weight: 600;
+  }
 }
 
-.detalle-prop-label {
-  color: var(--sgi-text-muted);
-  min-width: 80px;
-}
-
-.detalle-prop-valor {
-  font-weight: 600;
-}
-
-// ── Nota ─────────────────────────────────────────────────────
-.detalle-nota {
+// ── Banner ────────────────────────────────────────────────────
+.detalle-banner {
   font-size: 0.82rem;
   border-radius: 10px;
+  margin-top: 20px;
 }
 
-// ── Footer ───────────────────────────────────────────────────
+// ── Footer ────────────────────────────────────────────────────
 .detalle-footer {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   color: var(--sgi-text-muted);
-  font-size: 0.8rem;
-  padding: 20px 28px 0 28px;
-  margin: 0;
-  position: absolute;
-
-  bottom: 0;
-  width: 100%;
-  height: 20px !important;
-  background: var(--sgi-surface-alt);
-  border-top: 1px solid var(--sgi-border);
+  font-size: 0.78rem;
+  padding: 24px 0 8px;
 }
 
-// ── Responsive ───────────────────────────────────────────────
+// ── Responsive ────────────────────────────────────────────────
 @media (max-width: 740px) {
-  .detalle-card__inner {
+  .detalle-card {
     grid-template-columns: 1fr;
   }
 
-  .detalle-imagen-col {
+  .detalle-card__image {
     border-right: none;
     border-bottom: 1px solid var(--sgi-border);
-    padding: 8px 0 8px 0;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    height: 100%;
+    padding: 16px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
-  .detalle-imagen-wrap {
-    width: 95%;
-    height: 100%;
-    flex-shrink: 0;
-  }
-
-  .detalle-qr-wrap {
-    width: auto;
+  .detalle-img-wrap,
+  .detalle-img-placeholder {
+    width: 180px;
+    aspect-ratio: 1;
   }
 
   .detalle-qr-img {
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
   }
 
-  .detalle-datos-col {
+  .detalle-card__data {
     padding: 20px;
   }
 
   .detalle-contenido {
-    width: 99%;
-    padding: 0 0 32px 0;
-    margin: 0;
+    width: 100vw;
+    padding: 0 0 24px;
   }
 
   .detalle-header {
-    padding: 5px 16px 5px 16px;
-    margin: 0;
-  }
-
-  .sgi-logo-sub {
-    display: none;
+    padding: 0 16px;
   }
 }
 
 @media (max-width: 480px) {
-  .detalle-contenido {
-    width: 100%;
-    /*height: 80% !important;*/
-    /*margin: 15px 10px 40px 10px;*/
-    padding: 0 5px;
-    /*border: 2px solid var(--sgi-positive);*/
-  }
-  .detalle-imagen-col {
+  .detalle-card__image {
     flex-direction: column;
     align-items: center;
   }
 
-  .detalle-imagen-wrap {
+  .detalle-img-wrap,
+  .detalle-img-placeholder {
     width: 100%;
+    max-width: 240px;
+  }
+
+  .detalle-card__data {
+    padding: 16px;
+  }
+
+  .detalle-precios {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .detalle-precio-item--featured {
+    border-left-width: 3px;
+    padding-left: 14px;
+  }
+
+  .detalle-precio-valor {
+    font-size: 1.1rem;
+
+    &--principal {
+      font-size: 1.3rem;
+    }
   }
 }
 </style>

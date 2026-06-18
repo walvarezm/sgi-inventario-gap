@@ -34,6 +34,10 @@ export const useCategoriaStore = defineStore('categoria', () => {
     activas.value.map((c) => ({ label: c.nombre, value: c.id })),
   )
 
+  const optionsName = computed(() =>
+    activas.value.map((c) => ({ label: c.nombre, value: c.nombre })),
+  )
+
   const cacheInfo = computed(() => ({
     isValid: cache.isValid.value,
     isStale: cache.isStale.value,
@@ -65,6 +69,12 @@ export const useCategoriaStore = defineStore('categoria', () => {
     return actualizada
   }
 
+  async function remove(id: string): Promise<void> {
+    await categoriaService.remove(id)
+    cache.removeItem(id, 'id')
+    sync.emit('categoria:deleted', id)
+  }
+
   // ── Helpers ────────────────────────────────────────────────
   function getById(id: string): Categoria | undefined {
     return items.value.find((c) => c.id === id)
@@ -79,7 +89,7 @@ export const useCategoriaStore = defineStore('categoria', () => {
   }
 
   return {
-    items, loading, error, activas, options, cacheInfo,
-    fetchAll, create, update, getById, clearError, forceReload,
+    items, loading, error, activas, options, optionsName, cacheInfo,
+    fetchAll, create, update, remove, getById, clearError, forceReload,
   }
 })

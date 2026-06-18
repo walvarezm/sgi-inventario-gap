@@ -18,9 +18,9 @@
       sizeStyleError: {{ sizeStyleError }}
       <br />
     </div>
-<!--    <div v-if="imagenUrl">imagenUrl: {{ imagenUrl }}</div>-->
+    <!--    <div v-if="imagenUrl">imagenUrl: {{ imagenUrl }}</div>-->
 
-    <div class="imagen-preview">
+    <div class="imagen-previews">
       <q-img
         v-if="imagenUrl && (props.imagenLocation === 'drive' || props.imagenLocation === 'local')"
         :src="imagenUrl"
@@ -51,7 +51,7 @@
 
       <div
         v-else
-        class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered justify-center q-my-none"
+        class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered justify-center q-my-none card-image-wrapper"
         :style="sizeStyleError"
       >
         <q-icon
@@ -113,37 +113,38 @@ const imagenUrl = computed(() => {
 
 const widthPx = computed(() => {
   if (props.type === 'table') return props.width / 2 / 10 + 'rem'
-  if (props.type === 'card') return '50%'
+  if (props.type === 'card') return props.width / 5 + 'rem'
   return props.width / 2 + '%' // 'view'
 })
 
 const heightPx = computed(() => {
   if (props.type === 'table') return props.height / 2 / 10 + 'rem'
+  if (props.type === 'card') return props.height / 2 / 5 + 'rem'
   return props.height / 2 / 10 + 'rem'
 })
 
 const maxWidthImg = computed(() => {
-  if (props.type === 'view') return props.width / 1 + '%'
-  if (props.type === 'card') return '100%'
+  if (props.type === 'card') return (props.width * 2) / 10 + 'rem'
+  if (props.type === 'view') return props.width + '%'
   return props.width + '%'
 })
 
 const maxHeightImg = computed(() => {
-  if (props.type === 'view') return props.height + 'vh'
   if (props.type === 'card') return (props.height * 2) / 10 + 'rem'
+  if (props.type === 'view') return props.height + 'vh'
   return props.height + '%'
 })
 
 const imgStyle = computed(
   () =>
-    `max-width: ${maxWidthImg.value}; max-height: ${maxHeightImg.value}; height: ${maxHeightImg.value}; `,
+    `width: ${maxWidthImg.value}; max-width: 100%; max-height: ${maxHeightImg.value}; height: ${maxHeightImg.value}; `,
 )
 
 const sizeStyleError = computed(() => {
   if (props.type === 'table') {
     return `width: ${widthPx.value}; height: ${heightPx.value}; text-align: center; border-radius: 3px; margin: 0`
   }
-  return `width: ${widthPx.value}; max-height: ${heightPx.value}; text-align: left !important; border-radius: 13px; margin: 16px 0`
+  return `width: ${widthPx.value}; max-width: 100%; max-height: ${heightPx.value}; height: ${heightPx.value}; border-radius: 5px;`
 })
 </script>
 

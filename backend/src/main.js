@@ -59,15 +59,17 @@ function doPost(e) {
       // Catálogo
       'getCatalogo':             () => CatalogoService.getBySucursal(payload, session),
       // Categorías
-      'getCategorias':           () => CategoriaService.getAll(),          // pública
+      'getCategorias':           () => CategoriaService.getAll(payload),    // pública
       'getCategoriaById':        () => CategoriaService.getById(payload),
       'createCategoria':         () => CategoriaService.create(payload, session),
       'updateCategoria':         () => CategoriaService.update(payload, session),
+      'deleteCategoria':         () => CategoriaService.remove(payload, session),
       // Marcas
-      'getMarcas':               () => MarcaService.getAll(),
+      'getMarcas':               () => MarcaService.getAll(payload),
       'getMarcaById':            () => MarcaService.getById(payload),
       'createMarca':             () => MarcaService.create(payload, session),
       'updateMarca':             () => MarcaService.update(payload, session),
+      'deleteMarca':             () => MarcaService.remove(payload, session),
       // Productos
       'getProductos':            () => ProductoService.getAll(payload),
       'getProductoById':         () => ProductoService.getById(payload),

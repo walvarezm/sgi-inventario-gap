@@ -26,7 +26,7 @@ const paginacion = { rowsPerPage: 10 }
 const columnas = computed<QTableColumn[]>(() => {
   const cols: QTableColumn[] = [
     { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center', style: 'width:60px' },
-    { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
+    { name: 'marca', label: 'Marca', field: 'marca', align: 'center', sortable: true },
     { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
     { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
     {
@@ -99,45 +99,34 @@ const columnas = computed<QTableColumn[]>(() => {
       </q-td>
     </template>
 
-    <!-- SKU + QR icon -->
-    <template #body-cell-sku="{ row }">
-      <q-td>
-        <div class="row items-center no-wrap q-gutter-xs">
-          <span class="text-weight-bold text-mono text-body2">{{ row.sku }}</span>
-          <!--          <q-btn
-            flat
-            round
-            dense
-            size="sm"
-            icon="qr_code"
-            color="primary"
-            @click="emit('ver-qr', row)"
-          >
-            <q-tooltip>Ver código QR</q-tooltip>
-          </q-btn>-->
-        </div>
+    <!-- Marca + Nombre -->
+    <template #body-cell-marca="{ row }">
+      <q-td class="tabla-col-5 text-center">
+        <div class="text-body1 text-weight-bold text-mono">{{ row.marca }}</div>
       </q-td>
     </template>
 
-    <!-- Marca + Nombre -->
-    <template #body-cell-marca="{ row }">
-      <q-td>
-        <div class="text-caption text-muted">{{ row.marca }}</div>
+    <!-- SKU + QR icon -->
+    <template #body-cell-sku="{ row }">
+      <q-td class="tabla-col-8">
+        <span class="text-body2 text-weight-bold text-mono">{{ row.sku }}</span>
       </q-td>
     </template>
+
     <template #body-cell-nombre="{ row }">
-      <q-td>
+      <q-td class="tabla-col-35">
         <div class="text-weight-medium product-name-with-ellipsis">
           {{ row.nombre }}
         </div>
+        <q-tooltip v-if="row.nombre.length > 50">{{ row.nombre }}</q-tooltip>
         <!--        <div class="text-caption text-muted">{{ row.marca }}</div>-->
-        <!--        <div
-          v-if="row.descripcion"
-          class="text-caption text-muted ellipsis"
-          style="max-width: 240px"
+        <div
+          v-if="row.nombre.trim() !== row.descripcion.trim()"
+          class="text-caption text-italic text-muted ellipsis"
+          style="max-width: 90%"
         >
           {{ row.descripcion }}
-        </div>-->
+        </div>
       </q-td>
     </template>
 
@@ -170,7 +159,7 @@ const columnas = computed<QTableColumn[]>(() => {
     <!-- Precio final -->
     <template #body-cell-precioFinal="{ value }">
       <q-td class="text-right">
-        <span class="text-body1 text-weight-bold text-positive">{{ formatCurrency(value) }}</span>
+        <span class="text-body2 text-weight-bold text-positive">{{ formatCurrency(value) }}</span>
       </q-td>
     </template>
 
@@ -246,4 +235,5 @@ const columnas = computed<QTableColumn[]>(() => {
   top: 0;
   z-index: 1;
 }
+
 </style>

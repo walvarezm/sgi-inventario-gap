@@ -36,7 +36,8 @@ const InventarioService = {
         stockActual: Number(i.stock_actual) || 0,
         stockMinimo: Number(p.stock_minimo) || 0,
         stockBajo: (Number(i.stock_actual) || 0) <= (Number(p.stock_minimo) || 0),
-        // Precios resueltos (base o propios)
+        // Precios
+        precioCompra: Number(p.precio_compra) || 0,
         precioOfrecido: precios.precioOfrecido,
         precioFinal: precios.precioFinal,
         precioUsaBase: precios.precioUsaBase,

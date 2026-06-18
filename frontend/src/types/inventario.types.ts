@@ -23,6 +23,8 @@ export interface InventarioItem {
   productoId: string
   sucursalId: string
   stockActual: number
+  /** Precio de compra del producto base */
+  precioCompra: number
   /** Precio de catálogo vigente para esta sucursal */
   precioOfrecido: number
   /** Precio de venta vigente para esta sucursal */

@@ -4,17 +4,13 @@
 
 const CategoriaService = {
 
-  getAll() {
-    /*const cache = CacheService.getScriptCache()
-    const cached = cache.get('categorias_all')
-    if (cached) return JSON.parse(cached)*/
-
-    const data = Sheets.getAll('Categorias')
-      .filter(c => c.activo === true || c.activo === 'TRUE' || c.activo === 1)
-      .map(this._mapear)
-
-    //cache.put('categorias_all', JSON.stringify(data), 600) // 10 min
-    return data
+  getAll(payload) {
+    const soloActivos = !payload || payload.todos !== true
+    let data = Sheets.getAll('Categorias')
+    if (soloActivos) {
+      data = data.filter(c => c.activo === true || c.activo === 'TRUE' || c.activo === 1)
+    }
+    return data.map(this._mapear)
   },
 
   getById(payload) {
@@ -72,6 +68,15 @@ const CategoriaService = {
     //CacheService.getScriptCache().remove('categorias_all')
     LogService.registrar(session.userId, 'UPDATE', 'Categorias', null, 'ID: ' + payload.id)
     return this._mapear(actualizada)
+  },
+
+  remove(payload, session) {
+    if (session.rol !== 'ADMINISTRADOR') {
+      throw new Error('Sin permiso para eliminar categorías')
+    }
+    Sheets.update('Categorias', payload.id, { activo: false })
+    LogService.registrar(session.userId, 'DELETE', 'Categorias', null, 'ID: ' + payload.id)
+    return true
   },
 
   _mapear(c) {
