@@ -1,166 +1,18 @@
-<template>
-  <div>
-    <div
-      v-if="!productos.length && !loading"
-      class="full-width column flex-center q-pa-xl text-muted"
-    >
-      <q-icon name="menu_book" size="48px" style="opacity: 0.3" class="q-mb-md" />
-      <span>No hay productos en el catálogo</span>
-    </div>
-
-    <div v-if="loading" class="row q-col-gutter-sm q-col-gutter-md-md">
-      <div v-for="n in 8" :key="n" class="col-12 col-sm-6 col-md-4 col-lg-3">
-        <q-card class="sgi-card" flat>
-          <q-skeleton height="140px" square />
-          <q-card-section class="q-gutter-xs">
-            <q-skeleton type="text" width="60%" />
-            <q-skeleton type="text" width="80%" />
-            <q-skeleton type="text" width="40%" />
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
-
-    <div v-else class="row q-col-gutter-sm q-col-gutter-md-md">
-      <div
-        v-for="producto in productos"
-        :key="producto.id"
-        class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-3"
-      >
-        <q-card class="sgi-card catalogo-card" flat>
-          <div
-            class="card-image-wrapper"
-            :class="{ 'card-image-wrapper--clickable': !!producto.imagenUrl }"
-            @click="producto.imagenUrl && emit('ver-image', producto)"
-          >
-            <ProductoImagenIFrame
-              :imagen-url="producto.imagenUrl"
-              :width="120"
-              :height="65"
-              :imagen-location="producto.imagenLocation"
-              type="card"
-            />
-
-            <div class="card-image-overlay">
-              <q-btn
-                round
-                unelevated
-                size="xs"
-                color="primary"
-                text-color="white"
-                icon="qr_code"
-                class="card-fab card-fab--qr"
-                @click.stop="emit('ver-qr', producto)"
-              >
-                <q-tooltip>Ver QR</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="canEdit"
-                round
-                unelevated
-                size="xs"
-                color="purple"
-                text-color="white"
-                icon="edit"
-                class="card-fab card-fab--edit"
-                @click.stop="emit('editar', producto)"
-              >
-                <q-tooltip>Editar producto</q-tooltip>
-              </q-btn>
-            </div>
-          </div>
-
-          <q-card-section class="q-pb-xs q-pt-sm">
-            <div class="row items-center no-wrap q-mb-xs">
-              <span class="catalogo-card__marca text-caption text-weight-bold text-muted ellipsis">
-                {{ producto.marca }}
-              </span>
-              <q-space />
-              <span class="catalogo-card__sku text-caption text-weight-bold text-mono">
-                {{ producto.sku }}
-              </span>
-            </div>
-
-            <div class="text-subtitle2 text-weight-bold ellipsis-2-lines">
-              {{ producto.nombre }}
-              <q-tooltip>{{ producto.nombre }}</q-tooltip>
-            </div>
-            <div
-              v-if="producto.descripcion && producto.nombre !== producto.descripcion"
-              class="catalogo-card__description text-caption text-muted ellipsis-2-lines"
-            >
-              {{ producto.descripcion }}
-            </div>
-          </q-card-section>
-
-          <q-separator class="q-mx-md" />
-
-          <q-card-section class="q-py-sm">
-            <div class="catalogo-card__prices">
-              <div
-                v-if="canViewPurchasePrice"
-                class="catalogo-card__price catalogo-card__price--purchase"
-              >
-                <span class="catalogo-card__price-label">P.Compra</span>
-                <strong class="catalogo-card__price-value">
-                  {{ formatNotCurrency(Number(producto.precioCompra) || 0) }}
-                </strong>
-              </div>
-              <div
-                v-if="producto.precioOfrecido >= producto.precioFinal"
-                class="catalogo-card__price catalogo-card__price--list"
-              >
-                <span class="catalogo-card__price-label">P.Venta</span>
-                <strong class="catalogo-card__price-value text-info">
-                  {{ formatNotCurrency(producto.precioOfrecido) }}
-                </strong>
-              </div>
-              <div class="catalogo-card__price catalogo-card__price--final">
-                <span class="catalogo-card__price-label">P.Final</span>
-                <strong class="catalogo-card__price-value">
-                  {{ formatNotCurrency(producto.precioFinal) }}
-                </strong>
-              </div>
-            </div>
-          </q-card-section>
-
-          <q-card-section class="q-py-sm row items-center q-col-gutter-xs">
-            <div class="col-auto">
-              <q-chip
-                dense
-                size="sm"
-                :color="stockColor(producto).chip"
-                :text-color="stockColor(producto).text"
-                :icon="stockColor(producto).icon"
-                :label="`Stock: ${producto.stock}`"
-              />
-            </div>
-            <div class="col" />
-            <div v-if="producto.stockBajo && producto.stock > 0" class="col-auto">
-              <q-chip dense size="sm" color="orange-2" text-color="orange-9" label="Stock bajo" />
-            </div>
-            <div v-if="producto.stock === 0" class="col-auto">
-              <q-chip dense size="sm" color="grey-3" text-color="grey-7" label="Sin stock" />
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import type { ProductoCatalogo } from 'src/types'
 import { computed } from 'vue'
+import type { ProductoCatalogo } from 'src/types'
 import { useAuthStore } from 'src/stores/authStore'
-import { formatCurrency, formatNotCurrency } from 'src/utils/formatters'
+import { useSucursalStore } from 'src/stores/sucursalStore'
+import { formatNotCurrency } from 'src/utils/formatters'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
+import { useQuasar } from 'quasar'
 
 interface Props {
   productos: ProductoCatalogo[]
   loading?: boolean
+  showSucursalColumn?: boolean
 }
-withDefaults(defineProps<Props>(), { loading: false })
+const props = withDefaults(defineProps<Props>(), { loading: false, showSucursalColumn: false })
 
 const emit = defineEmits<{
   'ver-image': [producto: ProductoCatalogo]
@@ -169,143 +21,514 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const sucursalStore = useSucursalStore()
+const $q = useQuasar()
 const canEdit = computed(() => authStore.can('productos.editar'))
 const canViewPurchasePrice = computed(() => authStore.can('productos.editar'))
+const esMovil = computed(() => $q.screen.lt.md)
 
-function stockColor(producto: ProductoCatalogo): { chip: string; text: string; icon: string } {
-  if (producto.stock === 0) return { chip: 'grey-3', text: 'grey-7', icon: 'remove_circle_outline' }
-  if (producto.stockBajo) return { chip: 'orange-2', text: 'orange-9', icon: 'warning' }
-  return { chip: 'green-2', text: 'green-9', icon: 'check_circle' }
+function getNombreSucursal(id: string): string {
+  return sucursalStore.getById(id)?.nombre ?? id
+}
+
+function stockState(producto: ProductoCatalogo): {
+  tone: 'positive' | 'warning' | 'negative'
+  label: string
+  icon: string
+} {
+  if (producto.stock === 0) {
+    return { tone: 'negative', label: 'Sin stock', icon: 'remove_circle' }
+  }
+  if (producto.stockBajo || producto.stock <= producto.stockMinimo) {
+    return { tone: 'warning', label: 'Stock bajo', icon: 'warning_amber' }
+  }
+  return { tone: 'positive', label: 'En stock', icon: 'check_circle' }
+}
+
+function hasDiscount(p: ProductoCatalogo): boolean {
+  return Number(p.precioOfrecido) > Number(p.precioFinal)
 }
 </script>
 
+<template>
+  <div class="catalogo-grid">
+    <!-- Empty state (no data, not loading) -->
+    <div v-if="!productos.length && !loading" class="catalogo-empty">
+      <div class="catalogo-empty__art">
+        <q-icon name="menu_book" size="56px" />
+      </div>
+      <h3 class="catalogo-empty__title">Catálogo vacío</h3>
+      <p class="catalogo-empty__text">No hay productos que coincidan con los filtros aplicados.</p>
+    </div>
+
+    <!-- Loading skeleton -->
+    <template v-if="loading">
+      <div v-for="n in 8" :key="`sk-${n}`" class="catalogo-grid__item">
+        <div class="catalogo-card catalogo-card--skeleton">
+          <div class="catalogo-card__image">
+            <q-skeleton height="100%" square />
+          </div>
+          <div class="catalogo-card__body">
+            <q-skeleton width="40%" />
+            <q-skeleton width="80%" />
+            <q-skeleton width="60%" />
+            <div class="row q-mt-sm q-gutter-sm">
+              <q-skeleton width="48px" height="32px" />
+              <q-skeleton width="48px" height="32px" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Cards -->
+    <div
+      v-for="(producto, idx) in productos"
+      v-else
+      :key="producto.id"
+      class="catalogo-grid__item"
+      :style="{ '--stagger': `${idx * 35}ms` }"
+    >
+      <article class="catalogo-card" :class="`catalogo-card--${stockState(producto).tone}`">
+        <!-- Stock corner ribbon -->
+        <div
+          v-if="producto.stock === 0 || producto.stockBajo"
+          class="catalogo-card__ribbon"
+          :class="`catalogo-card__ribbon--${stockState(producto).tone}`"
+          :title="stockState(producto).label"
+        >
+          <q-icon :name="stockState(producto).icon" size="14px" />
+          <span>{{ stockState(producto).label }}</span>
+        </div>
+
+        <!-- Image -->
+        <div
+          class="catalogo-card__image"
+          :class="{ 'catalogo-card__image--clickable': !!producto.imagenUrl }"
+          @click="producto.imagenUrl && emit('ver-image', producto)"
+        >
+          <ProductoImagenIFrame
+            :imagen-url="producto.imagenUrl"
+            :imagen-location="producto.imagenLocation"
+            :width="100"
+            :height="50"
+            type="card"
+          />
+          <div class="catalogo-card__image-overlay">
+            <q-btn
+              round
+              unelevated
+              size="sm"
+              color="white"
+              text-color="primary"
+              icon="qr_code_2"
+              class="catalogo-card__fab"
+              @click.stop="emit('ver-qr', producto)"
+            >
+              <q-tooltip anchor="center left" self="center right">Ver QR</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="canEdit"
+              round
+              unelevated
+              size="sm"
+              color="white"
+              text-color="primary"
+              icon="edit"
+              class="catalogo-card__fab"
+              @click.stop="emit('editar', producto)"
+            >
+              <q-tooltip anchor="center left" self="center right">Editar</q-tooltip>
+            </q-btn>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="catalogo-card__body">
+          <div v-if="props.showSucursalColumn" class="catalogo-card__sucursal-tag">
+            <q-icon name="store" size="14px" />
+            <span :title="getNombreSucursal(producto.sucursalId)">
+              {{ getNombreSucursal(producto.sucursalId) }}
+            </span>
+          </div>
+
+          <div class="catalogo-card__topline">
+            <span class="catalogo-card__marca" :title="producto.marca">{{ producto.marca }}</span>
+            <span class="catalogo-card__sku" :title="producto.sku">{{ producto.sku }}</span>
+          </div>
+
+          <h3 class="catalogo-card__nombre" :title="producto.nombre">
+            {{ producto.nombre }}
+          </h3>
+
+          <p
+            v-if="producto.descripcion && producto.nombre !== producto.descripcion"
+            class="catalogo-card__descripcion"
+            :title="producto.descripcion"
+          >
+            {{ producto.descripcion }}
+          </p>
+
+          <!-- Prices -->
+          <div class="catalogo-card__prices">
+            <div
+              v-if="canViewPurchasePrice"
+              class="catalogo-card__price catalogo-card__price--purchase"
+            >
+              <span class="catalogo-card__price-label">Compra</span>
+              <span class="catalogo-card__price-value">
+                {{ formatNotCurrency(Number(producto.precioCompra) || 0) }}
+              </span>
+            </div>
+            <div
+              v-if="hasDiscount(producto)"
+              class="catalogo-card__price catalogo-card__price--list"
+            >
+              <span class="catalogo-card__price-label">Lista</span>
+              <span class="catalogo-card__price-value">
+                <s>{{ formatNotCurrency(producto.precioOfrecido) }}</s>
+              </span>
+            </div>
+            <div class="catalogo-card__price catalogo-card__price--final">
+              <span class="catalogo-card__price-label">
+                {{ hasDiscount(producto) ? 'Oferta' : 'Venta' }}
+              </span>
+              <span class="catalogo-card__price-value">
+                Bs. {{ formatNotCurrency(producto.precioFinal) }}
+              </span>
+            </div>
+          </div>
+          <!-- Stock + actions -->
+          <div class="catalogo-card__footer">
+            <div class="catalogo-card__stock">
+              <q-icon
+                :name="stockState(producto).icon"
+                :class="`catalogo-card__stock-icon--${stockState(producto).tone}`"
+                size="18px"
+              />
+              <span class="catalogo-card__stock-value">{{ producto.stock }}</span>
+              <span class="catalogo-card__stock-label">en stock</span>
+            </div>
+            <div v-if="esMovil" class="catalogo-card__actions">
+              <q-btn
+                round
+                unelevated
+                size="sm"
+                color="primary"
+                text-color="white"
+                icon="qr_code_2"
+                class="catalogo-card__fab"
+                @click.stop="emit('ver-qr', producto)"
+              >
+                <q-tooltip>Ver QR</q-tooltip>
+              </q-btn>
+              <q-btn
+                v-if="canEdit"
+                round
+                unelevated
+                size="sm"
+                color="primary"
+                text-color="white"
+                icon="edit"
+                class="catalogo-card__fab"
+                @click.stop="emit('editar', producto)"
+              >
+                <q-tooltip>Editar producto</q-tooltip>
+              </q-btn>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</template>
+
 <style scoped lang="scss">
-.catalogo-card {
-  transition:
-    box-shadow 0.2s,
-    transform 0.15s;
-  cursor: default;
-  height: 100%;
+.catalogo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+.catalogo-grid__item {
+  display: flex;
+  animation: card-enter 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--stagger, 0ms);
+}
+
+.catalogo-empty {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
-  border-radius: var(--sgi-radius-lg);
-
-  &:hover {
-    box-shadow: var(--sgi-shadow-lg);
-    transform: translateY(-4px);
-  }
-
-  > .q-card__section:last-child {
-    margin-top: auto;
-  }
-}
-
-.card-image-wrapper {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--sgi-radius-lg) var(--sgi-radius-lg) 0 0;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--sgi-primary) 8%, transparent), transparent),
-    var(--sgi-surface-alt);
-  aspect-ratio: 16 / 9;
-  display: flex;
   align-items: center;
   justify-content: center;
-
-  :deep(.q-img) {
-    width: 100%;
-    height: 100%;
-  }
-
-  :deep(.imagen-preview) {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  text-align: center;
+  padding: 80px 24px;
+  border-radius: 18px;
+  background: var(--sgi-surface-soft);
+  border: 1px dashed var(--sgi-border);
 }
 
-.card-image-wrapper--clickable {
-  cursor: pointer;
+.catalogo-empty__art {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--sgi-primary) 10%, transparent);
+  color: var(--sgi-primary);
+  margin-bottom: 16px;
 }
 
-.card-image-overlay {
-  position: absolute;
-  bottom: 6px;
-  right: 6px;
+.catalogo-empty__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--sgi-text);
+}
+
+.catalogo-empty__text {
+  margin: 6px 0 0;
+  color: var(--sgi-text-muted);
+  max-width: 320px;
+}
+
+.catalogo-card {
+  position: relative;
   display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s;
+  flex-direction: column;
+  width: 100%;
+  border-radius: 16px;
+  background: var(--sgi-surface-soft);
+  border: 1px solid var(--sgi-border);
+  overflow: hidden;
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 200ms ease;
+  box-shadow: 0 6px 18px rgba(15, 23, 40, 0.05);
 }
 
-.card-image-wrapper:hover .card-image-overlay {
+.catalogo-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 38px rgba(15, 23, 40, 0.12);
+  border-color: color-mix(in srgb, var(--sgi-primary) 25%, var(--sgi-border));
+}
+
+.catalogo-card--skeleton {
+  pointer-events: none;
+  animation: none;
+}
+
+.catalogo-card__ribbon {
+  position: absolute;
+  top: 12px;
+  right: -36px;
+  transform: rotate(40deg);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 44px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.catalogo-card__ribbon--positive {
+  background: var(--sgi-positive);
+}
+.catalogo-card__ribbon--warning {
+  background: var(--sgi-warning);
+  color: #2a1a00;
+}
+.catalogo-card__ribbon--negative {
+  background: var(--sgi-negative);
+}
+
+.catalogo-card__image {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sgi-primary) 6%, transparent),
+      transparent 70%
+    ),
+    var(--sgi-surface-alt);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: not-allowed;
+}
+
+.catalogo-card__image--clickable {
+  cursor: zoom-in;
+}
+
+.catalogo-card__image :deep(.q-img) {
+  width: 100%;
+  height: 100%;
+}
+
+.catalogo-card__image-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.catalogo-card:hover .catalogo-card__image-overlay {
   opacity: 1;
+  transform: translateY(0);
+}
+
+.catalogo-card__fab {
+  box-shadow: 0 6px 14px rgba(15, 23, 40, 0.22);
 }
 
 @media (hover: none) {
-  .card-image-overlay {
+  .catalogo-card__image-overlay {
     opacity: 1;
+    transform: none;
   }
 }
 
-.card-fab {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-  width: 28px;
-  height: 28px;
+.catalogo-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 16px;
+  flex: 1;
+}
 
-  .q-icon {
-    font-size: 16px;
+.catalogo-card__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.catalogo-card__sucursal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--sgi-primary);
+  background: color-mix(in srgb, var(--sgi-primary) 10%, transparent);
+  padding: 3px 8px;
+  border-radius: 6px;
+  max-width: 100%;
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
 .catalogo-card__marca {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--sgi-warning);
-  font-size: 0.8rem;
-  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
 }
 
 .catalogo-card__sku {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
   color: var(--sgi-text-muted);
-  font-size: 0.9rem;
-  flex-shrink: 0;
+  background: color-mix(in srgb, var(--sgi-text-muted) 12%, transparent);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40%;
 }
 
-.catalogo-card__description {
-  min-height: 2.2em;
-  font-size: 0.75rem;
+.catalogo-card__nombre {
+  margin: 2px 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--sgi-text);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.catalogo-card__descripcion {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--sgi-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .catalogo-card__prices {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .catalogo-card__price {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 6px 7px !important;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sgi-surface) 88%, transparent);
   border: 1px solid var(--sgi-border);
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--sgi-surface) 84%, transparent);
+}
+
+.catalogo-card__price--final {
+  grid-column: 1 / -1;
+  background: color-mix(in srgb, var(--sgi-positive) 10%, transparent);
+  border-color: color-mix(in srgb, var(--sgi-positive) 24%, var(--sgi-border));
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
 }
 
 .catalogo-card__price-label {
-  color: var(--sgi-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
-  white-space: nowrap;
+  letter-spacing: 0.06em;
+  color: var(--sgi-text-muted);
 }
 
 .catalogo-card__price-value {
-  font-size: 0.85rem;
-  text-align: right;
-  font-weight: 800;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--sgi-text);
 }
 
 .catalogo-card__price--purchase .catalogo-card__price-value {
@@ -313,80 +536,90 @@ function stockColor(producto: ProductoCatalogo): { chip: string; text: string; i
 }
 
 .catalogo-card__price--list .catalogo-card__price-value {
-  color: var(--sgi-secondary);
+  color: var(--sgi-text-muted);
+  font-weight: 500;
+  font-size: 0.82rem;
 }
 
 .catalogo-card__price--final .catalogo-card__price-value {
+  font-size: 1.15rem;
+  font-weight: 800;
   color: var(--sgi-positive);
-  font-size: 0.95rem;
+  letter-spacing: -0.01em;
 }
 
-.text-mono {
-  font-family: monospace;
+.catalogo-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid color-mix(in srgb, var(--sgi-border) 60%, transparent);
 }
 
-.ellipsis-2-lines {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.catalogo-card__stock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-@media (max-width: 599px) {
+.catalogo-card__stock-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--sgi-text);
+}
+
+.catalogo-card__stock-label {
+  font-size: 0.72rem;
+  color: var(--sgi-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.catalogo-card__stock-icon--positive {
+  color: var(--sgi-positive);
+}
+.catalogo-card__stock-icon--warning {
+  color: var(--sgi-warning);
+}
+.catalogo-card__stock-icon--negative {
+  color: var(--sgi-negative);
+}
+
+.catalogo-card__actions {
+  display: flex;
+  gap: 2px;
+}
+
+@media (max-width: 380px) {
   .catalogo-card__prices {
     grid-template-columns: 1fr;
-    gap: 6px;
   }
-
-  .catalogo-card__price {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 10px;
-  }
-
-  .catalogo-card__price-value {
-    font-size: 0.9rem;
-  }
-
-  .catalogo-card__price--final .catalogo-card__price-value {
-    font-size: 0.95rem;
-  }
-}
-
-@media (min-width: 600px) and (max-width: 1023px) {
-  .catalogo-card__prices {
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-  }
-
   .catalogo-card__price--final {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    grid-column: 1;
   }
 }
 
-@media (min-width: 1024px) and (max-width: 1439px) {
-  .catalogo-card__prices {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
+@media (prefers-reduced-motion: reduce) {
+  .catalogo-grid__item,
+  .catalogo-card,
+  .catalogo-card__image-overlay {
+    animation: none;
+    transition: none;
   }
 }
 
-@media (min-width: 1440px) {
-  .catalogo-card__prices {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
-
-  .catalogo-card__price {
-    padding: 8px 10px;
-  }
-
-  .catalogo-card__price-value {
-    font-size: 0.9rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

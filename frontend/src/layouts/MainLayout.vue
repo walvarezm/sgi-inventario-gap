@@ -25,37 +25,24 @@
         </q-btn>-->
 
         <div class="sgi-theme-toggle q-ml-sm">
-          <q-btn-toggle
-            v-model="selectedThemeModel"
-            unelevated
-            rounded
-            no-caps
-            spread
-            toggle-color="transparent"
-            color="transparent"
-            text-color="grey-7"
-            :options="themeToggleOptions"
-            @update:model-value="selectTheme"
+          <button
+            type="button"
+            class="sgi-theme-toggle__btn"
+            :class="{ 'sgi-theme-toggle__btn--dark': themeStore.isDark }"
+            :aria-label="themeStore.isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+            :aria-pressed="themeStore.isDark"
+            @click="themeStore.toggleTheme()"
           >
-            <template #light>
-              <div class="sgi-theme-toggle__option">
-                <q-icon name="light_mode" size="16px" />
-                <span class="sgi-theme-toggle__label">Claro</span>
-              </div>
-            </template>
-            <template #medium>
-              <div class="sgi-theme-toggle__option">
-                <q-icon name="desktop_windows" size="16px" />
-                <span class="sgi-theme-toggle__label">Medio</span>
-              </div>
-            </template>
-            <template #dark>
-              <div class="sgi-theme-toggle__option">
-                <q-icon name="dark_mode" size="16px" />
-                <span class="sgi-theme-toggle__label">Oscuro</span>
-              </div>
-            </template>
-          </q-btn-toggle>
+            <span class="sgi-theme-toggle__thumb">
+              <q-icon
+                :name="themeStore.isDark ? 'dark_mode' : 'light_mode'"
+                size="16px"
+              />
+            </span>
+            <span class="sgi-theme-toggle__hint">
+              {{ themeStore.isDark ? 'Oscuro' : 'Claro' }}
+            </span>
+          </button>
         </div>
 
         <q-btn flat round class="q-ml-sm">
@@ -136,7 +123,7 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
-import { useThemeStore, type AppTheme } from 'src/stores/themeStore'
+import { useThemeStore } from 'src/stores/themeStore'
 import { ROL_LABELS } from 'src/types'
 import type { Rol } from 'src/types'
 
@@ -164,20 +151,10 @@ const avatarLetra = computed(() =>
 const rolLabel = computed(() => (authStore.rol ? ROL_LABELS[authStore.rol as Rol] : ''))
 const appVersion = computed(() => import.meta.env.VITE_APP_VERSION)
 const scrollTopButtonOffset = computed<[number, number]>(() => [18, isMobile.value ? 18 : 64])
-const selectedThemeModel = computed({
-  get: () => themeStore.selectedTheme,
-  set: (value: AppTheme) => themeStore.setTheme(value),
-})
 const sucursalActiva = computed(() => {
   if (!authStore.sucursalId || authStore.sucursalId === 'ALL') return null
   return sucursalStore.getById(authStore.sucursalId)
 })
-
-const themeToggleOptions = [
-  { value: 'light', slot: 'light' },
-  { value: 'medium', slot: 'medium' },
-  { value: 'dark', slot: 'dark' },
-]
 
 const navItems = [
   { name: 'dashboard', label: 'Dashboard', icon: 'dashboard', permission: 'dashboard.ver' },
@@ -212,10 +189,6 @@ function canSeeItem(item: { permission?: string; anyPermissions?: string[] }): b
 
 function toggleDrawer(): void {
   drawerOpen.value = !drawerOpen.value
-}
-
-function selectTheme(theme: AppTheme): void {
-  themeStore.setTheme(theme)
 }
 
 async function logout(): Promise<void> {
@@ -314,39 +287,82 @@ onMounted(async () => {
   box-shadow: 0 10px 24px rgba(15, 23, 40, 0.18);
 }
 .sgi-theme-toggle {
-  width: 240px;
-}
-
-.sgi-theme-toggle :deep(.q-btn-toggle) {
-  width: 100%;
-  padding: 4px;
-  border: 1px solid var(--sgi-border);
-  background: color-mix(in srgb, var(--sgi-surface) 90%, transparent);
-  border-radius: 16px;
-}
-
-.sgi-theme-toggle :deep(.q-btn) {
-  min-height: 38px;
-  color: var(--sgi-text-muted) !important;
-  border-radius: 12px !important;
-}
-
-.sgi-theme-toggle :deep(.q-btn[aria-pressed='true']) {
-  background: color-mix(in srgb, var(--sgi-surface-alt) 86%, white) !important;
-  color: var(--sgi-text) !important;
-  box-shadow: 0 4px 14px rgba(15, 23, 40, 0.08);
-}
-
-.sgi-theme-toggle__option {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
 }
 
-.sgi-theme-toggle__label {
-  font-size: 0.84rem;
-  font-weight: 500;
+// ── Sun/Moon switch button ─────────────────────────────────────
+.sgi-theme-toggle__btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px 0 4px;
+  border: 1px solid var(--sgi-border);
+  background: var(--sgi-surface-soft);
+  color: var(--sgi-text);
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition:
+    background var(--sgi-dur-normal) var(--sgi-ease-out),
+    border-color var(--sgi-dur-normal) var(--sgi-ease-out),
+    color var(--sgi-dur-normal) var(--sgi-ease-out),
+    box-shadow var(--sgi-dur-normal) var(--sgi-ease-out);
+}
+
+.sgi-theme-toggle__btn:hover {
+  border-color: var(--sgi-border-strong);
+  background: var(--sgi-surface);
+  box-shadow: var(--sgi-shadow-sm);
+}
+
+.sgi-theme-toggle__btn:focus-visible {
+  outline: 2px solid var(--sgi-primary);
+  outline-offset: 2px;
+}
+
+.sgi-theme-toggle__thumb {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #fff7e6;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+  transition:
+    background var(--sgi-dur-normal) var(--sgi-ease-out),
+    transform var(--sgi-dur-normal) var(--sgi-ease-spring),
+    box-shadow var(--sgi-dur-normal) var(--sgi-ease-out);
+}
+
+.sgi-theme-toggle__btn--dark .sgi-theme-toggle__thumb {
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #e0e7ff;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  transform: rotate(360deg);
+}
+
+.sgi-theme-toggle__hint {
+  color: var(--sgi-text-secondary);
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  .sgi-theme-toggle__hint {
+    display: none;
+  }
+  .sgi-theme-toggle__btn {
+    padding: 0 4px 0 4px;
+    width: 38px;
+    justify-content: center;
+  }
 }
 :deep(.sgi-nav-active) {
   background: color-mix(in srgb, var(--sgi-primary) 18%, transparent) !important;

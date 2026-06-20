@@ -26,6 +26,7 @@
         :src="imagenUrl"
         :style="imgStyle"
         :fit="props.type === 'view' ? 'contain' : 'cover'"
+        position="50% 50%"
         class="q-pa-md bg-img-custom"
         loading="lazy"
       >
@@ -51,18 +52,18 @@
 
       <div
         v-else
-        class="flex flex-center bg-grey-12 text-grey-7 q-card--bordered justify-center q-my-none card-image-wrapper"
+        class="flex flex-center bg-grey-14 text-grey-7 justify-center q-my-none card-image-wrapper placeholder-img"
         :style="sizeStyleError"
       >
         <q-icon
           name="broken_image"
           color="grey-5"
           size="md"
-          class="absolute q-mt-none"
+          class="relative-position"
           style="opacity: 0.5"
         />
         <span
-          class="text-caption q-mt-none text-caption-error"
+          class="text-caption q-mt-none text-caption-error text-grey-1"
           style="font-size: 0.8rem; max-height: 100px"
         >
           Sin imagen
@@ -125,7 +126,7 @@ const heightPx = computed(() => {
 
 const maxWidthImg = computed(() => {
   if (props.type === 'card') return (props.width * 2) / 10 + 'rem'
-  if (props.type === 'view') return props.width + '%'
+  if (props.type === 'view') return props.width / 2 + 'vw'
   return props.width + '%'
 })
 
@@ -137,12 +138,12 @@ const maxHeightImg = computed(() => {
 
 const imgStyle = computed(
   () =>
-    `width: ${maxWidthImg.value}; max-width: 100%; max-height: ${maxHeightImg.value}; height: ${maxHeightImg.value}; `,
+    `width: ${maxWidthImg.value}; max-width: 100%; max-height: ${maxHeightImg.value}; height: ${maxHeightImg.value};`,
 )
 
 const sizeStyleError = computed(() => {
   if (props.type === 'table') {
-    return `width: ${widthPx.value}; height: ${heightPx.value}; text-align: center; border-radius: 3px; margin: 0`
+    return `width: ${widthPx.value}; height: ${heightPx.value}; text-align: center`
   }
   return `width: ${widthPx.value}; max-width: 100%; max-height: ${heightPx.value}; height: ${heightPx.value}; border-radius: 5px;`
 })
@@ -154,11 +155,13 @@ const sizeStyleError = computed(() => {
   border: 2px dashed var(--sgi-border);
   border-radius: 3px;
   background: var(--sgi-surface-alt);
+  padding: 2px;
+  margin: 0;
 }
 .bg-img-custom {
   border: 1px solid var(--sgi-border);
   border-radius: 3px !important;
   background: color-mix(in srgb, var(--sgi-surface-alt) 25%, transparent);
-  padding: 10px;
+  padding: 20px;
 }
 </style>

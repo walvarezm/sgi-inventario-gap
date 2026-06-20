@@ -1,147 +1,267 @@
 // =============================================================
-// app.scss — Estilos globales SGI
+// app.scss — Design system SGI v2
+// Paleta: Indigo (brand) + Cyan (accent) · 2 temas: light/dark
 // =============================================================
 
+// ── Tipografía ──────────────────────────────────────────────────
+$font-family-sans:
+  'Inter var',
+  'Inter',
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  'Segoe UI Variable',
+  Roboto,
+  'Helvetica Neue',
+  Arial,
+  system-ui,
+  sans-serif;
+
+$font-family-mono:
+  'JetBrains Mono',
+  'Fira Code',
+  ui-monospace,
+  SFMono-Regular,
+  Menlo,
+  Monaco,
+  Consolas,
+  'Liberation Mono',
+  'Courier New',
+  monospace;
+
+// ── DESIGN TOKENS (compartidos) ────────────────────────────────
 :root {
-  --sgi-primary: #4b5563;
-  --sgi-secondary: #6b7280;
-  --sgi-accent: #9ca3af;
-  --sgi-positive: #27ae60;
-  --sgi-negative: #ff6b6b;
-  --sgi-warning: #ffb020;
-  --sgi-info: #31ccec;
-  --sgi-info-2: #7c8798;
+  // Brand (Indigo)
+  --sgi-primary:        #4f46e5;
+  --sgi-primary-hover:  #4338ca;
+  --sgi-primary-active: #3730a3;
+  --sgi-primary-soft:   rgba(79, 70, 229, 0.10);
+  --sgi-primary-glow:   rgba(79, 70, 229, 0.30);
 
-  --sgi-surface: #fdfefe;
-  --sgi-surface-alt: #f1f3f6;
-  --sgi-surface-soft: rgba(255, 255, 255, 0.74);
-  --sgi-border: rgba(131, 139, 154, 0.24);
-  --sgi-text: #1f2937;
-  --sgi-text-muted: #6b7280;
-  --sgi-header-table: #f5f6f8;
-  --sgi-page-gradient: radial-gradient(circle at top left, rgba(203, 213, 225, 0.28), transparent 28%);
-  --sgi-header-bg: linear-gradient(135deg, #f9fafb 0%, #f1f3f6 100%);
-  --sgi-chip-bg: rgba(75, 85, 99, 0.08);
-  --sgi-chip-text: #374151;
+  // Accent (Cyan)
+  --sgi-accent:         #06b6d4;
+  --sgi-accent-hover:   #0891b2;
+  --sgi-accent-soft:    rgba(6, 182, 212, 0.10);
 
-  --sgi-sidebar-width: 272px;
-  --sgi-header-height: 64px;
-  --sgi-radius: 5px;
-  --sgi-radius-lg: 22px;
-  --sgi-shadow: 0 18px 44px rgba(15, 23, 40, 0.08);
-  --sgi-shadow-lg: 0 24px 64px rgba(15, 23, 40, 0.16);
+  // Semánticos
+  --sgi-positive:       #10b981;
+  --sgi-positive-soft:  rgba(16, 185, 129, 0.10);
+  --sgi-negative:       #ef4444;
+  --sgi-negative-soft:  rgba(239, 68, 68, 0.10);
+  --sgi-warning:        #f59e0b;
+  --sgi-warning-soft:   rgba(245, 158, 11, 0.12);
+  --sgi-info:           #0ea5e9;
+  --sgi-info-soft:      rgba(14, 165, 233, 0.10);
+
+  // Layout
+  --sgi-sidebar-width:  272px;
+  --sgi-header-height:  64px;
+  --sgi-radius-sm:      8px;
+  --sgi-radius:         12px;
+  --sgi-radius-lg:      18px;
+  --sgi-radius-xl:      24px;
+
+  // Motion
+  --sgi-ease-out:       cubic-bezier(0.16, 1, 0.3, 1);
+  --sgi-ease-in-out:    cubic-bezier(0.4, 0, 0.2, 1);
+  --sgi-ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --sgi-dur-fast:       150ms;
+  --sgi-dur-normal:     220ms;
+  --sgi-dur-slow:       380ms;
+}
+
+// ── LIGHT THEME ─────────────────────────────────────────────────
+body.sgi-theme-light {
+  // Superficies
+  --sgi-surface:        #ffffff;
+  --sgi-surface-alt:    #f8fafc;   // slate-50 — page bg
+  --sgi-surface-soft:   rgba(255, 255, 255, 0.82);
+  --sgi-surface-raised: #ffffff;
+  --sgi-surface-sunken: #f1f5f9;   // slate-100
+  --sgi-surface-inverse:#0f172a;   // slate-900
+
+  // Bordes
+  --sgi-border:         #e2e8f0;   // slate-200
+  --sgi-border-subtle:  #eef2f7;
+  --sgi-border-strong:  #cbd5e1;   // slate-300
+
+  // Texto
+  --sgi-text:           #0f172a;   // slate-900
+  --sgi-text-secondary: #475569;   // slate-600
+  --sgi-text-muted:     #94a3b8;   // slate-400
+  --sgi-text-inverse:   #f8fafc;   // slate-50
+
+  // Brand tints ajustados para light
+  --sgi-primary-soft:   rgba(79, 70, 229, 0.08);
+  --sgi-primary-glow:   rgba(79, 70, 229, 0.20);
+
+  // Chips
+  --sgi-chip-bg:        rgba(15, 23, 42, 0.05);
+  --sgi-chip-text:      #334155;
+
+  // Tablas
+  --sgi-header-table:   #f8fafc;   // slate-50 (más sutil)
+  --sgi-table-row:      #ffffff;
+  --sgi-table-row-alt:  #fbfdff;
+
+  // Header / hero
+  --sgi-header-bg:      #ffffff;
+  --sgi-page-gradient:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(79, 70, 229, 0.06), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 0%, rgba(6, 182, 212, 0.05), transparent 60%);
+
+  // Sombras (más sutiles y modernas)
+  --sgi-shadow-xs:      0 1px 2px rgba(15, 23, 42, 0.04);
+  --sgi-shadow-sm:      0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --sgi-shadow:         0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --sgi-shadow-md:      0 10px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --sgi-shadow-lg:      0 20px 40px rgba(15, 23, 42, 0.10), 0 4px 12px rgba(15, 23, 42, 0.05);
+  --sgi-shadow-color:   rgba(15, 23, 42, 0.08);
+  --sgi-focus-ring:     0 0 0 3px rgba(79, 70, 229, 0.20);
+}
+
+// ── DARK THEME ──────────────────────────────────────────────────
+body.sgi-theme-dark {
+  // Superficies — paleta "deep dark" moderna
+  --sgi-surface:        #14171f;   // card bg
+  --sgi-surface-alt:    #0b0d12;   // page bg (más profundo)
+  --sgi-surface-soft:   rgba(20, 23, 31, 0.78);
+  --sgi-surface-raised: #1a1d27;   // hovers / popovers
+  --sgi-surface-sunken: #08090d;
+  --sgi-surface-inverse:#f8fafc;
+
+  // Bordes
+  --sgi-border:         #252932;
+  --sgi-border-subtle:  #1d2029;
+  --sgi-border-strong:  #353945;
+
+  // Texto
+  --sgi-text:           #f1f5f9;   // slate-100
+  --sgi-text-secondary: #cbd5e1;   // slate-300
+  --sgi-text-muted:     #64748b;   // slate-500
+  --sgi-text-inverse:   #0f172a;
+
+  // Brand (más luminoso para contraste)
+  --sgi-primary:        #818cf8;   // indigo-400
+  --sgi-primary-hover:  #a5b4fc;   // indigo-300
+  --sgi-primary-active: #c7d2fe;   // indigo-200
+  --sgi-primary-soft:   rgba(129, 140, 248, 0.14);
+  --sgi-primary-glow:   rgba(129, 140, 248, 0.30);
+
+  // Accent
+  --sgi-accent:         #22d3ee;   // cyan-400
+  --sgi-accent-hover:   #67e8f9;   // cyan-300
+  --sgi-accent-soft:    rgba(34, 211, 238, 0.14);
+
+  // Semánticos
+  --sgi-positive:       #34d399;   // emerald-400
+  --sgi-positive-soft:  rgba(52, 211, 153, 0.14);
+  --sgi-negative:       #f87171;   // red-400
+  --sgi-negative-soft:  rgba(248, 113, 113, 0.14);
+  --sgi-warning:        #fbbf24;   // amber-400
+  --sgi-warning-soft:   rgba(251, 191, 36, 0.14);
+  --sgi-info:           #38bdf8;   // sky-400
+  --sgi-info-soft:      rgba(56, 189, 248, 0.14);
+
+  // Chips
+  --sgi-chip-bg:        rgba(241, 245, 249, 0.08);
+  --sgi-chip-text:      #e2e8f0;
+
+  // Tablas
+  --sgi-header-table:   #1a1d27;
+  --sgi-table-row:      #14171f;
+  --sgi-table-row-alt:  #171a22;
+
+  // Header / hero
+  --sgi-header-bg:      #14171f;
+  --sgi-page-gradient:
+    radial-gradient(ellipse 80% 60% at 0% 0%, rgba(129, 140, 248, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 0%, rgba(34, 211, 238, 0.06), transparent 60%);
+
+  // Sombras (más profundas en dark mode)
+  --sgi-shadow-xs:      0 1px 2px rgba(0, 0, 0, 0.30);
+  --sgi-shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.30);
+  --sgi-shadow:         0 4px 12px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
+  --sgi-shadow-md:      0 10px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.30);
+  --sgi-shadow-lg:      0 20px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --sgi-shadow-color:   rgba(0, 0, 0, 0.40);
+  --sgi-focus-ring:     0 0 0 3px rgba(129, 140, 248, 0.30);
+}
+
+// ── RESET y base ────────────────────────────────────────────────
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
 }
 
 body {
-  font-family:
-    'Segoe UI Variable',
-    'Segoe UI',
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: $font-family-sans;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--sgi-text);
   background: var(--sgi-surface-alt);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  // Transición suave de tema al cambiar
+  transition:
+    background-color var(--sgi-dur-slow) var(--sgi-ease-out),
+    color var(--sgi-dur-slow) var(--sgi-ease-out);
 }
 
-body.sgi-theme-light {
-  --sgi-primary: #444f60;
-  --sgi-secondary: #687385;
-  --sgi-accent: #9ea6b2;
-  --sgi-positive: #1f9d61;
-  --sgi-negative: #d6455d;
-  --sgi-warning: #ef9b16;
-  --sgi-surface: #fbfdff;
-  --sgi-surface-alt: #f2f4f7;
-  --sgi-surface-soft: rgba(255, 255, 255, 0.78);
-  --sgi-border: rgba(120, 130, 145, 0.22);
-  --sgi-text: #1f2937;
-  --sgi-text-muted: #6b7280;
-  --sgi-header-table-old: #f5f6f8;
-  --sgi-header-table: #dbdde0;
-  --sgi-page-gradient: radial-gradient(circle at top left, rgba(209, 213, 219, 0.3), transparent 28%);
-  --sgi-header-bg: linear-gradient(135deg, #fafafa 0%, #f0f2f5 100%);
-  --sgi-chip-bg: rgba(75, 85, 99, 0.08);
-  --sgi-chip-text: #374151;
+// Aplicar transición a las superficies y elementos principales
+body,
+.sgi-page,
+.sgi-card,
+.sgi-table,
+.q-header,
+.q-drawer,
+.q-card,
+.q-dialog__inner > .q-card,
+.sgi-table table thead tr th,
+.sgi-table tbody tr {
+  transition:
+    background-color var(--sgi-dur-slow) var(--sgi-ease-out),
+    color var(--sgi-dur-slow) var(--sgi-ease-out),
+    border-color var(--sgi-dur-slow) var(--sgi-ease-out);
 }
 
-body.body--dark.sgi-theme-medium {
-  --sgi-primary: #d9dde4;
-  --sgi-secondary: #afb7c2;
-  --sgi-accent: #8f98a5;
-  --sgi-positive: #4dd38e;
-  --sgi-negative: #ff8a8a;
-  --sgi-warning: #ffc857;
-  --sgi-info-2: #c4ccd8;
-  --sgi-info: #31ccec;
-  --sgi-surface: #484f59;
-  --sgi-surface-alt: #3f454e;
-  --sgi-surface-soft: rgba(72, 79, 89, 0.82);
-  --sgi-border: rgba(222, 226, 232, 0.14);
-  --sgi-text: #f7f7f8;
-  --sgi-text-muted: #d1d5db;
-  --sgi-header-table-old: rgba(79, 85, 95, 0.95);
-  --sgi-header-table: #3F3F40;
-  --sgi-page-gradient: radial-gradient(circle at top left, rgba(229, 231, 235, 0.1), transparent 30%);
-  --sgi-header-bg: linear-gradient(135deg, #555d68 0%, #454c56 100%);
-  --sgi-chip-bg: rgba(243, 244, 246, 0.12);
-  --sgi-chip-text: #f9fafb;
+code, pre, .font-mono {
+  font-family: $font-family-mono;
+  font-variant-numeric: tabular-nums;
 }
 
-body.body--dark.sgi-theme-dark {
-  --sgi-primary: #f3f4f6;
-  --sgi-secondary: #d1d5db;
-  --sgi-accent: #9ca3af;
-  --sgi-positive: #56d38d;
-  --sgi-negative: #ff8f8f;
-  --sgi-warning: #ffc15d;
-  --sgi-info-2: #cbd5e1;
-  --sgi-info: #31ccec;
-  --sgi-surface: #17181b;
-  --sgi-surface-alt: #111214;
-  --sgi-surface-soft: rgba(23, 24, 27, 0.84);
-  --sgi-border: rgba(255, 255, 255, 0.08);
-  --sgi-text: #f8fafc;
-  --sgi-text-muted: #a1a1aa;
-  --sgi-header-table: #434343;
-  --sgi-header-tabled: rgba(26, 28, 31, 0.95);
-  --sgi-page-gradient: radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 26%);
-  --sgi-header-bg: linear-gradient(135deg, #131416 0%, #1c1e21 100%);
-  --sgi-chip-bg: rgba(255, 255, 255, 0.08);
-  --sgi-chip-text: #f8fafc;
-}
-
+// ── Quasar overrides de tema ───────────────────────────────────
 .body--dark {
   --q-negative: var(--sgi-negative);
 }
 
-.text-primary {
-  color: var(--sgi-primary) !important;
+// ── Utilidades ─────────────────────────────────────────────────
+.text-primary   { color: var(--sgi-primary) !important; }
+.bg-primary     { background: var(--sgi-primary) !important; }
+.text-muted     { color: var(--sgi-text-muted) !important; }
+.text-warning-c { color: var(--sgi-warning) !important; }
+.stock-bajo     { color: var(--sgi-warning); font-weight: 700; }
+.stock-ok       { color: var(--sgi-positive); }
+
+// Focus visible global
+*:focus-visible {
+  outline: 2px solid var(--sgi-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-.bg-primary {
-  background: var(--sgi-primary) !important;
-}
-
-.sgi-card {
-  border-radius: var(--sgi-radius-lg);
-  box-shadow: var(--sgi-shadow);
-  background: var(--sgi-surface-soft);
-  border: 1px solid var(--sgi-border);
-  backdrop-filter: blur(16px);
-
-  .text-caption-error {
-    display: block;
-  }
-}
-
+// ── Page ───────────────────────────────────────────────────────
 .sgi-page {
   min-height: 100%;
   padding: 24px;
   background:
     var(--sgi-page-gradient),
-    linear-gradient(180deg, color-mix(in srgb, var(--sgi-surface-alt) 86%, transparent), var(--sgi-surface-alt));
+    var(--sgi-surface-alt);
+  color: var(--sgi-text);
 }
 
 .sgi-page-title {
@@ -149,36 +269,39 @@ body.body--dark.sgi-theme-dark {
   color: var(--sgi-text);
   font-size: clamp(1.5rem, 2vw, 2rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
 }
 
 .sgi-page-subtitle {
-  color: var(--sgi-text-muted);
+  color: var(--sgi-text-secondary);
+  font-size: 0.95rem;
 }
 
-.text-warning-c {
-  color: var(--sgi-warning);
+// ── Card base ──────────────────────────────────────────────────
+.sgi-card {
+  border-radius: var(--sgi-radius-lg);
+  box-shadow: var(--sgi-shadow);
+  background: var(--sgi-surface-soft);
+  border: 1px solid var(--sgi-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  .text-caption-error {
+    display: block;
+  }
 }
 
-.text-muted {
-  color: var(--sgi-text-muted);
-}
-
-.stock-bajo {
-  color: var(--sgi-warning);
-  font-weight: 700;
-}
-
-.stock-ok {
-  color: var(--sgi-positive);
-}
-
+// ── Table ──────────────────────────────────────────────────────
 .sgi-table {
   border-radius: var(--sgi-radius-lg);
   overflow: hidden;
+  background: var(--sgi-surface);
+  border: 1px solid var(--sgi-border);
 
   .q-table__top {
     padding: 12px 16px;
+    color: var(--sgi-text-secondary);
   }
 
   .q-table__middle {
@@ -190,21 +313,30 @@ body.body--dark.sgi-theme-dark {
   }
 
   thead tr th {
-    color: var(--sgi-text);
+    color: var(--sgi-text-secondary);
     background: var(--sgi-header-table);
     border-top: 1px solid var(--sgi-border) !important;
     border-bottom: 1px solid var(--sgi-border) !important;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    padding: 12px 8px !important;
-
+    padding: 12px 12px !important;
+    white-space: nowrap;
   }
 
   tbody tr {
-    background: color-mix(in srgb, var(--sgi-surface) 86%, transparent);
-    border-bottom: 1px solid var(--sgi-border);
+    background: var(--sgi-table-row);
+    border-bottom: 1px solid var(--sgi-border-subtle);
+    transition: background-color var(--sgi-dur-fast) var(--sgi-ease-out);
+  }
+
+  tbody tr:nth-child(even) {
+    background: var(--sgi-table-row-alt);
+  }
+
+  tbody tr:hover {
+    background: var(--sgi-primary-soft);
   }
 
   .text-caption-error {
@@ -218,63 +350,26 @@ body.body--dark.sgi-theme-dark {
     -webkit-line-clamp: 1 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
-
-    /*display: inline-block;*/
-    /*overflow: hidden;*/
     text-overflow: ellipsis;
     white-space: nowrap !important;
   }
 
-
-  .tabla-col-5 {
-    max-width: 5vw;
-    min-width: 5vw;
-  }
-  .tabla-col-6 {
-    max-width: 6vw;
-    min-width: 6vw;
-  }
-  .tabla-col-8 {
-    max-width: 8vw;
-    min-width: 8vw;
-  }
-  .tabla-col-10 {
-    max-width: 10vw;
-    min-width: 10vw;
-  }
-  .tabla-col-20 {
-    max-width: 20vw;
-    min-width: 20vw;
-  }
-  .tabla-col-30 {
-    max-width: 30vw;
-    min-width: 30vw;
-  }
-  .tabla-col-35 {
-    max-width: 35vw;
-    min-width: 30vw;
-  }
-  .tabla-col-40 {
-    /*  width: 40%;*/
-    max-width: 40vw;
-    min-width: 40vw;
-  }
-  .tabla-col-50 {
-    width: 50%;
-  }
-  .tabla-col-60 {
-    width: 60%;
-  }
-  .tabla-col-80 {
-    width: 80%;
-  }
-  .tabla-col-100 {
-    width: 100%;
-  }
-
-
+  // Column width utilities
+  .tabla-col-5  { max-width: 5vw;  min-width: 5vw; }
+  .tabla-col-6  { max-width: 6vw;  min-width: 6vw; }
+  .tabla-col-8  { max-width: 8vw;  min-width: 8vw; }
+  .tabla-col-10 { max-width: 10vw; min-width: 10vw; }
+  .tabla-col-20 { max-width: 20vw; min-width: 20vw; }
+  .tabla-col-30 { max-width: 30vw; min-width: 30vw; }
+  .tabla-col-35 { max-width: 35vw; min-width: 30vw; }
+  .tabla-col-40 { max-width: 40vw; min-width: 40vw; }
+  .tabla-col-50 { width: 50%; }
+  .tabla-col-60 { width: 60%; }
+  .tabla-col-80 { width: 80%; }
+  .tabla-col-100 { width: 100%; }
 }
 
+// ── Filter toggle ──────────────────────────────────────────────
 .sgi-filter-toggle {
   color: var(--sgi-text);
   font-weight: 700;
@@ -288,6 +383,7 @@ body.body--dark.sgi-theme-dark {
   padding-top: 4px;
 }
 
+// ── Inputs (Quasar) — refinados para look moderno ──────────────
 input[type='number'],
 ::-webkit-inner-spin-button,
 ::-webkit-outer-spin-button {
@@ -296,58 +392,85 @@ input[type='number'],
   -moz-appearance: textfield;
 }
 
+// ── Scrollbar moderno ──────────────────────────────────────────
 ::-webkit-scrollbar {
   width: 10px;
   height: 7px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--sgi-text-muted) 48%, transparent);
+  background: color-mix(in srgb, var(--sgi-text-muted) 35%, transparent);
   border-radius: 999px;
+  transition: background var(--sgi-dur-fast) ease;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--sgi-text) 32%, var(--sgi-text-muted));
+  background: color-mix(in srgb, var(--sgi-text-secondary) 60%, transparent);
 }
 
+// Firefox scrollbar
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--sgi-text-muted) 35%, transparent) transparent;
+}
+
+// ── Quasar component refinements ───────────────────────────────
+// Inputs más modernos en ambos temas
+:deep(.q-field--outlined .q-field__control) {
+  border-radius: var(--sgi-radius-sm);
+  background: var(--sgi-surface);
+}
+
+:deep(.q-field--outlined.q-field--focused .q-field__control) {
+  box-shadow: var(--sgi-focus-ring);
+}
+
+:deep(.q-field--outlined .q-field__control:before) {
+  border-color: var(--sgi-border);
+}
+
+:deep(.q-field--outlined .q-field__control:hover:before) {
+  border-color: var(--sgi-border-strong);
+}
+
+// Botones con micro-interacciones
+:deep(.q-btn) {
+  letter-spacing: 0;
+  font-weight: 600;
+  transition:
+    transform var(--sgi-dur-fast) var(--sgi-ease-out),
+    box-shadow var(--sgi-dur-fast) var(--sgi-ease-out),
+    background-color var(--sgi-dur-fast) var(--sgi-ease-out);
+}
+
+:deep(.q-btn:not(.q-btn--flat):not(.q-btn--outline):hover) {
+  transform: translateY(-1px);
+}
+
+// Chips más modernos
+:deep(.q-chip) {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+// ── Container utility ──────────────────────────────────────────
 .container {
   height: 80vh;
 }
 
+// ── Responsive ─────────────────────────────────────────────────
 @media (max-width: 1024px) {
-  .container {
-    height: 72vh;
-  }
+  .container { height: 72vh; }
 }
 
 @media (max-width: 768px) {
-  .sgi-page {
-    padding: 16px;
-  }
-
-  .sgi-page-title {
-    font-size: 1.35rem;
-  }
-
-  .sgi-page-subtitle {
-    font-size: 0.92rem;
-  }
-
-  .container {
-    height: 68vh;
-  }
-
-  .sgi-table table {
-    min-width: 640px;
-  }
-
-  .sgi-card .q-card__section.row {
-    align-items: stretch;
-  }
+  .sgi-page { padding: 16px; }
+  .sgi-page-title { font-size: 1.35rem; }
+  .sgi-page-subtitle { font-size: 0.92rem; }
+  .container { height: 68vh; }
+  .sgi-table table { min-width: 640px; }
+  .sgi-card .q-card__section.row { align-items: stretch; }
 
   .q-dialog__inner > .q-card,
   .q-dialog__inner > .sgi-card {
@@ -361,45 +484,27 @@ input[type='number'],
     grid-template-columns: 1fr;
   }
 
-  .q-dialog .q-card__actions .q-btn {
-    width: 100%;
-  }
+  .q-dialog .q-card__actions .q-btn { width: 100%; }
 }
 
 @media (max-width: 480px) {
-  .sgi-page {
-    padding: 12px;
-  }
-
-  .sgi-page-button {
-    width: 100%;
-  }
-
-  .container {
-    height: 62vh;
-  }
+  .sgi-page { padding: 12px; }
+  .sgi-page-button { width: 100%; }
+  .container { height: 62vh; }
 }
 
 @media (min-height: 1200px) {
-  .container {
-    height: 80vh;
-  }
+  .container { height: 80vh; }
 }
 
-@media (min-width: 600px) {
-  .masonry-container {
-    columns: 2 auto;
-  }
-}
+@media (min-width: 600px)  { .masonry-container { columns: 2 auto; } }
+@media (min-width: 900px)  { .masonry-container { columns: 3 auto; } }
+@media (min-width: 1200px) { .masonry-container { columns: 4 auto; } }
 
-@media (min-width: 900px) {
-  .masonry-container {
-    columns: 3 auto;
-  }
-}
-
-@media (min-width: 1200px) {
-  .masonry-container {
-    columns: 4 auto;
+// ── Reduced motion ─────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
