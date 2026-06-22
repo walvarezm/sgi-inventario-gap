@@ -5,21 +5,26 @@
       <div>
         <div class="sgi-page-title">Dashboard</div>
         <div class="text-muted text-body2 q-mt-xs">
-          Bienvenido, <strong>{{ authStore.nombreUsuario }}</strong>
-          · {{ formatDateTime(new Date().toISOString()) }}
+          Bienvenido,
+          <strong>{{ authStore.nombreUsuario }}</strong>
+          <strong>{{ sucursalNombreActiva }}</strong>
+          | {{ formatDateTime(new Date().toISOString()) }}
         </div>
       </div>
       <q-space />
       <div class="row q-gutter-sm items-center">
         <!-- Selector de sucursal -->
-        <q-select
+<!--        <q-select
           v-if="authStore.isGlobal"
           v-model="sucursalFiltro"
           :options="[{ label: 'Todas las sucursales', value: null }, ...opcionesSucursal]"
-          outlined dense emit-value map-options
-          style="min-width:200px"
+          outlined
+          dense
+          emit-value
+          map-options
+          style="min-width: 200px"
           @update:model-value="cargarTodo"
-        />
+        />-->
         <q-btn flat round icon="refresh" color="primary" :loading="cargando" @click="cargarTodo">
           <q-tooltip>Actualizar</q-tooltip>
         </q-btn>
@@ -40,7 +45,7 @@
               </div>
               <div class="kpi-sub text-muted">{{ kpis?.facturasCantidadHoy ?? 0 }} factura(s)</div>
             </div>
-            <q-icon name="today" color="primary" size="40px" style="opacity:0.5" />
+            <q-icon name="today" color="primary" size="40px" style="opacity: 0.5" />
           </q-card-section>
           <q-linear-progress :value="ventasHoyProgress" color="primary" size="3px" />
         </q-card>
@@ -58,7 +63,7 @@
               </div>
               <div class="kpi-sub text-muted">{{ kpis?.facturasCantidadMes ?? 0 }} factura(s)</div>
             </div>
-            <q-icon name="calendar_month" color="positive" size="40px" style="opacity:0.5" />
+            <q-icon name="calendar_month" color="positive" size="40px" style="opacity: 0.5" />
           </q-card-section>
           <q-linear-progress :value="0.6" color="positive" size="3px" />
         </q-card>
@@ -70,7 +75,10 @@
           <q-card-section class="row items-center no-wrap">
             <div class="col">
               <div class="kpi-label">Alertas de stock</div>
-              <div class="kpi-value" :class="(kpis?.stockBajo ?? 0) > 0 ? 'text-negative' : 'text-positive'">
+              <div
+                class="kpi-value"
+                :class="(kpis?.stockBajo ?? 0) > 0 ? 'text-negative' : 'text-positive'"
+              >
                 <template v-if="cargando"><q-skeleton type="text" width="60%" /></template>
                 <template v-else>{{ kpis?.stockBajo ?? 0 }}</template>
               </div>
@@ -79,7 +87,8 @@
             <q-icon
               :name="(kpis?.stockBajo ?? 0) > 0 ? 'warning' : 'check_circle'"
               :color="(kpis?.stockBajo ?? 0) > 0 ? 'negative' : 'positive'"
-              size="40px" style="opacity:0.5"
+              size="40px"
+              style="opacity: 0.5"
             />
           </q-card-section>
           <q-linear-progress
@@ -100,9 +109,11 @@
                 <template v-if="cargando"><q-skeleton type="text" width="80%" /></template>
                 <template v-else>{{ formatCurrency(kpis?.valorInventario ?? 0) }}</template>
               </div>
-              <div class="kpi-sub text-muted">{{ kpis?.productosActivos ?? 0 }} productos activos</div>
+              <div class="kpi-sub text-muted">
+                {{ kpis?.productosActivos ?? 0 }} productos activos
+              </div>
             </div>
-            <q-icon name="inventory" color="teal" size="40px" style="opacity:0.5" />
+            <q-icon name="inventory" color="teal" size="40px" style="opacity: 0.5" />
           </q-card-section>
           <q-linear-progress :value="0.5" color="teal" size="3px" />
         </q-card>
@@ -122,7 +133,7 @@
 
       <!-- Top productos -->
       <div class="col-12 col-md-4">
-        <q-card class="sgi-card" flat style="height:100%">
+        <q-card class="sgi-card" flat style="height: 100%">
           <q-card-section class="q-pb-sm">
             <div class="text-subtitle1 text-weight-bold">Top 5 Productos</div>
             <div class="text-caption text-muted">Más vendidos este mes</div>
@@ -137,7 +148,15 @@
               <q-item-section avatar>
                 <q-avatar
                   size="28px"
-                  :color="i === 0 ? 'amber' : i === 1 ? 'grey-4' : i === 2 ? 'deep-orange-2' : 'blue-grey-1'"
+                  :color="
+                    i === 0
+                      ? 'amber'
+                      : i === 1
+                        ? 'grey-4'
+                        : i === 2
+                          ? 'deep-orange-2'
+                          : 'blue-grey-1'
+                  "
                   :text-color="i === 0 ? 'white' : 'grey-8'"
                   font-size="13px"
                 >
@@ -145,7 +164,7 @@
                 </q-avatar>
               </q-item-section>
               <q-item-section>
-                <q-item-label class="ellipsis text-weight-medium" style="max-width:150px">
+                <q-item-label class="ellipsis text-weight-medium" style="max-width: 150px">
                   {{ p.nombre }}
                 </q-item-label>
                 <q-item-label caption>{{ p.sku }} · {{ p.marca }}</q-item-label>
@@ -176,7 +195,8 @@
               <q-btn
                 v-if="authStore.hasRole(acc.roles as Rol[])"
                 :to="{ name: acc.name }"
-                flat unelevated
+                flat
+                unelevated
                 class="acceso-btn full-width"
                 :color="acc.color"
               >
@@ -194,16 +214,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
 import { reporteService } from 'src/services/reporteService'
 import type { KPIs, PuntoVentas, TopProducto, Rol } from 'src/types'
 import { formatCurrency, formatDateTime } from 'src/utils/formatters'
 import GraficoVentas from 'src/components/reportes/GraficoVentas.vue'
+import { useSucursalActivaStore } from 'src/stores/sucursalActiva.ts'
+import { TODAS_LAS_SUCURSALES } from 'src/composables/useSucursalCatalog.ts'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
+const sucursalActivaStore = useSucursalActivaStore()
 
 const sucursalFiltro = ref<string | null>(
   authStore.isGlobal ? null : (authStore.sucursalId ?? null),
@@ -217,6 +240,10 @@ const cargando = ref(false)
 const cargandoVentas = ref(false)
 const cargandoTop = ref(false)
 
+const sucursalSeleccionadaActiva = computed(() => sucursalActivaStore.sucursalId)
+const sucursalNombreActiva = computed(() =>
+  sucursalActivaStore.sucursal ? ' | Sucursal: ' + sucursalActivaStore.sucursal.nombre : '',
+)
 const opcionesSucursal = computed(() =>
   sucursalStore.activas.map((s) => ({ label: s.nombre, value: s.id })),
 )
@@ -227,12 +254,48 @@ const ventasHoyProgress = computed(() => {
 })
 
 const accesosRapidos = [
-  { name: 'pos',         label: 'Punto de Venta', icon: 'point_of_sale', color: 'primary',  roles: ['ADMINISTRADOR','SUPERVISOR','VENDEDOR'] },
-  { name: 'inventario',  label: 'Inventario',     icon: 'warehouse',     color: 'teal',     roles: ['ADMINISTRADOR','SUPERVISOR','BODEGUERO'] },
-  { name: 'catalogo',    label: 'Catálogo',       icon: 'menu_book',     color: 'indigo',   roles: ['ADMINISTRADOR','SUPERVISOR','BODEGUERO','VENDEDOR','CONTADOR'] },
-  { name: 'productos',   label: 'Productos',      icon: 'inventory_2',   color: 'cyan',     roles: ['ADMINISTRADOR','SUPERVISOR'] },
-  { name: 'proveedores', label: 'Proveedores',    icon: 'local_shipping',color: 'orange',   roles: ['ADMINISTRADOR','SUPERVISOR','BODEGUERO'] },
-  { name: 'reportes',    label: 'Reportes',       icon: 'bar_chart',     color: 'positive', roles: ['ADMINISTRADOR','SUPERVISOR','CONTADOR'] },
+  {
+    name: 'pos',
+    label: 'Punto de Venta',
+    icon: 'point_of_sale',
+    color: 'primary',
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'VENDEDOR'],
+  },
+  {
+    name: 'inventario',
+    label: 'Inventario',
+    icon: 'warehouse',
+    color: 'teal',
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'BODEGUERO'],
+  },
+  {
+    name: 'catalogo',
+    label: 'Catálogo',
+    icon: 'menu_book',
+    color: 'indigo',
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'BODEGUERO', 'VENDEDOR', 'CONTADOR'],
+  },
+  {
+    name: 'productos',
+    label: 'Productos',
+    icon: 'inventory_2',
+    color: 'cyan',
+    roles: ['ADMINISTRADOR', 'SUPERVISOR'],
+  },
+  {
+    name: 'proveedores',
+    label: 'Proveedores',
+    icon: 'local_shipping',
+    color: 'orange',
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'BODEGUERO'],
+  },
+  {
+    name: 'reportes',
+    label: 'Reportes',
+    icon: 'bar_chart',
+    color: 'positive',
+    roles: ['ADMINISTRADOR', 'SUPERVISOR', 'CONTADOR'],
+  },
 ]
 
 // Fechas para filtros
@@ -252,7 +315,9 @@ async function cargarKPIs(): Promise<void> {
     kpis.value = await reporteService.getKPIs(
       sucursalFiltro.value ? { sucursalId: sucursalFiltro.value } : {},
     )
-  } catch { /* continuar */ } finally {
+  } catch {
+    /* continuar */
+  } finally {
     cargando.value = false
   }
 }
@@ -265,7 +330,9 @@ async function cargarVentas(): Promise<void> {
       desde: getFechaDesde30Dias(),
       agruparPor: 'dia',
     })
-  } catch { datosVentas.value = [] } finally {
+  } catch {
+    datosVentas.value = []
+  } finally {
     cargandoVentas.value = false
   }
 }
@@ -278,7 +345,9 @@ async function cargarTopProductos(): Promise<void> {
       desde: getFechaInicioMes(),
       limite: 5,
     })
-  } catch { topProductos.value = [] } finally {
+  } catch {
+    topProductos.value = []
+  } finally {
     cargandoTop.value = false
   }
 }
@@ -289,14 +358,30 @@ async function cargarTodo(): Promise<void> {
 
 onMounted(async () => {
   if (sucursalStore.items.length === 0) await sucursalStore.fetchAll()
+  sucursalFiltro.value =
+    sucursalSeleccionadaActiva.value === TODAS_LAS_SUCURSALES
+      ? null
+      : sucursalSeleccionadaActiva.value
   await cargarTodo()
 })
+
+watch(
+  sucursalSeleccionadaActiva,
+  async (sucursalId) => {
+    console.log('sucursalSeleccionadaActiva', sucursalId)
+    sucursalFiltro.value = sucursalId === TODAS_LAS_SUCURSALES ? null : sucursalId
+    await cargarTodo()
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped lang="scss">
 .kpi-card {
   transition: box-shadow 0.2s;
-  &:hover { box-shadow: var(--sgi-shadow-lg); }
+  &:hover {
+    box-shadow: var(--sgi-shadow-lg);
+  }
   .kpi-label {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -304,12 +389,21 @@ onMounted(async () => {
     color: var(--sgi-text-muted);
     margin-bottom: 4px;
   }
-  .kpi-value { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
-  .kpi-sub { font-size: 0.78rem; margin-top: 2px; }
+  .kpi-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .kpi-sub {
+    font-size: 0.78rem;
+    margin-top: 2px;
+  }
 }
 .acceso-btn {
   border-radius: var(--sgi-radius-lg);
   border: 1px solid var(--sgi-border);
-  &:hover { background: rgba(21,101,192,0.06); }
+  &:hover {
+    background: rgba(21, 101, 192, 0.06);
+  }
 }
 </style>

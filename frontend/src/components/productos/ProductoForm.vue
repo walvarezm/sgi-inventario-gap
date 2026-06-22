@@ -1,5 +1,5 @@
 <template>
-  <q-card class="sgi-card" style="width: 900px; max-width: 96vw">
+  <q-card class="sgi-card" style="min-width: auto; max-width: 65vw">
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6 text-weight-bold">
         {{ isEdit ? 'Editar Producto' : 'Nuevo Producto' }}

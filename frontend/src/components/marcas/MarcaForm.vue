@@ -1,5 +1,5 @@
 <template>
-  <q-card class="sgi-card" style="min-width: 400px; max-width: 480px">
+  <q-card class="sgi-card" style="min-width: auto; max-width: 480px">
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6 text-weight-bold">
         {{ isEdit ? 'Editar Marca' : 'Nueva Marca' }}

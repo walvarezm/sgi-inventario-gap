@@ -14,15 +14,19 @@ import CarritoItem from 'src/components/pos/CarritoItem.vue'
 import POSPaymentMethods from 'src/components/pos/POSPaymentMethods.vue'
 import SucursalSwitcher from 'src/components/catalogo/SucursalSwitcher.vue'
 import { useLoading } from 'src/composables/useLoading'
+import { useSucursalActivaStore } from 'src/stores/sucursalActiva.ts'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
+const sucursalActivaStore = useSucursalActivaStore()
 const cataloStore = useCataloStore()
 const facturaStore = useFacturaStore()
 const $q = useQuasar()
 const pos = usePOS()
 
-const sucursalActiva = ref<string>(authStore.sucursalId ?? '')
+const sucursalActivaSel = computed(() => sucursalActivaStore.sucursalId)
+const sucursalActiva = ref<string>(sucursalActivaSel.value)
+//const sucursalActiva = ref<string>(authStore.sucursalId ?? '')
 const dialogDocumentoEmitido = ref(false)
 const ultimoDocumentoId = ref('')
 const ultimoDocumentoNumero = ref('')
@@ -31,11 +35,16 @@ const customerExpanded = ref(false)
 
 const esMovil = computed(() => $q.screen.lt.md)
 
-const tiposDocumento: Array<{ value: TipoDocumentoVenta; label: string; icon: string; tone: string }> = [
-  { value: 'FACTURA',         label: 'Factura',         icon: 'receipt_long',   tone: 'primary' },
-  { value: 'VENTA_SIN_FACTURA', label: 'Venta sin fac.', icon: 'point_of_sale',   tone: 'positive' },
-  { value: 'PROFORMA',        label: 'Proforma',        icon: 'description',    tone: 'info' },
-  { value: 'COTIZACION',      label: 'Cotización',      icon: 'request_quote',  tone: 'secondary' },
+const tiposDocumento: Array<{
+  value: TipoDocumentoVenta
+  label: string
+  icon: string
+  tone: string
+}> = [
+  { value: 'FACTURA', label: 'Factura', icon: 'receipt_long', tone: 'primary' },
+  { value: 'VENTA_SIN_FACTURA', label: 'Venta sin fac.', icon: 'point_of_sale', tone: 'positive' },
+  { value: 'PROFORMA', label: 'Proforma', icon: 'description', tone: 'info' },
+  { value: 'COTIZACION', label: 'Cotización', icon: 'request_quote', tone: 'secondary' },
 ]
 
 const tiposDocumentoDisponibles = computed(() => {
@@ -173,6 +182,16 @@ onMounted(async () => {
 watch(esMovil, (m) => {
   customerExpanded.value = !m
 })
+
+watch(
+  sucursalActivaSel,
+  async (sucursalId) => {
+    sucursalActiva.value = sucursalId
+    //await onCambioSucursal(sucursalId)
+    await cargarCatalogo()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -190,14 +209,14 @@ watch(esMovil, (m) => {
         </p>
       </div>
 
-      <div class="pos-hero__actions">
+<!--      <div class="pos-hero__actions">
         <SucursalSwitcher
           v-if="sucursalStore.activas.length > 0"
           v-model="sucursalActiva"
           :size="esMovil ? 'sm' : 'md'"
           @change="onCambioSucursal"
         />
-      </div>
+      </div>-->
     </header>
 
     <!-- ── TYPE SELECTOR STRIP ────────────────────────────── -->
@@ -208,9 +227,13 @@ watch(esMovil, (m) => {
         type="button"
         role="tab"
         :aria-selected="pos.tipoDocumento.value === tipo.value"
-        :class="['pos-type-strip__btn', `pos-type-strip__btn--${tipo.tone}`, {
-          'is-active': pos.tipoDocumento.value === tipo.value,
-        }]"
+        :class="[
+          'pos-type-strip__btn',
+          `pos-type-strip__btn--${tipo.tone}`,
+          {
+            'is-active': pos.tipoDocumento.value === tipo.value,
+          },
+        ]"
         @click="pos.setTipoDocumento(tipo.value)"
       >
         <q-icon :name="tipo.icon" size="16px" />
@@ -219,7 +242,10 @@ watch(esMovil, (m) => {
       <q-space />
       <div v-if="pos.carrito.value.length > 0" class="pos-type-strip__count">
         <q-icon name="shopping_bag" size="14px" />
-        <span><strong>{{ pos.cantidadItems.value }}</strong> ítem{{ pos.cantidadItems.value === 1 ? '' : 's' }}</span>
+        <span>
+          <strong>{{ pos.cantidadItems.value }}</strong>
+          ítem{{ pos.cantidadItems.value === 1 ? '' : 's' }}
+        </span>
       </div>
     </div>
 
@@ -315,12 +341,7 @@ watch(esMovil, (m) => {
                   </q-input>
                 </div>
                 <div class="col-12 col-sm-5">
-                  <q-input
-                    v-model="pos.cliente.value.nitCi"
-                    label="NIT / CI"
-                    outlined
-                    dense
-                  />
+                  <q-input v-model="pos.cliente.value.nitCi" label="NIT / CI" outlined dense />
                 </div>
                 <div class="col-12 col-sm-6">
                   <q-input
@@ -430,7 +451,9 @@ watch(esMovil, (m) => {
         </div>
         <div class="pos-action-bar__row pos-action-bar__row--total">
           <span class="pos-action-bar__label">Total</span>
-          <span class="pos-action-bar__total-value">{{ formatCurrency(pos.totalDocumento.value) }}</span>
+          <span class="pos-action-bar__total-value">
+            {{ formatCurrency(pos.totalDocumento.value) }}
+          </span>
         </div>
       </div>
 
@@ -443,11 +466,7 @@ watch(esMovil, (m) => {
         <span v-if="pos.procesando.value" class="pos-action-bar__spinner">
           <q-spinner-dots size="22px" color="white" />
         </span>
-        <q-icon
-          v-else
-          :name="accionPrincipal.icon"
-          size="22px"
-        />
+        <q-icon v-else :name="accionPrincipal.icon" size="22px" />
         <span>{{ accionPrincipal.label }}</span>
         <q-icon name="arrow_forward" size="18px" class="pos-action-bar__arrow" />
       </button>
@@ -499,9 +518,11 @@ watch(esMovil, (m) => {
   padding: 22px 24px;
   border-radius: 18px;
   background:
-    linear-gradient(135deg,
+    linear-gradient(
+      135deg,
       color-mix(in srgb, var(--sgi-primary) 8%, transparent),
-      transparent 60%),
+      transparent 60%
+    ),
     var(--sgi-surface-soft);
   border: 1px solid var(--sgi-border);
   box-shadow: var(--sgi-shadow);

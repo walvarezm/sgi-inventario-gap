@@ -19,10 +19,12 @@ import { useMarcaStore } from 'src/stores/marcaStore'
 import { useNotify } from 'src/composables/useNotify'
 import ProductoViewImage from 'src/components/productos/ProductoViewImage.vue'
 import { TODAS_LAS_SUCURSALES } from 'src/composables/useSucursalCatalog'
+import { useSucursalActivaStore } from 'src/stores/sucursalActiva.ts'
 
 // ── Stores ─────────────────────────────────────────────────────
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
+const sucursalActivaStore = useSucursalActivaStore()
 const categoriaStore = useCategoriaStore()
 const marcaStore = useMarcaStore()
 const cataloStore = useCataloStore()
@@ -48,15 +50,14 @@ const opcionesSucursal = computed(() =>
   sucursalStore.activas.map((s) => ({ label: s.nombre, value: s.id })),
 )
 
+const sucursalSeleccionadaActiva = computed(() => sucursalActivaStore.sucursalId)
 const sucursalActiva = computed(() =>
   sucursalSeleccionada.value && sucursalSeleccionada.value !== TODAS_LAS_SUCURSALES
     ? sucursalStore.getById(sucursalSeleccionada.value)
     : null,
 )
 
-const esVistaGlobal = computed(
-  () => sucursalSeleccionada.value === TODAS_LAS_SUCURSALES,
-)
+const esVistaGlobal = computed(() => sucursalSeleccionada.value === TODAS_LAS_SUCURSALES)
 
 const productosEnStock = computed(() => {
   const base = catalogo.productosFiltrados.value
@@ -64,8 +65,7 @@ const productosEnStock = computed(() => {
     return base.filter((p) => p.stock > 0 && !p.stockBajo).length
   }
   return base.filter(
-    (p) =>
-      p.sucursalId === sucursalSeleccionada.value && p.stock > 0 && !p.stockBajo,
+    (p) => p.sucursalId === sucursalSeleccionada.value && p.stock > 0 && !p.stockBajo,
   ).length
 })
 
@@ -90,8 +90,7 @@ const productosStockBajo = computed(() => {
     return base.filter((p) => p.stockBajo && p.stock > 0).length
   }
   return base.filter(
-    (p) =>
-      p.stockBajo && p.stock > 0 && p.sucursalId === sucursalSeleccionada.value,
+    (p) => p.stockBajo && p.stock > 0 && p.sucursalId === sucursalSeleccionada.value,
   ).length
 })
 
@@ -100,9 +99,7 @@ const productosAgotados = computed(() => {
   if (esVistaGlobal.value) {
     return base.filter((p) => p.stock === 0).length
   }
-  return base.filter(
-    (p) => p.stock === 0 && p.sucursalId === sucursalSeleccionada.value,
-  ).length
+  return base.filter((p) => p.stock === 0 && p.sucursalId === sucursalSeleccionada.value).length
 })
 
 const filtrosActivosCount = computed(() => {
@@ -112,7 +109,7 @@ const filtrosActivosCount = computed(() => {
   if (catalogo.marcaFiltro.value) n++
   if (mostrarSoloStockBajo.value) n++
   if (mostrarSoloAgotados.value) n++
-  if (esVistaGlobal.value) n++
+  //if (esVistaGlobal.value) n++
   return n
 })
 
@@ -122,8 +119,7 @@ const vistaActivaEsTabla = computed(() => catalogo.vistaTabla.value)
 const puedeCambiarVista = computed(() => !esMovil.value)
 
 const showFiltersAndStats = computed(
-  () =>
-    !!sucursalSeleccionada.value && productosMostrados.value.length > 0,
+  () => !!sucursalSeleccionada.value && productosMostrados.value.length > 0,
 )
 
 const showSkeleton = computed(
@@ -136,15 +132,11 @@ const showSkeleton = computed(
 
 const showGlobalSkeleton = computed(
   () =>
-    esVistaGlobal.value &&
-    catalogo.loading.value &&
-    catalogo.productosFiltrados.value.length === 0,
+    esVistaGlobal.value && catalogo.loading.value && catalogo.productosFiltrados.value.length === 0,
 )
 
 /** Habilita el cambio de sucursal a admin/supervisor o usuarios con permiso `sucursales.ver`. */
-const puedeCambiarSucursal = computed(
-  () => authStore.isGlobal || authStore.can('sucursales.ver'),
-)
+const puedeCambiarSucursal = computed(() => authStore.isGlobal || authStore.can('sucursales.ver'))
 
 // ── Actions ────────────────────────────────────────────────────
 async function cargarCatalogo(): Promise<void> {
@@ -348,13 +340,31 @@ onMounted(async () => {
 
   if (!authStore.isGlobal && authStore.sucursalId) {
     sucursalSeleccionada.value = authStore.sucursalId
-    await cargarCatalogo()
+  } else {
+    sucursalSeleccionada.value = sucursalSeleccionadaActiva.value
   }
+  await cargarCatalogo()
 })
+
+watch(
+  sucursalSeleccionadaActiva,
+  async (sucursalId) => {
+    //if (sucursalId) {
+
+    console.log('sucursalSeleccionadaActiva', sucursalId)
+    sucursalSeleccionada.value = sucursalId
+    await onCambioSucursal(sucursalId)
+    //await cargarCatalogo()
+    //}
+  },
+  { immediate: true },
+)
 
 watch(esMovil, (movil) => {
   if (movil) {
     catalogo.vistaTabla.value = false
+  } else {
+    catalogo.vistaTabla.value = true
   }
 })
 
@@ -369,12 +379,24 @@ watch(sucursalSeleccionada, (sucursalId) => {
     <!-- ── HERO ───────────────────────────────────────────── -->
     <header class="catalogo-hero">
       <div class="catalogo-hero__copy">
-        <div class="catalogo-hero__eyebrow">
+        <!--        <div class="catalogo-hero__eyebrow">
           <q-icon name="menu_book" size="14px" />
           <span>Catálogo</span>
-        </div>
+        </div>-->
         <h1 class="catalogo-hero__title">Catálogo de Productos</h1>
         <div class="catalogo-hero__meta">
+          <span class="catalogo-hero__meta-item catalogo-hero__meta-item--muted">
+            <q-icon :name="esVistaGlobal ? 'public' : 'store'" size="14px" />
+            <span v-if="esVistaGlobal">
+              Vista global —
+              <strong>{{ productosMostrados.length }}</strong>
+              productos de todas las sucursales
+            </span>
+            <span v-else>
+              Catálogo de
+              <strong>{{ sucursalActiva?.nombre ?? 'sucursal seleccionada' }}</strong>
+            </span>
+          </span>
           <span v-if="lastUpdated" class="catalogo-hero__meta-item catalogo-hero__meta-item--muted">
             <q-icon name="schedule" size="14px" />
             <span>Actualizado {{ formatDateTime(lastUpdated.toISOString()) }}</span>
@@ -383,19 +405,19 @@ watch(sucursalSeleccionada, (sucursalId) => {
       </div>
 
       <div class="catalogo-hero__actions">
-        <SucursalSwitcher
+        <!--        <SucursalSwitcher
           v-if="sucursalStore.activas.length > 0"
           v-model="sucursalSeleccionada"
           :size="esMovil ? 'sm' : 'md'"
           @change="onCambioSucursal"
-        />
+        />-->
 
         <q-btn
           v-if="canExport"
           outline
           color="negative"
           icon="picture_as_pdf"
-          :label="esMovil ? 'PDF' : 'Exportar PDF'"
+          :label="esMovil ? '' : 'Exportar PDF'"
           :size="esMovil ? 'sm' : 'md'"
           no-caps
           :loading="exportandoPDF"
@@ -407,7 +429,7 @@ watch(sucursalSeleccionada, (sucursalId) => {
           outline
           color="positive"
           icon="table_chart"
-          :label="esMovil ? 'XLS' : 'Exportar Excel'"
+          :label="esMovil ? '' : 'Exportar Excel'"
           :size="esMovil ? 'sm' : 'md'"
           no-caps
           class="catalogo-hero__btn"
@@ -418,11 +440,12 @@ watch(sucursalSeleccionada, (sucursalId) => {
           unelevated
           color="primary"
           icon="tune"
+          :label="esMovil ? '' : 'Filtros'"
+          :size="esMovil ? 'sm' : 'md'"
           no-caps
           class="catalogo-hero__btn"
           @click="dialogFiltros = true"
         >
-          Filtros
           <q-badge v-if="filtrosActivosCount > 0" color="negative" floating>
             {{ filtrosActivosCount }}
           </q-badge>
@@ -433,6 +456,7 @@ watch(sucursalSeleccionada, (sucursalId) => {
           color="primary"
           icon="refresh"
           :label="esMovil ? '' : 'Recargar'"
+          :size="esMovil ? 'sm' : 'md'"
           no-caps
           :loading="catalogo.loading.value"
           class="catalogo-hero__btn"
@@ -467,8 +491,10 @@ watch(sucursalSeleccionada, (sucursalId) => {
         <template #prepend><q-icon name="store" /></template>
       </q-select>
       <div v-else class="catalogo-sucursal-prompt__hint">
-        Usa el selector <q-icon name="store" size="14px" /> <strong>Sucursal</strong> en la parte
-        superior para elegir.
+        Usa el selector
+        <q-icon name="store" size="14px" />
+        <strong>Sucursal</strong>
+        en la parte superior para elegir.
       </div>
     </section>
 
@@ -483,7 +509,7 @@ watch(sucursalSeleccionada, (sucursalId) => {
         tone="primary"
         :value="productosMostrados.length"
         :active="!mostrarSoloStockBajo && !mostrarSoloAgotados"
-        label="Total productos"
+        :label="'Total productos (' + catalogo.productosFiltrados.value.length + ')'"
         :loading="showSkeleton"
         @click="
           () => {
@@ -577,7 +603,8 @@ watch(sucursalSeleccionada, (sucursalId) => {
 
         <q-btn
           v-if="filtrosActivosCount > 0"
-          flat
+          outline
+          rounded
           color="negative"
           icon="filter_alt_off"
           label="Limpiar"
@@ -585,9 +612,13 @@ watch(sucursalSeleccionada, (sucursalId) => {
           size="sm"
           class="catalogo-toolbar__clear"
           @click="limpiarFiltros"
-        />
+        >
+          <q-badge v-if="filtrosActivosCount > 0" color="negative" floating>
+            {{ filtrosActivosCount }}
+          </q-badge>
+        </q-btn>
 
-        <q-space />
+        <!--        <q-space />-->
 
         <q-btn-toggle
           v-if="puedeCambiarVista"
@@ -619,12 +650,13 @@ watch(sucursalSeleccionada, (sucursalId) => {
         </q-btn-toggle>
       </div>
 
-      <div class="catalogo-toolbar__chips">
+      <div v-if="false" class="catalogo-toolbar__chips">
         <span class="catalogo-toolbar__chip-info">
           <q-icon :name="esVistaGlobal ? 'public' : 'store'" size="14px" />
           <span v-if="esVistaGlobal">
-            Vista global — <strong>{{ productosMostrados.length }}</strong> productos de todas
-            las sucursales
+            Vista global —
+            <strong>{{ productosMostrados.length }}</strong>
+            productos de todas las sucursales
           </span>
           <span v-else>
             Mostrando catálogo de
@@ -669,7 +701,8 @@ watch(sucursalSeleccionada, (sucursalId) => {
           <q-space />
           <q-btn
             v-if="filtrosActivosCount > 0"
-            flat
+            outline
+            rounded
             color="negative"
             label="Limpiar"
             no-caps

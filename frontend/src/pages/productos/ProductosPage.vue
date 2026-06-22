@@ -1,257 +1,7 @@
-<template>
-  <q-page class="sgi-page">
-    <div class="row items-center q-mb-lg">
-      <div>
-        <div class="sgi-page-title">Productos</div>
-        <div class="text-muted text-body2 q-mt-xs">
-          {{ productoStore.activos.length }} productos activos
-        </div>
-      </div>
-      <q-space />
-      <q-btn
-        label="Importar Excel"
-        icon="upload_file"
-        color="secondary"
-        outline
-        class="q-mr-sm"
-        @click="dialogImport = true"
-      />
-      <q-btn
-        label="Nuevo producto"
-        icon="add"
-        color="primary"
-        unelevated
-        @click="abrirFormulario()"
-      />
-    </div>
-
-    <!-- Filtros -->
-    <q-card class="sgi-card q-mb-md" flat>
-      <q-expansion-item
-        icon="tune"
-        label="Filtros y búsqueda"
-        caption="Busca por marca, codigo, nombre o filtra por categoria marca y/o estado"
-        expand-separator
-        :default-opened="!esMovil"
-        header-class="sgi-filter-toggle"
-      >
-        <q-card-section class="row items-center q-col-gutter-sm sgi-filter-body">
-          <div class="col-12 col-sm-4">
-            <q-input
-              v-model="busqueda"
-              placeholder="Buscar marca, codigo, nombre…"
-              outlined
-              dense
-              clearable
-            >
-              <template #prepend><q-icon name="search" /></template>
-            </q-input>
-          </div>
-          <div class="col-12 col-sm-2">
-            <q-select
-              v-model="filtroCategoria"
-              :options="[{ label: 'Todas las categorías', value: null }, ...categoriaStore.options]"
-              label="Categoría"
-              outlined
-              dense
-              emit-value
-              map-options
-            />
-          </div>
-          <div class="col-12 col-sm-2">
-            <q-select
-              v-model="filtroMarca"
-              :options="[{ label: 'Todas las marcas', value: null }, ...marcaStore.options]"
-              label="Marca"
-              outlined
-              dense
-              emit-value
-              map-options
-            />
-          </div>
-          <div class="col-12 col-sm-2">
-            <q-select
-              v-model="filtroActivo"
-              :options="opcionesEstado"
-              label="Estado"
-              outlined
-              dense
-              emit-value
-              map-options
-            />
-          </div>
-          <div class="col-auto">
-            <q-btn
-              flat
-              round
-              icon="refresh"
-              color="primary"
-              :loading="productoStore.loading"
-              @click="recargar"
-            >
-              <q-tooltip>Recargar</q-tooltip>
-            </q-btn>
-          </div>
-          <q-space />
-          <div class="text-caption text-muted">{{ productosFiltrados.length }} producto(s)</div>
-        </q-card-section>
-      </q-expansion-item>
-    </q-card>
-
-    <!-- Tabla -->
-    <q-card class="sgi-card" flat>
-      <q-table
-        :rows="productosFiltrados"
-        :columns="columnas"
-        :loading="productoStore.loading"
-        row-key="id"
-        flat
-        dense
-        class="sgi-table"
-        :pagination="{ rowsPerPage: 10 }"
-        no-data-label="No hay productos registrados"
-        @row-dblclick="fnRowDblClick"
-      >
-        <template #body-cell-imagenUrl="{ row }">
-          <q-td>
-            <span :style="row.imagenUrl ? 'cursor: pointer' : ''" @click="verIMG(row)">
-              <ProductoImagenIFrame
-                :imagen-url="row.imagenUrl"
-                :width="35"
-                :height="35"
-                :imagen-location="row.imagenLocation"
-              />
-              <q-tooltip>Ver Imagen</q-tooltip>
-            </span>
-          </q-td>
-        </template>
-
-        <template #body-cell-sku="{ row }">
-          <q-td>
-            <div class="row items-center no-wrap q-gutter-xs">
-              <span class="text-weight-bold">{{ row.sku }}</span>
-            </div>
-          </q-td>
-        </template>
-
-        <template #body-cell-precioCompra="{ value }">
-          <q-td class="text-right text-muted">
-            <span class="text-weight-bold text-primary">{{ formatCurrency(value) }}</span>
-          </q-td>
-        </template>
-
-        <template #body-cell-precioOfrecido="{ value }">
-          <q-td class="text-right text-muted">
-            <span style="text-decoration: line-through">{{ formatCurrency(value) }}</span>
-          </q-td>
-        </template>
-
-        <template #body-cell-precioFinal="{ value }">
-          <q-td class="text-right">
-            <span class="text-weight-bold text-positive">{{ formatCurrency(value) }}</span>
-          </q-td>
-        </template>
-
-        <template #body-cell-categoriaId="{ value }">
-          <q-td>
-            <q-chip
-              v-if="categoriaStore.getById(value)"
-              dense
-              size="sm"
-              color="blue-1"
-              text-color="blue-9"
-            >
-              {{ categoriaStore.getById(value)?.nombre }}
-            </q-chip>
-            <span v-else class="text-muted">—</span>
-          </q-td>
-        </template>
-
-        <template #body-cell-activo="{ value }">
-          <q-td class="text-center">
-            <q-chip
-              :color="value ? 'positive' : 'grey-4'"
-              :text-color="value ? 'white' : 'grey-7'"
-              :icon="value ? 'check_circle' : 'cancel'"
-              :label="value ? 'Activo' : 'Inactivo'"
-              dense
-              size="sm"
-            />
-          </q-td>
-        </template>
-
-        <template #body-cell-acciones="{ row }">
-          <q-td class="text-right">
-            <q-btn
-              flat
-              round
-              dense
-              icon="edit"
-              color="primary"
-              size="sm"
-              @click="abrirFormulario(row)"
-            >
-              <q-tooltip>Editar</q-tooltip>
-            </q-btn>
-            <q-btn flat round dense icon="qr_code_2" color="teal" size="sm" @click="verQR(row)">
-              <q-tooltip>Ver QR</q-tooltip>
-            </q-btn>
-            <q-btn
-              flat
-              round
-              dense
-              icon="delete"
-              color="negative"
-              size="sm"
-              @click="confirmarEliminar(row)"
-            >
-              <q-tooltip>Eliminar</q-tooltip>
-            </q-btn>
-          </q-td>
-        </template>
-
-        <template #no-data="{ message }">
-          <div class="full-width column flex-center q-pa-xl text-muted">
-            <q-icon name="inventory_2" size="48px" style="opacity: 0.3" class="q-mb-md" />
-            <span>{{ message }}</span>
-          </div>
-        </template>
-      </q-table>
-    </q-card>
-
-    <!-- Dialog Formulario -->
-    <q-dialog v-model="dialogForm" persistent>
-      <ProductoForm :producto="productoEditar" @saved="onSaved" @cancelled="dialogForm = false" />
-    </q-dialog>
-
-    <q-dialog v-model="dialogImport" persistent>
-      <ProductoImportDialog @imported="onImported" @cancelled="dialogImport = false" />
-    </q-dialog>
-
-    <!-- Dialog IMG -->
-    <ProductoViewImage :is-open="dialogIMG" :producto="productoQR" @cancelled="dialogIMG = false" />
-
-    <!-- Dialog QR -->
-    <q-dialog v-model="dialogQR">
-      <q-card class="sgi-card q-pa-md text-center" style="min-width: 280px; max-width: 320px">
-        <q-card-section class="row items-center q-pb-none">
-          <div class="text-subtitle1 text-weight-bold">QR — {{ productoQR?.sku }}</div>
-          <q-space />
-          <q-btn icon="close" flat round dense v-close-popup />
-        </q-card-section>
-        <q-card-section>
-          <ProductoQR v-if="productoQR" :sku="productoQR.sku" :qr-code="productoQR.qrCode" />
-          <div class="text-caption text-muted q-mt-sm">{{ productoQR?.nombre }}</div>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
-  </q-page>
-</template>
-
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import type { QTableColumn } from 'quasar'
 import { useQuasar } from 'quasar'
+import type { QTableColumn } from 'quasar'
 import type { Producto } from 'src/types'
 import { useProductoStore } from 'src/stores/productoStore'
 import { useCategoriaStore } from 'src/stores/categoriaStore'
@@ -263,13 +13,15 @@ import ProductoImportDialog from 'src/components/productos/ProductoImportDialog.
 import ProductoQR from 'src/components/productos/ProductoQR.vue'
 import ProductoImagenIFrame from 'src/components/productos/ProductoImagenIFrame.vue'
 import ProductoViewImage from 'src/components/productos/ProductoViewImage.vue'
+import StandardTableToolbar from 'src/components/shared/StandardTableToolbar.vue'
+import StandardFilters from 'src/components/shared/StandardFilters.vue'
+import StandardTable from 'src/components/shared/StandardTable.vue'
 
 const productoStore = useProductoStore()
 const categoriaStore = useCategoriaStore()
 const marcaStore = useMarcaStore()
 const { notifySuccess, notifyWarning, notifyError } = useNotify()
 const $q = useQuasar()
-const esMovil = computed(() => $q.screen.lt.md)
 
 const busqueda = ref('')
 const filtroCategoria = ref<string | null>(null)
@@ -286,20 +38,9 @@ const productosFiltrados = computed(() => {
   let lista = productoStore.items
   if (filtroActivo.value !== null) lista = lista.filter((p) => p.activo === filtroActivo.value)
   if (filtroCategoria.value) lista = lista.filter((p) => p.categoriaId === filtroCategoria.value)
-  //if (filtroMarca.value) lista = lista.filter((p) => p.marca === filtroMarca.value)
   if (filtroMarca.value) lista = lista.filter((p) => p.marcaId === filtroMarca.value)
-  if (busqueda.value) {
-    /*const q = busqueda.value.toLowerCase()
-    lista = lista.filter(
-      (p) =>
-        p.sku.toLowerCase().includes(q) ||
-        p.nombre.toLowerCase().includes(q) ||
-        p.marca.toLowerCase().includes(q) ||
-        p.descripcion.toLowerCase().includes(q),
-    )*/
 
-    // Busqueda avanzada
-    // Divide el criterio en tokens y exige que TODOS estén presentes en algún campo
+  if (busqueda.value.trim()) {
     const tokens = busqueda.value
       .toLowerCase()
       .split(/\s+/)
@@ -315,19 +56,30 @@ const productosFiltrados = computed(() => {
   return lista
 })
 
+const totalProductos = computed(() => productoStore.items.length)
+
 const opcionesEstado = [
   { label: 'Todos', value: null },
   { label: 'Activos', value: true },
   { label: 'Inactivos', value: false },
 ]
 
-const columnas: QTableColumn[] = [
-  { name: 'imagenUrl', label: 'img', field: 'imagenUrl', align: 'center', style: 'width:56px' },
-  { name: 'categoriaId', label: 'Categ', field: 'categoriaId', align: 'left' },
+const opcionesCategoria = computed(() => [
+  { label: 'Todas las categorías', value: null },
+  ...categoriaStore.options,
+])
+
+const opcionesMarca = computed(() => [
+  { label: 'Todas las marcas', value: null },
+  ...marcaStore.options,
+])
+
+const columnas: QTableColumn<Producto>[] = [
+  { name: 'imagenUrl', label: '', field: 'imagenUrl', align: 'center' },
+  { name: 'categoriaId', label: 'Categoría', field: 'categoriaId', align: 'left' },
   { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
   { name: 'sku', label: 'Código', field: 'sku', align: 'left', sortable: true },
-  { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left', sortable: true },
-  //{ name: 'unidad', label: 'Unidad', field: 'unidad', align: 'center' },
+  { name: 'nombre', label: 'Producto', field: 'nombre', align: 'left', sortable: true },
   {
     name: 'precioCompra',
     label: 'P. Compra',
@@ -337,15 +89,14 @@ const columnas: QTableColumn[] = [
   },
   {
     name: 'precioOfrecido',
-    label: 'P. Venta',
+    label: 'P. Lista',
     field: 'precioOfrecido',
     align: 'right',
     sortable: true,
   },
   { name: 'precioFinal', label: 'P. Final', field: 'precioFinal', align: 'right', sortable: true },
-  //{ name: 'stockMinimo', label: 'Stock Mín.', field: 'stockMinimo', align: 'center' },
   { name: 'activo', label: 'Estado', field: 'activo', align: 'center', sortable: true },
-  { name: 'acciones', label: 'Acciones', field: 'id', align: 'right' },
+  { name: 'acciones', label: '', field: 'id', align: 'right' },
 ]
 
 function abrirFormulario(p?: Producto): void {
@@ -372,17 +123,13 @@ function verQR(p: Producto): void {
   dialogQR.value = true
 }
 
-const fnRowDblClick = (_e: Event, row: Producto, _index: number) => {
-  abrirFormulario(row)
-}
-
 function confirmarEliminar(p: Producto): void {
   $q.dialog({
     title: 'Eliminar producto',
     message: `¿Eliminar <strong>${p.nombre}</strong> [${p.sku}]? El producto quedará inactivo.`,
     html: true,
-    cancel: { label: 'Cancelar', flat: true },
-    ok: { label: 'Eliminar', color: 'negative', unelevated: true },
+    cancel: { label: 'Cancelar', flat: true, noCaps: true },
+    ok: { label: 'Eliminar', color: 'negative', unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await productoStore.remove(p.id)
@@ -393,16 +140,315 @@ function confirmarEliminar(p: Producto): void {
   })
 }
 
-async function recargar(): Promise<void> {
-  //productosFiltrados.value.map(()=> {})
-  productoStore.forceReload()
-  categoriaStore.forceReload()
-  marcaStore.forceReload()
-  await Promise.all([productoStore.fetchAll(true), categoriaStore.fetchAll(), marcaStore.fetchAll()])
+function limpiarFiltros(): void {
+  busqueda.value = ''
+  filtroCategoria.value = null
+  filtroMarca.value = null
+  filtroActivo.value = true
 }
 
-async function cargar(): Promise<void> {
-  await Promise.all([productoStore.fetchAll(), categoriaStore.fetchAll(), marcaStore.fetchAll()])
+async function recargar(): Promise<void> {
+  await Promise.all([
+    productoStore.fetchAll(true),
+    categoriaStore.fetchAll(),
+    marcaStore.fetchAll(),
+  ])
 }
-onMounted(cargar)
+
+onMounted(() =>
+  Promise.all([productoStore.fetchAll(), categoriaStore.fetchAll(), marcaStore.fetchAll()]),
+)
 </script>
+
+<template>
+  <q-page class="sgi-page">
+    <StandardTableToolbar
+      v-model:search="busqueda"
+      title="Productos"
+      subtitle="Gestión del catálogo maestro de productos"
+      icon="inventory_2"
+      primary-label="Nuevo producto"
+      primary-icon="add"
+      :show-primary="true"
+      search-placeholder="Buscar por SKU, nombre, marca o descripción…"
+      :show-sucursal-selector="false"
+      @primary="abrirFormulario()"
+    >
+      <template #actions>
+        <button type="button" class="std-toolbar__secondary" @click="dialogImport = true">
+          <q-icon name="upload_file" size="18px" />
+          <span>Importar Excel</span>
+        </button>
+      </template>
+
+      <StandardFilters
+        v-model="busqueda"
+        :total="totalProductos"
+        :filtered="productosFiltrados.length"
+        count-label="productos"
+        placeholder="Buscar por Marca, Codigo, Nombre…"
+        @clear="limpiarFiltros"
+      >
+        <template #extra>
+          <q-select
+            v-model="filtroCategoria"
+            :options="opcionesCategoria"
+            outlined
+            dense
+            emit-value
+            map-options
+            clearable
+            class="std-filters__select"
+          />
+          <q-select
+            v-model="filtroMarca"
+            :options="opcionesMarca"
+            outlined
+            dense
+            emit-value
+            map-options
+            clearable
+            class="std-filters__select"
+          />
+          <q-select
+            v-model="filtroActivo"
+            :options="opcionesEstado"
+            outlined
+            dense
+            emit-value
+            map-options
+            clearable
+            class="std-filters__select"
+          />
+          <q-btn
+            color="primary"
+            icon="refresh"
+            label="Recargar"
+            no-caps
+            size="md"
+            class="std-filters__select"
+            :loading="productoStore.loading"
+            @click="recargar"
+          />
+        </template>
+      </StandardFilters>
+    </StandardTableToolbar>
+
+    <StandardTable
+      :rows="productosFiltrados"
+      :columns="columnas"
+      :loading="productoStore.loading"
+      no-data-label="No hay productos registrados"
+      empty-icon="inventory_2"
+      @row-click="(_, row) => abrirFormulario(row as Producto)"
+    >
+      <template #body-cell-imagenUrl="{ row }">
+        <q-td auto-width>
+          <div
+            class="prod-thumb"
+            :class="{ 'prod-thumb--clickable': !!row.imagenUrl }"
+            @click.stop="verIMG(row as Producto)"
+          >
+            <ProductoImagenIFrame
+              :imagen-url="(row as Producto).imagenUrl"
+              :width="40"
+              :height="40"
+              :imagen-location="(row as Producto).imagenLocation"
+              type="table"
+            />
+          </div>
+        </q-td>
+      </template>
+
+      <template #body-cell-sku="{ row }">
+        <q-td>
+          <span class="std-cell-mono">{{ (row as Producto).sku }}</span>
+        </q-td>
+      </template>
+
+      <template #body-cell-categoriaId="{ row }">
+        <q-td>
+          <span
+            v-if="categoriaStore.getById((row as Producto).categoriaId)"
+            class="std-status std-status--info"
+          >
+            {{ categoriaStore.getById((row as Producto).categoriaId)?.nombre }}
+          </span>
+          <span v-else class="text-muted">—</span>
+        </q-td>
+      </template>
+
+      <template #body-cell-precioCompra="{ value }">
+        <q-td class="text-right">
+          <span class="text-mono text-weight-bold text-primary">
+            {{ formatCurrency(Number(value) || 0) }}
+          </span>
+        </q-td>
+      </template>
+
+      <template #body-cell-precioOfrecido="{ value, row }">
+        <q-td class="text-right">
+          <span
+            v-if="Number(value) > Number((row as Producto).precioFinal)"
+            class="text-mono text-muted"
+            style="text-decoration: line-through"
+          >
+            {{ formatCurrency(value) }}
+          </span>
+          <span v-else class="text-mono text-weight-medium">
+            {{ formatCurrency(value) }}
+          </span>
+        </q-td>
+      </template>
+
+      <template #body-cell-precioFinal="{ value }">
+        <q-td class="text-right">
+          <span class="text-mono text-weight-bold text-positive">
+            {{ formatCurrency(value) }}
+          </span>
+        </q-td>
+      </template>
+
+      <template #body-cell-activo="{ value }">
+        <q-td auto-width>
+          <span class="std-status" :class="value ? 'std-status--active' : 'std-status--inactive'">
+            <q-icon :name="value ? 'check_circle' : 'cancel'" size="14px" />
+            {{ value ? 'Activo' : 'Inactivo' }}
+          </span>
+        </q-td>
+      </template>
+
+      <template #body-cell-acciones="{ row }">
+        <q-td auto-width>
+          <div class="std-cell-actions">
+            <q-btn
+              flat
+              round
+              dense
+              icon="edit"
+              color="primary"
+              size="sm"
+              @click.stop="abrirFormulario(row as Producto)"
+            >
+              <q-tooltip>Editar</q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              round
+              dense
+              icon="qr_code_2"
+              color="info"
+              size="sm"
+              @click.stop="verQR(row as Producto)"
+            >
+              <q-tooltip>Ver QR</q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              round
+              dense
+              icon="delete_outline"
+              color="negative"
+              size="sm"
+              @click.stop="confirmarEliminar(row as Producto)"
+            >
+              <q-tooltip>Eliminar</q-tooltip>
+            </q-btn>
+          </div>
+        </q-td>
+      </template>
+    </StandardTable>
+
+    <q-dialog v-model="dialogForm" persistent>
+      <ProductoForm :producto="productoEditar" @saved="onSaved" @cancelled="dialogForm = false" />
+    </q-dialog>
+
+    <q-dialog v-model="dialogImport" persistent>
+      <ProductoImportDialog @imported="onImported" @cancelled="dialogImport = false" />
+    </q-dialog>
+
+    <ProductoViewImage :is-open="dialogIMG" :producto="productoQR" @cancelled="dialogIMG = false" />
+
+    <q-dialog v-model="dialogQR">
+      <q-card class="sgi-card q-pa-md text-center" style="min-width: 280px; max-width: 320px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-subtitle1 text-weight-bold">QR — {{ productoQR?.sku }}</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-card-section>
+          <ProductoQR v-if="productoQR" :sku="productoQR.sku" :qr-code="productoQR.qrCode" />
+          <div class="text-caption text-muted q-mt-sm">{{ productoQR?.nombre }}</div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+  </q-page>
+</template>
+
+<style scoped lang="scss">
+@use 'src/css/_table-shared.scss' as *;
+
+.std-toolbar__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--sgi-border);
+  background: var(--sgi-surface);
+  color: var(--sgi-text);
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition:
+    background var(--sgi-dur-fast) var(--sgi-ease-out),
+    border-color var(--sgi-dur-fast) var(--sgi-ease-out),
+    transform var(--sgi-dur-fast) var(--sgi-ease-out);
+}
+
+.std-toolbar__secondary:hover {
+  background: var(--sgi-surface-sunken);
+  border-color: var(--sgi-border-strong);
+  transform: translateY(-1px);
+}
+
+.std-filters__select {
+  width: auto;
+}
+
+.prod-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--sgi-surface-sunken);
+  border: 1px solid var(--sgi-border);
+  flex-shrink: 0;
+  transition: transform var(--sgi-dur-fast) var(--sgi-ease-out);
+}
+
+.prod-thumb--clickable {
+  cursor: zoom-in;
+}
+
+.prod-thumb--clickable:hover {
+  transform: scale(1.06);
+}
+
+.std-cell-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  color: var(--sgi-text-secondary);
+}
+
+@media (max-width: 998px) {
+  .std-filters__select {
+    width: 95%;
+  }
+}
+</style>

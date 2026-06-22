@@ -12,12 +12,30 @@
         </q-toolbar-title>
 
         <q-chip
-          v-if="sucursalActiva"
+          v-if="sucursalStore.activas.length === 1"
           icon="store"
-          :label="sucursalActiva.nombre"
+          :label="sucursalActiva?.nombre ?? ''"
           dense
           class="q-mr-sm sgi-store-chip"
         />
+
+        <SucursalSwitcher
+          v-else-if="sucursalActivaStore.puedeCambiarSucursal"
+          v-model="sucursalGlobalId"
+          :size="esMovilHeader ? 'sm' : 'md'"
+          :show-label="true"
+          @change="onCambioSucursalGlobal"
+        />
+
+        <!-- Indicador para usuarios que NO pueden cambiar de sucursal -->
+        <div
+          v-else-if="sucursalActiva"
+          class="sgi-store-chip-static q-mr-sm"
+          :title="`Tu sucursal: ${sucursalActiva.nombre}`"
+        >
+          <q-icon name="store" size="14px" />
+          <span class="sgi-store-chip-static__text">{{ sucursalActiva.nombre }}</span>
+        </div>
 
         <!--        <q-btn flat round dense icon="notifications">
           <q-badge color="negative" floating>0</q-badge>
@@ -123,12 +141,15 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/authStore'
 import { useSucursalStore } from 'src/stores/sucursalStore'
+import { useSucursalActivaStore } from 'src/stores/sucursalActiva'
 import { useThemeStore } from 'src/stores/themeStore'
 import { ROL_LABELS } from 'src/types'
 import type { Rol } from 'src/types'
+import SucursalSwitcher from 'src/components/catalogo/SucursalSwitcher.vue'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
+const sucursalActivaStore = useSucursalActivaStore()
 const themeStore = useThemeStore()
 const router = useRouter()
 const $q = useQuasar()
@@ -151,10 +172,18 @@ const avatarLetra = computed(() =>
 const rolLabel = computed(() => (authStore.rol ? ROL_LABELS[authStore.rol as Rol] : ''))
 const appVersion = computed(() => import.meta.env.VITE_APP_VERSION)
 const scrollTopButtonOffset = computed<[number, number]>(() => [18, isMobile.value ? 18 : 64])
-const sucursalActiva = computed(() => {
-  if (!authStore.sucursalId || authStore.sucursalId === 'ALL') return null
-  return sucursalStore.getById(authStore.sucursalId)
+const sucursalActiva = computed(() => sucursalActivaStore.sucursal)
+const sucursalGlobalId = computed({
+  get: () => sucursalActivaStore.sucursalId,
+  set: (val: string) => sucursalActivaStore.setSucursal(val),
 })
+
+const esMovilHeader = computed(() => $q.screen.lt.md)
+
+function onCambioSucursalGlobal(_id: string): void {
+  // La sucursal global ya cambió vía v-model. Las páginas que leen
+  // `sucursalActivaStore.sucursalId` se actualizarán reactivamente.
+}
 
 const navItems = [
   { name: 'dashboard', label: 'Dashboard', icon: 'dashboard', permission: 'dashboard.ver' },
@@ -270,6 +299,27 @@ onMounted(async () => {
   background: var(--sgi-chip-bg);
   color: var(--sgi-chip-text);
   border: 1px solid var(--sgi-border);
+}
+
+.sgi-store-chip-static {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--sgi-chip-bg);
+  color: var(--sgi-chip-text);
+  border: 1px solid var(--sgi-border);
+  font-size: 0.78rem;
+  font-weight: 600;
+  max-width: 200px;
+}
+
+.sgi-store-chip-static__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sgi-header :deep(.q-btn) {

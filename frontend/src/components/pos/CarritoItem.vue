@@ -56,8 +56,8 @@ function onTipoDescuento(value: TipoDescuento): void {
       <ProductoImagenIFrame
         :imagen-url="item.imagenUrl"
         :imagen-location="item.imagenLocation"
-        :width="120"
-        :height="60"
+        :width="20"
+        :height="20"
         type="card"
       />
     </div>

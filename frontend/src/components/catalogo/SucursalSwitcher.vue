@@ -27,18 +27,14 @@ const triggerRef = ref<HTMLElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 
 /** Puede cambiar de sucursal: admin, supervisor, o con permiso `sucursales.ver` */
-const puedeCambiarSucursal = computed(
-  () => authStore.isGlobal || authStore.can('sucursales.ver'),
-)
+const puedeCambiarSucursal = computed(() => authStore.isGlobal || authStore.can('sucursales.ver'))
 
 const opcionesFiltradas = computed(() => {
   const q = search.value.trim().toLowerCase()
   const base = sucursalStore.activas
   if (!q) return base
   return base.filter(
-    (s) =>
-      s.nombre.toLowerCase().includes(q) ||
-      (s.ciudad ?? '').toLowerCase().includes(q),
+    (s) => s.nombre.toLowerCase().includes(q) || (s.ciudad ?? '').toLowerCase().includes(q),
   )
 })
 
@@ -57,6 +53,7 @@ const esMiSucursal = computed(() => {
 })
 
 function seleccionar(id: string): void {
+  console.log('seleccionar sucursalSeleccionadaActiva', id)
   emit('update:modelValue', id)
   emit('change', id)
   menuOpen.value = false
@@ -123,10 +120,7 @@ onBeforeUnmount(() => {
       @click="openMenu"
     >
       <span class="sucursal-switcher__icon">
-        <q-icon
-          :name="modelValue === TODAS_LAS_SUCURSALES ? 'public' : 'store'"
-          size="18px"
-        />
+        <q-icon :name="modelValue === TODAS_LAS_SUCURSALES ? 'public' : 'store'" size="18px" />
       </span>
       <span class="sucursal-switcher__body">
         <span v-if="showLabel" class="sucursal-switcher__label">
@@ -142,12 +136,7 @@ onBeforeUnmount(() => {
         size="20px"
         class="sucursal-switcher__caret"
       />
-      <q-icon
-        v-else
-        name="lock"
-        size="14px"
-        class="sucursal-switcher__lock"
-      >
+      <q-icon v-else name="lock" size="14px" class="sucursal-switcher__lock">
         <q-tooltip>Tu rol no permite consultar otras sucursales</q-tooltip>
       </q-icon>
     </button>
@@ -155,16 +144,8 @@ onBeforeUnmount(() => {
     <span v-if="esMiSucursal" class="sucursal-switcher__pill">Mi sucursal</span>
 
     <Teleport v-if="menuOpen" to="body">
-      <div
-        class="sucursal-switcher__backdrop"
-        @click="menuOpen = false"
-      />
-      <div
-        class="sucursal-switcher__menu"
-        role="listbox"
-        :style="menuStyle"
-        @click.stop
-      >
+      <div class="sucursal-switcher__backdrop" @click="menuOpen = false" />
+      <div class="sucursal-switcher__menu" role="listbox" :style="menuStyle" @click.stop>
         <div class="sucursal-switcher__menu-head">
           <q-icon name="store" size="18px" />
           <span>Cambiar de sucursal</span>
@@ -188,8 +169,7 @@ onBeforeUnmount(() => {
             type="button"
             class="sucursal-switcher__option"
             :class="{
-              'sucursal-switcher__option--active':
-                modelValue === TODAS_LAS_SUCURSALES,
+              'sucursal-switcher__option--active': modelValue === TODAS_LAS_SUCURSALES,
             }"
             role="option"
             :aria-selected="modelValue === TODAS_LAS_SUCURSALES"
