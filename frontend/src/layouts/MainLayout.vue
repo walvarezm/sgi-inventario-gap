@@ -31,10 +31,11 @@
         <div
           v-else-if="sucursalActiva"
           class="sgi-store-chip-static q-mr-sm"
-          :title="`Tu sucursal: ${sucursalActiva.nombre}`"
         >
+          <span class="text-caption text-muted">Tu sucursal: </span>
           <q-icon name="store" size="14px" />
           <span class="sgi-store-chip-static__text">{{ sucursalActiva.nombre }}</span>
+          <q-tooltip>{{ `Sucursal en sesión: ${sucursalActiva.nombre}` }}</q-tooltip>
         </div>
 
         <!--        <q-btn flat round dense icon="notifications">
@@ -52,10 +53,7 @@
             @click="themeStore.toggleTheme()"
           >
             <span class="sgi-theme-toggle__thumb">
-              <q-icon
-                :name="themeStore.isDark ? 'dark_mode' : 'light_mode'"
-                size="16px"
-              />
+              <q-icon :name="themeStore.isDark ? 'dark_mode' : 'light_mode'" size="16px" />
             </span>
             <span class="sgi-theme-toggle__hint">
               {{ themeStore.isDark ? 'Oscuro' : 'Claro' }}

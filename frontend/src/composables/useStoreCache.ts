@@ -64,6 +64,12 @@ export function useStoreCache<T>(options: StoreCacheOptions = {}) {
     _ts.value ? new Date(_ts.value).toLocaleTimeString('es-BO') : null,
   )
 
+  const timeRest = computed(() =>{
+    const d =  _ts.value + ttl
+    return d ? new Date(d).toLocaleTimeString('es-BO'): null
+  }
+  )
+
   const hasData = computed(() => _data.value !== null && (_data.value as unknown[])?.length !== 0)
 
   // ── Métodos ─────────────────────────────────────────────────
@@ -168,6 +174,7 @@ export function useStoreCache<T>(options: StoreCacheOptions = {}) {
     isStale,
     lastFetchedAt,
     hasData,
+    timeRest,
     // Métodos
     fetch,
     invalidate,

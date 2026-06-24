@@ -14,7 +14,7 @@
       <q-space />
       <div class="row q-gutter-sm items-center">
         <!-- Selector de sucursal -->
-<!--        <q-select
+        <!--        <q-select
           v-if="authStore.isGlobal"
           v-model="sucursalFiltro"
           :options="[{ label: 'Todas las sucursales', value: null }, ...opcionesSucursal]"
@@ -223,6 +223,7 @@ import { formatCurrency, formatDateTime } from 'src/utils/formatters'
 import GraficoVentas from 'src/components/reportes/GraficoVentas.vue'
 import { useSucursalActivaStore } from 'src/stores/sucursalActiva.ts'
 import { TODAS_LAS_SUCURSALES } from 'src/composables/useSucursalCatalog.ts'
+import { useLoading } from 'src/composables/useLoading.ts'
 
 const authStore = useAuthStore()
 const sucursalStore = useSucursalStore()
@@ -244,9 +245,9 @@ const sucursalSeleccionadaActiva = computed(() => sucursalActivaStore.sucursalId
 const sucursalNombreActiva = computed(() =>
   sucursalActivaStore.sucursal ? ' | Sucursal: ' + sucursalActivaStore.sucursal.nombre : '',
 )
-const opcionesSucursal = computed(() =>
+/*const opcionesSucursal = computed(() =>
   sucursalStore.activas.map((s) => ({ label: s.nombre, value: s.id })),
-)
+)*/
 
 const ventasHoyProgress = computed(() => {
   if (!kpis.value || !kpis.value.ventasMes) return 0
@@ -311,6 +312,7 @@ function getFechaInicioMes(): string {
 
 async function cargarKPIs(): Promise<void> {
   cargando.value = true
+  useLoading(true, 'Cargando KPIs de Sucursal: ' + sucursalActivaStore.sucursal?.nombre)
   try {
     kpis.value = await reporteService.getKPIs(
       sucursalFiltro.value ? { sucursalId: sucursalFiltro.value } : {},
@@ -319,11 +321,13 @@ async function cargarKPIs(): Promise<void> {
     /* continuar */
   } finally {
     cargando.value = false
+    useLoading(false)
   }
 }
 
 async function cargarVentas(): Promise<void> {
   cargandoVentas.value = true
+  useLoading(true, 'Cargando Ventas de Sucursal: ' + sucursalActivaStore.sucursal?.nombre)
   try {
     datosVentas.value = await reporteService.getReporteVentas({
       sucursalId: sucursalFiltro.value ?? undefined,
@@ -334,11 +338,13 @@ async function cargarVentas(): Promise<void> {
     datosVentas.value = []
   } finally {
     cargandoVentas.value = false
+    useLoading(false)
   }
 }
 
 async function cargarTopProductos(): Promise<void> {
   cargandoTop.value = true
+  useLoading(true, 'Cargando Productos de Sucursal: ' + sucursalActivaStore.sucursal?.nombre)
   try {
     topProductos.value = await reporteService.getTopProductos({
       sucursalId: sucursalFiltro.value ?? undefined,
@@ -349,28 +355,34 @@ async function cargarTopProductos(): Promise<void> {
     topProductos.value = []
   } finally {
     cargandoTop.value = false
+    useLoading(false)
   }
 }
 
 async function cargarTodo(): Promise<void> {
-  await Promise.all([cargarKPIs(), cargarVentas(), cargarTopProductos()])
+  //await Promise.all([cargarKPIs(), cargarVentas(), cargarTopProductos()])
+  await cargarKPIs()
+  await cargarVentas()
+  await cargarTopProductos()
 }
 
 onMounted(async () => {
-  if (sucursalStore.items.length === 0) await sucursalStore.fetchAll()
+  //if (sucursalStore.items.length === 0) await sucursalStore.fetchAll()
   sucursalFiltro.value =
     sucursalSeleccionadaActiva.value === TODAS_LAS_SUCURSALES
       ? null
       : sucursalSeleccionadaActiva.value
-  await cargarTodo()
+  //await cargarTodo()
 })
 
 watch(
   sucursalSeleccionadaActiva,
   async (sucursalId) => {
-    console.log('sucursalSeleccionadaActiva', sucursalId)
-    sucursalFiltro.value = sucursalId === TODAS_LAS_SUCURSALES ? null : sucursalId
-    await cargarTodo()
+    if (sucursalId) {
+      console.log('sucursalSeleccionadaActivasss', sucursalId)
+      sucursalFiltro.value = sucursalId === TODAS_LAS_SUCURSALES ? null : sucursalId
+      await cargarTodo()
+    }
   },
   { immediate: true },
 )

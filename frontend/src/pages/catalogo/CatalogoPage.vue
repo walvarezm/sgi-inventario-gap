@@ -60,7 +60,7 @@ const sucursalActiva = computed(() =>
 const esVistaGlobal = computed(() => sucursalSeleccionada.value === TODAS_LAS_SUCURSALES)
 
 const productosEnStock = computed(() => {
-  const base = catalogo.productosFiltrados.value
+  const base = catalogo.productosTotalEnStock.value || catalogo.productosFiltrados.value
   if (esVistaGlobal.value) {
     return base.filter((p) => p.stock > 0 && !p.stockBajo).length
   }
@@ -191,11 +191,13 @@ function limpiarFiltros(): void {
 }
 
 function toggleStockBajo(): void {
+  if (productosStockBajo.value === 0) return
   mostrarSoloStockBajo.value = !mostrarSoloStockBajo.value
   if (mostrarSoloStockBajo.value) mostrarSoloAgotados.value = false
 }
 
 function toggleAgotados(): void {
+  if (productosAgotados.value === 0) return
   mostrarSoloAgotados.value = !mostrarSoloAgotados.value
   if (mostrarSoloAgotados.value) mostrarSoloStockBajo.value = false
 }
@@ -340,22 +342,25 @@ onMounted(async () => {
 
   if (!authStore.isGlobal && authStore.sucursalId) {
     sucursalSeleccionada.value = authStore.sucursalId
+    //await cargarCatalogo()
   } else {
     sucursalSeleccionada.value = sucursalSeleccionadaActiva.value
   }
-  await cargarCatalogo()
+  catalogo.sucursalFiltro.value =
+    sucursalSeleccionada.value && sucursalSeleccionada.value !== TODAS_LAS_SUCURSALES
+      ? sucursalSeleccionada.value
+      : null
 })
 
 watch(
   sucursalSeleccionadaActiva,
   async (sucursalId) => {
-    //if (sucursalId) {
-
-    console.log('sucursalSeleccionadaActiva', sucursalId)
-    sucursalSeleccionada.value = sucursalId
-    await onCambioSucursal(sucursalId)
-    //await cargarCatalogo()
-    //}
+    if (sucursalId) {
+      console.log('sucursalSeleccionadaActiva', sucursalId)
+      sucursalSeleccionada.value = sucursalId
+      await onCambioSucursal(sucursalId)
+      //await cargarCatalogo()
+    }
   },
   { immediate: true },
 )
@@ -509,7 +514,7 @@ watch(sucursalSeleccionada, (sucursalId) => {
         tone="primary"
         :value="productosMostrados.length"
         :active="!mostrarSoloStockBajo && !mostrarSoloAgotados"
-        :label="'Total productos (' + catalogo.productosFiltrados.value.length + ')'"
+        :label="'items de [' + catalogo.productosTotalEnStock.value.length + '] productos'"
         :loading="showSkeleton"
         @click="
           () => {
@@ -573,7 +578,7 @@ watch(sucursalSeleccionada, (sucursalId) => {
           </button>
         </div>
 
-        <q-select
+        <!--        <q-select
           v-model="catalogo.categoriaFiltro.value"
           :options="[{ label: 'Todas las categorías', value: null }, ...categoriaStore.options]"
           label="Categoría"
@@ -585,7 +590,7 @@ watch(sucursalSeleccionada, (sucursalId) => {
           class="catalogo-toolbar__field"
         >
           <template #prepend><q-icon name="category" /></template>
-        </q-select>
+        </q-select>-->
 
         <q-select
           v-model="catalogo.marcaFiltro.value"
@@ -618,7 +623,7 @@ watch(sucursalSeleccionada, (sucursalId) => {
           </q-badge>
         </q-btn>
 
-        <!--        <q-space />-->
+        <q-space v-if="filtrosActivosCount === 0" />
 
         <q-btn-toggle
           v-if="puedeCambiarVista"
@@ -1039,6 +1044,7 @@ watch(sucursalSeleccionada, (sucursalId) => {
 
 .catalogo-toolbar__clear {
   font-weight: 600;
+  max-width: 50%;
 }
 
 .catalogo-toolbar__view {

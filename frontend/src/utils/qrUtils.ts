@@ -45,7 +45,7 @@ export function validateImageFile(file: File, maxMb = 5): string | null {
 }
 
 export function drivePreviewUrl(fileId: string): string {
-  return `https://drive.google.com/thumbnail?id=${fileId}`
+  return `https://drive.google.com/thumbnail?id=${fileId.trim()}`
   //return `https://drive.google.com/uc?export=view&id=${fileId}`
   //return `https://drive.google.com/file/d/${fileId}/preview`
 }

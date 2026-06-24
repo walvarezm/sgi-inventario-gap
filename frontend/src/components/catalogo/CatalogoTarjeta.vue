@@ -454,17 +454,17 @@ function hasDiscount(p: ProductoCatalogo): boolean {
 }
 
 .catalogo-card__sku {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--sgi-text-muted);
-  background: color-mix(in srgb, var(--sgi-text-muted) 12%, transparent);
+  /*font-family: 'JetBrains Mono', ui-monospace, monospace;*/
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--sgi-primary);
+  background: color-mix(in srgb, var(--sgi-primary) 15%, transparent);
   padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 40%;
+  max-width: 50%;
 }
 
 .catalogo-card__nombre {

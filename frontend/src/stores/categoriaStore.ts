@@ -42,16 +42,19 @@ export const useCategoriaStore = defineStore('categoria', () => {
     isValid: cache.isValid.value,
     isStale: cache.isStale.value,
     lastFetchedAt: cache.lastFetchedAt.value,
+    hasData: cache.hasData.value,
+    data: cache.data.value,
+    timeRest: cache.timeRest.value,
   }))
 
   // ── Actions ────────────────────────────────────────────────
 
   async function fetchAll(force = false): Promise<void> {
-    useLoading(true, 'Cargando Categorías...')
+    if(force) useLoading(true, 'Cargando Categorías...')
     try {
       await cache.fetch(force, () => categoriaService.getAll())
     } finally {
-      useLoading(false)
+      if (force) useLoading(false)
     }
   }
 

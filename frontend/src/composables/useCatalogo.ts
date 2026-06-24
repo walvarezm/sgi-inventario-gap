@@ -4,6 +4,7 @@
 import { ref, computed } from 'vue'
 import type { ProductoCatalogo } from 'src/types'
 import { useCataloStore } from 'src/stores/cataloStore'
+import { TODAS_LAS_SUCURSALES } from 'src/composables/useSucursalCatalog.ts'
 //import { useLoading } from 'src/composables/useLoading.ts'
 
 export function useCatalogo() {
@@ -16,6 +17,18 @@ export function useCatalogo() {
   const marcaFiltro = ref<string | null>(null)
   const vistaTabla = ref(true)
   const PRODUCTOS_SIN_RESTRICCION = new Set<string>(['f14fe181-7896-4c19-8a92-b87bc8511d09'])
+
+  const productosTotalEnStock = computed(() => {
+    const base = productosSucursal.value
+    if (sucursalFiltro.value === null || sucursalFiltro.value === TODAS_LAS_SUCURSALES) {
+      return base.filter((p) => !PRODUCTOS_SIN_RESTRICCION.has(p.id))
+    }
+    return base.filter(
+      (p) =>
+        p.sucursalId === sucursalFiltro.value &&
+        !PRODUCTOS_SIN_RESTRICCION.has(p.id)
+        )
+  })
 
   const productosFiltrados = computed( () => {
 
@@ -88,6 +101,7 @@ export function useCatalogo() {
   function toggleVista(): void { vistaTabla.value = !vistaTabla.value }
 
   return {
+    productosTotalEnStock,
     productos: productosSucursal, busqueda, sucursalFiltro, categoriaFiltro, marcaFiltro, vistaTabla,
     productosFiltrados, conStockBajo, totalProductos,
     loading: computed(() => cataloStore.loading),

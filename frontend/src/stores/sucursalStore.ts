@@ -35,6 +35,9 @@ export const useSucursalStore = defineStore('sucursal', () => {
     isValid: cache.isValid.value,
     isStale: cache.isStale.value,
     lastFetchedAt: cache.lastFetchedAt.value,
+    hasData: cache.hasData.value,
+    data: cache.data.value,
+    timeRest: cache.timeRest.value,
   }))
 
   // ── Actions ────────────────────────────────────────────────

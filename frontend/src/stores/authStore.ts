@@ -20,6 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // ── Getters ──────────────────────────────────────────────
   const isAuthenticated = computed(() => {
+    console.log('sesion.value', sesion.value)
     if (!sesion.value) return false
     return Date.now() < sesion.value.expiresAt
   })
@@ -46,7 +47,8 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { sesion: nuevaSesion } = await authService.login(credentials)
       sesion.value = nuevaSesion
-      LocalStorage.set(SESSION_KEY, nuevaSesion)
+      sesion.value.expiresAtEnd = new Date(nuevaSesion.expiresAt).toLocaleTimeString('es-BO')
+      LocalStorage.set(SESSION_KEY, sesion.value || nuevaSesion)
     } catch (e) {
       error.value = (e as Error).message
       throw e

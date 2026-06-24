@@ -151,7 +151,7 @@ function stockLabel(stock: number, bajo: boolean): string {
     <template #body-cell-nombre="{ row }">
       <q-td>
         <div class="catalogo-tabla__nombre">{{ row.nombre }}</div>
-        <q-tooltip v-if="row.nombre.length > 40">{{ row.nombre }}</q-tooltip>
+        <q-tooltip v-if="row.nombre.length > 35">{{ row.nombre }}</q-tooltip>
         <div
           v-if="row.descripcion && row.nombre.trim() !== row.descripcion.trim()"
           class="catalogo-tabla__descripcion"
@@ -340,11 +340,11 @@ function stockLabel(stock: number, bajo: boolean): string {
 }
 
 .catalogo-tabla__sku {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  /*font-family: 'JetBrains Mono', ui-monospace, monospace;*/
   font-size: 0.78rem;
   font-weight: 800;
-  color: var(--sgi-text-muted);
-  background: color-mix(in srgb, var(--sgi-text-muted) 25%, transparent);
+  color: var(--sgi-primary);
+  background: color-mix(in srgb, var(--sgi-primary) 15%, transparent);
   padding: 4px 8px;
   border-radius: 4px;
 }

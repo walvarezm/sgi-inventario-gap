@@ -60,6 +60,7 @@ const Auth = {
         scopeValues: sessionUser.scopeValues,
         token: token,
         expiresAt: payload.exp,
+        expiresAtEnd: new Date(payload.exp).toLocaleTimeString('es-BO'),
       },
     }
   },

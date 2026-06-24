@@ -94,6 +94,7 @@ export interface SesionUsuario {
   scopeValues: string[]
   token: string
   expiresAt: number
+  expiresAtEnd: string
 }
 
 export interface LoginCredentials {
